@@ -19,9 +19,12 @@ Modular monolith Python bootstrap for an AI pet-tech product. The repository is 
 ## Quickstart
 1. Install `uv` or use `python -m pip install -e .[dev]` as fallback.
 2. Copy `.env.example` to `.env`.
-3. Install dependencies with `make setup`.
-4. Start the API with `make run-api`.
-5. Start Streamlit with `make run-streamlit`.
+3. Choose one backend pair:
+   - `AUTH_BACKEND=bootstrap` and `PERSISTENCE_BACKEND=in_memory` for local demo mode
+   - `AUTH_BACKEND=supabase` and `PERSISTENCE_BACKEND=supabase` for real Supabase mode
+4. Install dependencies with `make setup`.
+5. Start the API with `make run-api`.
+6. Start Streamlit with `make run-streamlit`.
 
 ## Main commands
 - `make format`
@@ -51,6 +54,8 @@ Configuration is centralized in `packages/shared/config/settings.py`. The bootst
 - `LLM_API_KEY`
 - `LOG_LEVEL`
 - `ENABLE_TELEMETRY`
+
+When Supabase mode is enabled, the app now fails fast at startup if the required auth or persistence secrets are missing.
 
 ## Architecture notes
 - Streamlit is treated as a temporary validation client.

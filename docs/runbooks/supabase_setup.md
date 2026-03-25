@@ -18,6 +18,12 @@ Use these variables:
 - `BOOTSTRAP_USER_ID`
 - `BOOTSTRAP_USER_EMAIL`
 
+Secret handling rules:
+- keep real values only in local `.env`
+- never commit `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_PASSWORD`, or a populated `DATABASE_URL`
+- `SUPABASE_ANON_KEY` is client-safe, but still keep it out of the repo-local `.env.example`
+- when `AUTH_BACKEND=supabase`, `BOOTSTRAP_USER_ID` and `BOOTSTRAP_USER_EMAIL` are ignored
+
 Current project values already prepared in `.env.example`:
 - host: `aws-1-eu-west-1.pooler.supabase.com`
 - port: `5432`
@@ -27,6 +33,10 @@ Current project values already prepared in `.env.example`:
 ## Current bootstrap mode
 - `PERSISTENCE_BACKEND=supabase` enables Supabase repositories
 - `AUTH_BACKEND=supabase` enables real Supabase email/password auth and bearer-token user resolution
+
+Fail-fast validation:
+- if `PERSISTENCE_BACKEND=supabase`, the app now requires `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`
+- if `AUTH_BACKEND=supabase`, the app now requires `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`
 
 ## Schema to apply
 Run the SQL in `scripts/setup/supabase_schema.sql` inside the Supabase SQL editor before starting the app with the Supabase backend.

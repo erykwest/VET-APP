@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from pydantic import Field
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,6 +30,37 @@ class Settings(BaseSettings):
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     enable_telemetry: bool = Field(default=False, alias="ENABLE_TELEMETRY")
+
+    @model_validator(mode="after")
+    def validate_backend_configuration(self) -> "Settings":
+        if self.persistence_backend == "supabase":
+            self._require_fields(
+                "PERSISTENCE_BACKEND=supabase",
+                {
+                    "DATABASE_URL": self.database_url,
+                    "SUPABASE_URL": self.supabase_url,
+                    "SUPABASE_SERVICE_ROLE_KEY": self.supabase_service_role_key,
+                },
+            )
+
+        if self.auth_backend == "supabase":
+            self._require_fields(
+                "AUTH_BACKEND=supabase",
+                {
+                    "SUPABASE_URL": self.supabase_url,
+                    "SUPABASE_ANON_KEY": self.supabase_anon_key,
+                    "SUPABASE_SERVICE_ROLE_KEY": self.supabase_service_role_key,
+                },
+            )
+
+        return self
+
+    @staticmethod
+    def _require_fields(context: str, values: dict[str, str]) -> None:
+        missing = [name for name, value in values.items() if not value.strip()]
+        if missing:
+            formatted = ", ".join(missing)
+            raise ValueError(f"Missing required settings for {context}: {formatted}")
 
 
 @lru_cache(maxsize=1)
