@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Request
+from collections.abc import Callable
+
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
 from apps.api.routes.auth import router as auth_router
@@ -9,8 +11,9 @@ from apps.api.routes.pets import router as pets_router
 from apps.api.routes.reminders import router as reminders_router
 from packages.infrastructure.logging.logger import configure_logging
 from packages.infrastructure.telemetry.noop import setup_telemetry
+from packages.shared.auth_context import reset_access_token, set_access_token
 from packages.shared.config.settings import get_settings
-from packages.shared.errors.base import ProviderError, ValidationError
+from packages.shared.errors.base import AuthenticationError, ProviderError, ValidationError
 
 settings = get_settings()
 configure_logging(settings)
@@ -19,9 +22,29 @@ setup_telemetry(settings.enable_telemetry)
 app = FastAPI(title=settings.app_name)
 
 
+@app.middleware("http")
+async def inject_access_token(request: Request, call_next: Callable[[Request], Response]) -> Response:
+    auth_header = request.headers.get("Authorization", "")
+    token: str | None = None
+    if auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+
+    context_token = set_access_token(token or None)
+    try:
+        response = await call_next(request)
+    finally:
+        reset_access_token(context_token)
+    return response
+
+
 @app.exception_handler(ValidationError)
 async def handle_validation_error(_: Request, exc: ValidationError) -> JSONResponse:
     return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.exception_handler(AuthenticationError)
+async def handle_authentication_error(_: Request, exc: AuthenticationError) -> JSONResponse:
+    return JSONResponse(status_code=401, content={"detail": str(exc)})
 
 
 @app.exception_handler(ProviderError)

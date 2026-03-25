@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from packages.core.application.ports.auth_provider import AuthProvider
 from packages.core.application.services.create_pet_profile import CreatePetProfileService
 from packages.core.application.services.create_reminder import CreateReminderService
 from packages.core.application.services.get_pet_profile import GetPetProfileService
@@ -8,12 +9,22 @@ from packages.core.application.services.list_pet_profiles import ListPetProfiles
 from packages.core.application.services.list_reminders import ListRemindersService
 from packages.core.application.services.send_chat_message import SendChatMessageService
 from packages.core.application.services.update_pet_profile import UpdatePetProfileService
-from packages.infrastructure.auth.fake_auth_provider import FakeAuthProvider
+from packages.infrastructure.auth.bootstrap_auth_provider import BootstrapAuthProvider
+from packages.infrastructure.auth.supabase_auth_provider import SupabaseAuthProvider
 from packages.infrastructure.llm.providers.echo_llm_client import EchoLLMClient
 from packages.infrastructure.persistence.in_memory_repositories import (
     InMemoryConversationRepository,
     InMemoryPetProfileRepository,
     InMemoryReminderRepository,
+)
+from packages.infrastructure.persistence.supabase.client import (
+    build_supabase_client,
+    build_supabase_public_client,
+)
+from packages.infrastructure.persistence.supabase.supabase_repositories import (
+    SupabaseConversationRepository,
+    SupabasePetProfileRepository,
+    SupabaseReminderRepository,
 )
 from packages.shared.config.settings import Settings, get_settings
 
@@ -21,10 +32,12 @@ from packages.shared.config.settings import Settings, get_settings
 class ApplicationContainer:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        self.auth_provider = FakeAuthProvider()
-        self.pet_profile_repository = InMemoryPetProfileRepository()
-        self.conversation_repository = InMemoryConversationRepository()
-        self.reminder_repository = InMemoryReminderRepository()
+        self.auth_provider = self._build_auth_provider()
+        (
+            self.pet_profile_repository,
+            self.conversation_repository,
+            self.reminder_repository,
+        ) = self._build_repositories()
         self.llm_client = EchoLLMClient(settings)
 
     def create_pet_profile_service(self) -> CreatePetProfileService:
@@ -54,6 +67,34 @@ class ApplicationContainer:
 
     def list_reminders_service(self) -> ListRemindersService:
         return ListRemindersService(self.reminder_repository)
+
+    def _build_auth_provider(self) -> AuthProvider:
+        if self.settings.auth_backend == "supabase":
+            return SupabaseAuthProvider(
+                public_client=build_supabase_public_client(self.settings),
+                admin_client=build_supabase_client(self.settings),
+            )
+        return BootstrapAuthProvider(self.settings)
+
+    def _build_repositories(
+        self,
+    ) -> tuple[
+        InMemoryPetProfileRepository | SupabasePetProfileRepository,
+        InMemoryConversationRepository | SupabaseConversationRepository,
+        InMemoryReminderRepository | SupabaseReminderRepository,
+    ]:
+        if self.settings.persistence_backend == "supabase":
+            client = build_supabase_client(self.settings)
+            return (
+                SupabasePetProfileRepository(client),
+                SupabaseConversationRepository(client),
+                SupabaseReminderRepository(client),
+            )
+        return (
+            InMemoryPetProfileRepository(),
+            InMemoryConversationRepository(),
+            InMemoryReminderRepository(),
+        )
 
 
 @lru_cache(maxsize=1)

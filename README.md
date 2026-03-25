@@ -37,9 +37,15 @@ Configuration is centralized in `packages/shared/config/settings.py`. The bootst
 - `APP_NAME`
 - `API_HOST`
 - `API_PORT`
+- `DATABASE_URL`
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_DB_HOST`
+- `SUPABASE_DB_PORT`
+- `SUPABASE_DB_NAME`
+- `SUPABASE_DB_USER`
+- `SUPABASE_DB_PASSWORD`
 - `LLM_PROVIDER`
 - `LLM_MODEL`
 - `LLM_API_KEY`
@@ -51,7 +57,9 @@ Configuration is centralized in `packages/shared/config/settings.py`. The bootst
 - FastAPI routes stay thin and delegate to application services.
 - Domain models do not depend on Streamlit, FastAPI, or external providers.
 - In-memory adapters keep the bootstrap runnable while Supabase/Postgres adapters are prepared as extension points.
-- Auth and LLM integrations are demo stubs in this first bootstrap push.
+- LLM integration is still a demo stub in this first bootstrap push.
+- Supabase auth flow is now wired for runtime email/password login and bearer-token user resolution.
+- Supabase persistence tables are protected by RLS owner-based policies.
 
 ## Product source material
 Product and strategy documents now live under `docs/`:
@@ -60,3 +68,4 @@ Product and strategy documents now live under `docs/`:
 - `docs/architecture/repo_bootstrap_instructions.md`
 - `docs/decisions/*`
 - `docs/runbooks/local_development.md`
+- `docs/runbooks/supabase_setup.md`
