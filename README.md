@@ -69,6 +69,7 @@ When Supabase mode is enabled, the app now fails fast at startup if the required
 ## Product source material
 Product and strategy documents now live under `docs/`:
 - `docs/product/`
+- `docs/llm/`
 - `docs/architecture/overview.md`
 - `docs/architecture/repo_bootstrap_instructions.md`
 - `docs/decisions/*`
