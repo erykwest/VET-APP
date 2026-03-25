@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/router/app_router.dart';
 import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_radii.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
@@ -25,21 +24,21 @@ class OnboardingWelcomePage extends StatelessWidget {
             ],
           ),
         ),
-        child: SafeArea(
-          child: Padding(
+        child: const SafeArea(
+          child: const Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.xxl,
               AppSpacing.lg,
               AppSpacing.xxl,
               AppSpacing.lg,
             ),
-            child: Column(
+            child: const Column(
               children: [
-                const _TopBar(),
-                const SizedBox(height: AppSpacing.xxl),
+                _TopBar(),
+                SizedBox(height: AppSpacing.xxl),
                 const Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
+                  child: const SingleChildScrollView(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _HeroCard(),
@@ -122,7 +121,7 @@ class _HeroCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
           _Badge(),
@@ -259,7 +258,7 @@ class _IllustrationPanel extends StatelessWidget {
             top: 34,
             child: _BlurBubble(
               size: 150,
-              color: const Color(0x66F0BFA0),
+              color: Color(0x66F0BFA0),
             ),
           ),
           Positioned(
@@ -267,7 +266,7 @@ class _IllustrationPanel extends StatelessWidget {
             top: 10,
             child: _BlurBubble(
               size: 170,
-              color: const Color(0x6693C3B3),
+              color: Color(0x6693C3B3),
             ),
           ),
           Positioned(
@@ -276,7 +275,7 @@ class _IllustrationPanel extends StatelessWidget {
             child: _MiniCard(
               label: 'Vaccino',
               color: AppColors.accentSoft,
-              textColor: const Color(0xFF315E55),
+              textColor: Color(0xFF315E55),
             ),
           ),
           Positioned(
@@ -284,8 +283,8 @@ class _IllustrationPanel extends StatelessWidget {
             bottom: 22,
             child: _MiniCard(
               label: 'Referto PDF',
-              color: const Color(0xFFFFF5EC),
-              textColor: const Color(0xFF8B5B3E),
+              color: Color(0xFFFFF5EC),
+              textColor: Color(0xFF8B5B3E),
             ),
           ),
           Positioned(
@@ -480,7 +479,7 @@ class _BottomPanel extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () {
-                Navigator.of(context).pushNamed(AppRouter.auth);
+                Navigator.of(context).pushReplacement(OnboardingRoutes.authHub());
               },
               child: const Text('Ho già un account'),
             ),

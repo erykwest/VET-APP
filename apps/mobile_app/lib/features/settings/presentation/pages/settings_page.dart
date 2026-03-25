@@ -20,6 +20,18 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _notifications = true;
   bool _analytics = false;
 
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const ProfilePage()),
+    );
+  }
+
+  void _showLogoutPreview() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Logout preview: qui collegheremo il flusso reale.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +54,11 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _Header(),
+                _Header(
+                  onBack: () => Navigator.of(context).maybePop(),
+                  onOpenProfile: _openProfile,
+                  onLogoutPreview: _showLogoutPreview,
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 _StateChips(value: _state, onChanged: (value) => setState(() => _state = value)),
                 const SizedBox(height: AppSpacing.lg),
@@ -114,27 +130,50 @@ class _SettingsPageState extends State<SettingsPage> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header();
+  const _Header({
+    required this.onBack,
+    required this.onOpenProfile,
+    required this.onLogoutPreview,
+  });
+
+  final VoidCallback onBack;
+  final VoidCallback onOpenProfile;
+  final VoidCallback onLogoutPreview;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _BrandPill(),
-              const SizedBox(height: AppSpacing.lg),
-              Text('Settings', style: AppTextStyles.heading),
-              const SizedBox(height: AppSpacing.sm),
-              Text('Preferences, account controls and debug space.', style: AppTextStyles.body),
-            ],
-          ),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.start,
+          children: [
+            TextButton.icon(
+              onPressed: onBack,
+              icon: const Icon(Icons.arrow_back_rounded, size: 18),
+              label: const Text('Indietro'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onOpenProfile,
+              icon: const Icon(Icons.person_outline_rounded, size: 18),
+              label: const Text('Profilo'),
+            ),
+            FilledButton.tonalIcon(
+              onPressed: onLogoutPreview,
+              icon: const Icon(Icons.logout_rounded, size: 18),
+              label: const Text('Logout'),
+            ),
+          ],
         ),
-        const SizedBox(width: AppSpacing.md),
-        FilledButton(onPressed: () {}, child: const Text('Logout')),
+        const SizedBox(height: AppSpacing.lg),
+        const _BrandPill(),
+        const SizedBox(height: AppSpacing.lg),
+        const Text('Settings', style: AppTextStyles.heading),
+        const SizedBox(height: AppSpacing.sm),
+        const Text('Preferences, account controls and debug space.', style: AppTextStyles.body),
       ],
     );
   }

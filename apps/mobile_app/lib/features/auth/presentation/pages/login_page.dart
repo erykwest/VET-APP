@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../shared/auth/auth.dart';
+import '../../data/auth_repository_factory.dart';
 import '../widgets/auth_widgets.dart';
 import 'register_page.dart';
 import 'reset_password_page.dart';
@@ -15,6 +17,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _authRepository = const AuthRepositoryFactory().create();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -46,27 +49,39 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
       _status = AuthBannerStatus.loading;
       _title = 'Verifica in corso';
-      _message = 'Simuliamo il caricamento del login per testare gli stati UI.';
+      _message = 'Sto verificando le credenziali e preparando la sessione.';
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 900));
+    final result = await _authRepository.signInWithPassword(
+      AuthEmailPasswordCredentials(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      ),
+    );
 
     if (!mounted) return;
-    final shouldFail = _emailController.text.contains('fail');
-    setState(() {
-      _isLoading = false;
-      if (shouldFail) {
-        _status = AuthBannerStatus.error;
-        _title = 'Login non riuscito';
-        _message = 'Abbiamo simulato un errore. Prova un altra email o correggi i dati.';
-      } else {
-        _status = AuthBannerStatus.success;
-        _title = 'Login pronto';
-        _message = 'Stato successivo simulato. Ti porto nella home shell di anteprima.';
-      }
-    });
+    final success = result.fold(
+      onSuccess: (_) {
+        setState(() {
+          _isLoading = false;
+          _status = AuthBannerStatus.success;
+          _title = 'Login riuscito';
+          _message = 'Sessione pronta. Ti porto nella home shell.';
+        });
+        return true;
+      },
+      onFailure: (error) {
+        setState(() {
+          _isLoading = false;
+          _status = AuthBannerStatus.error;
+          _title = 'Login non riuscito';
+          _message = error.message;
+        });
+        return false;
+      },
+    );
 
-    if (!shouldFail) {
+    if (success) {
       await Future<void>.delayed(const Duration(milliseconds: 350));
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
@@ -152,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                   AuthFooterLink(
                     label: 'Hai dimenticato la password?',
                     onTap: () {
-                      Navigator.of(context).push(
+                      Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
                           builder: (_) => const ResetPasswordPage(),
                         ),

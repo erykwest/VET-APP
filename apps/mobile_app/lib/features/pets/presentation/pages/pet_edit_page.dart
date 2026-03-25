@@ -22,7 +22,8 @@ class PetEditPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return PetsScaffold(
       title: 'Edit ${pet.name}.',
-      subtitle: 'Adjust profile details without losing the original tone of the app.',
+      subtitle:
+          'Adjust profile details without losing the original tone of the app.',
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).maybePop(),
@@ -31,11 +32,13 @@ class PetEditPage extends StatelessWidget {
         ),
       ],
       body: switch (state) {
-        PetsScreenStatus.loading => const PetsLoadingView(label: 'Loading edit form...'),
+        PetsScreenStatus.loading =>
+          const PetsLoadingView(label: 'Loading edit form...'),
         PetsScreenStatus.error => PetsErrorView(
             title: 'Edit unavailable',
             subtitle: errorMessage,
-            onRetry: () {},
+            actionLabel: 'Close',
+            onRetry: () => Navigator.of(context).maybePop(),
           ),
         PetsScreenStatus.empty => _PetEditForm(
             pet: pet,
@@ -50,7 +53,8 @@ class PetEditPage extends StatelessWidget {
 class _PetEditForm extends StatelessWidget {
   const _PetEditForm({
     required this.pet,
-    this.helperText = 'Update the fields you want to change and keep the rest intact.',
+    this.helperText =
+        'Update the fields you want to change and keep the rest intact.',
   });
 
   final PetProfile pet;
@@ -72,7 +76,8 @@ class _PetEditForm extends StatelessWidget {
               const SizedBox(height: 16),
               PetFormField(label: 'Breed', initialValue: pet.breed),
               const SizedBox(height: 16),
-              PetFormField(label: 'Birth date', initialValue: pet.birthDateLabel),
+              PetFormField(
+                  label: 'Birth date', initialValue: pet.birthDateLabel),
               const SizedBox(height: 16),
               PetFormField(label: 'Sex', initialValue: pet.sex),
               const SizedBox(height: 16),
@@ -96,7 +101,8 @@ class _PetEditForm extends StatelessWidget {
                 primary: true,
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Changes saved locally for now.')),
+                    const SnackBar(
+                        content: Text('Changes saved locally for now.')),
                   );
                 },
               ),
@@ -106,7 +112,9 @@ class _PetEditForm extends StatelessWidget {
                 icon: Icons.archive_outlined,
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Archive action is a local placeholder.')),
+                    const SnackBar(
+                        content:
+                            Text('Archive action is a local placeholder.')),
                   );
                 },
               ),

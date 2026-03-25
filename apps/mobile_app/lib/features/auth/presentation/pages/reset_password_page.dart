@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../data/auth_repository_factory.dart';
 import '../widgets/auth_widgets.dart';
 import 'login_page.dart';
 import 'register_page.dart';
@@ -14,6 +15,7 @@ class ResetPasswordPage extends StatefulWidget {
 }
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
+  final _authRepository = const AuthRepositoryFactory().create();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
 
@@ -43,25 +45,32 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       _isLoading = true;
       _status = AuthBannerStatus.loading;
       _title = 'Invio in corso';
-      _message = 'Simuliamo la richiesta di reset password.';
+      _message = 'Sto preparando la richiesta di recupero password.';
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 900));
+    final result =
+        await _authRepository.resetPasswordForEmail(_emailController.text);
 
     if (!mounted) return;
-    final shouldFail = _emailController.text.contains('fail');
-    setState(() {
-      _isLoading = false;
-      if (shouldFail) {
-        _status = AuthBannerStatus.error;
-        _title = 'Invio fallito';
-        _message = 'Abbiamo simulato un errore. Prova con un altro indirizzo email.';
-      } else {
-        _status = AuthBannerStatus.success;
-        _title = 'Mail pronta';
-        _message = 'Il reset e stato simulato correttamente. Backend reale dopo.';
-      }
-    });
+    result.fold(
+      onSuccess: (_) {
+        setState(() {
+          _isLoading = false;
+          _status = AuthBannerStatus.success;
+          _title = 'Mail pronta';
+          _message =
+              'Se l account esiste, riceverai il link per il recupero accesso.';
+        });
+      },
+      onFailure: (error) {
+        setState(() {
+          _isLoading = false;
+          _status = AuthBannerStatus.error;
+          _title = 'Invio fallito';
+          _message = error.message;
+        });
+      },
+    );
   }
 
   @override
@@ -127,7 +136,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   AuthFooterLink(
                     label: 'Torna alla registrazione',
                     onTap: () {
-                      Navigator.of(context).push(
+                      Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
                           builder: (_) => const RegisterPage(),
                         ),

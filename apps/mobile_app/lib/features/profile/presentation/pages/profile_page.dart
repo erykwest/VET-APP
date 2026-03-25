@@ -4,6 +4,7 @@ import '../../../../../design_system/tokens/app_colors.dart';
 import '../../../../../design_system/tokens/app_radii.dart';
 import '../../../../../design_system/tokens/app_spacing.dart';
 import '../../../../../design_system/tokens/app_text_styles.dart';
+import '../../../settings/presentation/pages/settings_page.dart';
 
 enum _ViewState { empty, loading, error, success }
 
@@ -17,6 +18,18 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   _ViewState _state = _ViewState.success;
   bool _darkMode = false;
+
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+    );
+  }
+
+  void _showLogoutPreview() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Logout preview: qui collegheremo il flusso reale.')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +53,11 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _Header(),
+                _Header(
+                  onBack: () => Navigator.of(context).maybePop(),
+                  onOpenSettings: _openSettings,
+                  onLogoutPreview: _showLogoutPreview,
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 _StateChips(value: _state, onChanged: (value) => setState(() => _state = value)),
                 const SizedBox(height: AppSpacing.lg),
@@ -113,27 +130,50 @@ class _ProfilePageState extends State<ProfilePage> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header();
+  const _Header({
+    required this.onBack,
+    required this.onOpenSettings,
+    required this.onLogoutPreview,
+  });
+
+  final VoidCallback onBack;
+  final VoidCallback onOpenSettings;
+  final VoidCallback onLogoutPreview;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _BrandPill(),
-              const SizedBox(height: AppSpacing.lg),
-              Text('Profile', style: AppTextStyles.heading),
-              const SizedBox(height: AppSpacing.sm),
-              Text('Owner data, preferences and account details.', style: AppTextStyles.body),
-            ],
-          ),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.start,
+          children: [
+            TextButton.icon(
+              onPressed: onBack,
+              icon: const Icon(Icons.arrow_back_rounded, size: 18),
+              label: const Text('Indietro'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onOpenSettings,
+              icon: const Icon(Icons.settings_outlined, size: 18),
+              label: const Text('Impostazioni'),
+            ),
+            FilledButton.tonalIcon(
+              onPressed: onLogoutPreview,
+              icon: const Icon(Icons.logout_rounded, size: 18),
+              label: const Text('Logout'),
+            ),
+          ],
         ),
-        const SizedBox(width: AppSpacing.md),
-        FilledButton(onPressed: () {}, child: const Text('Logout')),
+        const SizedBox(height: AppSpacing.lg),
+        const _BrandPill(),
+        const SizedBox(height: AppSpacing.lg),
+        const Text('Profile', style: AppTextStyles.heading),
+        const SizedBox(height: AppSpacing.sm),
+        const Text('Owner data, preferences and account details.', style: AppTextStyles.body),
       ],
     );
   }

@@ -58,15 +58,17 @@ class ChatConversationDetailPage extends StatelessWidget {
                       actionLabel: 'Scrivi ora',
                       onAction: onSendMessage == null
                           ? null
-                          : () => onSendMessage!.call('Ciao, ho una domanda per Cocco.'),
+                          : () => onSendMessage!
+                              .call('Ciao, ho una domanda per Cocco.'),
                     ),
                   ChatScreenState.error => ChatErrorState(
                       key: const ValueKey('error'),
                       title: 'Conversazione non disponibile',
                       subtitle:
                           'Qualcosa e andato storto nel recupero del thread.',
-                      actionLabel: 'Riprova',
-                      onAction: onRetry,
+                      actionLabel: 'Back to chats',
+                      onAction:
+                          onRetry ?? () => Navigator.of(context).maybePop(),
                     ),
                   ChatScreenState.success => _SuccessConversationView(
                       key: const ValueKey('success'),
@@ -112,7 +114,8 @@ class _Header extends StatelessWidget {
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Icon(Icons.chat_bubble_outline, color: AppColors.onPrimary),
+            child: const Icon(Icons.chat_bubble_outline,
+                color: AppColors.onPrimary),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -130,7 +133,7 @@ class _Header extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${conversation.petName} • ${conversation.statusLabel}',
+                  '${conversation.petName} - ${conversation.statusLabel}',
                   style: const TextStyle(
                     color: AppColors.secondaryText,
                     fontSize: 12,

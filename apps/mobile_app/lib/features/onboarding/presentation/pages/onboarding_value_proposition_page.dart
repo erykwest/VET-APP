@@ -123,12 +123,12 @@ class _StateCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.xl),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
           Text('Cosa copre subito', style: AppTextStyles.title),
           SizedBox(height: AppSpacing.md),
-          Wrap(
+          const Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [

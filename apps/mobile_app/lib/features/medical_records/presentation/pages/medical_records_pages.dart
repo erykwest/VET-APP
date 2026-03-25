@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../../design_system/tokens/app_colors.dart';
 import '../../../../../design_system/tokens/app_radii.dart';
 import '../../../../../design_system/tokens/app_spacing.dart';
 import '../../../../../design_system/tokens/app_text_styles.dart';
+import '../../data/medical_records_repository.dart';
 
 enum _ViewState { empty, loading, error, success }
 
@@ -15,7 +18,43 @@ class MedicalRecordsListPage extends StatefulWidget {
 }
 
 class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
+  final MedicalRecordsRepository _repository = MedicalRecordsRepository();
+
+  late Future<List<MedicalRecordEntry>> _recordsFuture;
   _ViewState _state = _ViewState.success;
+
+  @override
+  void initState() {
+    super.initState();
+    _recordsFuture = _repository.loadRecords();
+  }
+
+  Future<void> _reload() async {
+    setState(() {
+      _recordsFuture = _repository.loadRecords();
+    });
+    await _recordsFuture;
+  }
+
+  void _openUpload() {
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const MedicalRecordsUploadPage()),
+      ).then((_) {
+        if (mounted) {
+          _reload();
+        }
+      }),
+    );
+  }
+
+  void _openDetail(MedicalRecordEntry record) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MedicalRecordDetailPage(record: record),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +62,7 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
       title: 'Medical records',
       subtitle: 'Archivio documenti clinici, referti e note.',
       actionLabel: 'Upload',
-      onAction: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const MedicalRecordsUploadPage()),
-      ),
+      onAction: _openUpload,
       state: _state,
       onStateChanged: (value) => setState(() => _state = value),
       child: switch (_state) {
@@ -34,9 +71,7 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
             body: 'Upload the first report to start building the archive.',
             icon: Icons.folder_open_outlined,
             actionLabel: 'Upload first file',
-            onAction: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const MedicalRecordsUploadPage()),
-            ),
+            onAction: _openUpload,
           ),
         _ViewState.loading => const _LoadingState(
             title: 'Syncing records',
@@ -49,36 +84,66 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
             actionLabel: 'Retry',
             onAction: () {},
           ),
-        _ViewState.success => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _SummaryCard(
-                title: '12 documents',
-                body: '2 new files this month, last sync 3 hours ago.',
-                icon: Icons.description_outlined,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              const _RecordTile(
-                title: 'Vaccination certificate',
-                subtitle: 'PDF - 2 pages - uploaded from clinic',
-                meta: 'Updated today',
-                badge: 'Verified',
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const _RecordTile(
-                title: 'Blood test result',
-                subtitle: 'PDF - 5 pages - hematology panel',
-                meta: 'Reviewed yesterday',
-                badge: 'Needs follow up',
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const _RecordTile(
-                title: 'X-ray summary',
-                subtitle: 'Image set - orthopedic note',
-                meta: 'Imported 12 Mar',
-                badge: 'Archived',
-              ),
-            ],
+        _ViewState.success => FutureBuilder<List<MedicalRecordEntry>>(
+            future: _recordsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const _LoadingState(
+                  title: 'Syncing records',
+                  body: 'Fetching documents and metadata from Supabase or preview data.',
+                );
+              }
+
+              if (snapshot.hasError) {
+                return _EmptyState(
+                  title: 'Could not load the archive',
+                  body: 'Retry after checking the network or continue in offline preview.',
+                  icon: Icons.cloud_off_outlined,
+                  actionLabel: 'Retry',
+                  onAction: () => unawaited(_reload()),
+                );
+              }
+
+              final records = snapshot.data ?? const <MedicalRecordEntry>[];
+              if (records.isEmpty) {
+                return _EmptyState(
+                  title: 'No documents yet',
+                  body: 'Upload the first report to start building the archive.',
+                  icon: Icons.folder_open_outlined,
+                  actionLabel: 'Upload first file',
+                  onAction: _openUpload,
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SummaryCard(
+                    title: '12 documents',
+                    body: '2 new files this month, last sync 3 hours ago.',
+                    icon: Icons.description_outlined,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  ...records.asMap().entries.expand(
+                    (entry) {
+                      final index = entry.key;
+                      final record = entry.value;
+                      return <Widget>[
+                        _RecordTile(
+                          title: record.title,
+                          subtitle: record.subtitle,
+                          meta: record.meta,
+                          badge: record.badge,
+                          onTap: () => _openDetail(record),
+                        ),
+                        if (index != records.length - 1)
+                          const SizedBox(height: AppSpacing.sm),
+                      ];
+                    },
+                  ),
+                ],
+              );
+            },
           ),
       },
     );
@@ -94,7 +159,22 @@ class MedicalRecordsUploadPage extends StatefulWidget {
 }
 
 class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
+  final MedicalRecordsRepository _repository = MedicalRecordsRepository();
   _ViewState _state = _ViewState.success;
+  final MedicalRecordEntry _draftRecord = const MedicalRecordEntry(
+    id: 'vaccination-certificate',
+    title: 'vaccination_certificate.pdf',
+    subtitle: 'Uploaded successfully and ready for metadata review.',
+    meta: 'Uploaded successfully',
+    badge: 'Verified',
+    detailSource: 'Clinica Vet',
+    createdAt: '25 Mar 2026, 09:32',
+    timeline: [
+      MedicalRecordTimelineEntry(label: 'Imported', value: '25 Mar 2026'),
+      MedicalRecordTimelineEntry(label: 'Reviewed', value: '25 Mar 2026, 09:45'),
+      MedicalRecordTimelineEntry(label: 'Ready for export', value: 'Available'),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -102,9 +182,14 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
       title: 'Upload document',
       subtitle: 'Carica PDF, JPG o PNG e completa i metadati.',
       actionLabel: 'Detail',
-      onAction: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const MedicalRecordDetailPage()),
-      ),
+      onAction: () {
+        unawaited(_repository.saveRecord(_draftRecord));
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => MedicalRecordDetailPage(record: _draftRecord),
+          ),
+        );
+      },
       state: _state,
       onStateChanged: (value) => setState(() => _state = value),
       child: switch (_state) {
@@ -120,9 +205,9 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
             actionLabel: 'Retry upload',
             onAction: () {},
           ),
-        _ViewState.success => Column(
+        _ViewState.success => const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               _SummaryCard(
                 title: 'vaccination_certificate.pdf',
                 body: 'Uploaded successfully and ready for metadata review.',
@@ -147,7 +232,9 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
 }
 
 class MedicalRecordDetailPage extends StatefulWidget {
-  const MedicalRecordDetailPage({super.key});
+  const MedicalRecordDetailPage({super.key, this.record});
+
+  final MedicalRecordEntry? record;
 
   @override
   State<MedicalRecordDetailPage> createState() => _MedicalRecordDetailPageState();
@@ -184,25 +271,26 @@ class _MedicalRecordDetailPageState extends State<MedicalRecordDetailPage> {
             actionLabel: 'Reload',
             onAction: () {},
           ),
-        _ViewState.success => const Column(
+        _ViewState.success => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _SummaryCard(
-                title: 'vaccination_certificate.pdf',
-                body: 'Verified clinic document linked to the active pet profile.',
+                title: widget.record?.title ?? 'vaccination_certificate.pdf',
+                body: widget.record?.detailSource ??
+                    'Verified clinic document linked to the active pet profile.',
                 icon: Icons.verified_outlined,
               ),
-              SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.lg),
               _MetaGrid(
                 items: [
-                  _MetaItem('Clinic', 'Clinica Vet Roma'),
-                  _MetaItem('Created', '25 Mar 2026, 09:32'),
-                  _MetaItem('Pages', '2'),
-                  _MetaItem('Tags', 'Vaccines, yearly check'),
+                  _MetaItem('Clinic', widget.record?.detailSource ?? 'Clinica Vet Roma'),
+                  _MetaItem('Created', widget.record?.createdAt ?? '25 Mar 2026, 09:32'),
+                  const _MetaItem('Pages', '2'),
+                  const _MetaItem('Tags', 'Vaccines, yearly check'),
                 ],
               ),
-              SizedBox(height: AppSpacing.lg),
-              _TimelineCard(),
+              const SizedBox(height: AppSpacing.lg),
+              _TimelineCard(timeline: widget.record?.timeline),
             ],
           ),
       },
@@ -622,50 +710,59 @@ class _RecordTile extends StatelessWidget {
     required this.subtitle,
     required this.meta,
     required this.badge,
+    required this.onTap,
   });
 
   final String title;
   final String subtitle;
   final String meta;
   final String badge;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.accentSoft,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Icon(Icons.description_outlined, color: AppColors.primary),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTextStyles.title.copyWith(fontSize: 17)),
-                const SizedBox(height: AppSpacing.xs),
-                Text(subtitle, style: AppTextStyles.bodySmall),
-                const SizedBox(height: AppSpacing.sm),
-                Text(meta, style: AppTextStyles.caption),
-              ],
-            ),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(Icons.description_outlined, color: AppColors.primary),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.title.copyWith(fontSize: 17)),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(subtitle, style: AppTextStyles.bodySmall),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(meta, style: AppTextStyles.caption),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              _Badge(label: badge),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          _Badge(label: badge),
-        ],
+        ),
       ),
     );
   }
@@ -778,10 +875,19 @@ class _LineItem extends StatelessWidget {
 }
 
 class _TimelineCard extends StatelessWidget {
-  const _TimelineCard();
+  const _TimelineCard({this.timeline});
+
+  final List<MedicalRecordTimelineEntry>? timeline;
 
   @override
   Widget build(BuildContext context) {
+    final rows = timeline ??
+        const [
+          MedicalRecordTimelineEntry(label: 'Imported', value: '25 Mar 2026'),
+          MedicalRecordTimelineEntry(label: 'Reviewed', value: '25 Mar 2026, 09:45'),
+          MedicalRecordTimelineEntry(label: 'Ready for export', value: 'Available'),
+        ];
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.xl),
@@ -790,14 +896,14 @@ class _TimelineCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Document timeline', style: AppTextStyles.title),
-          SizedBox(height: AppSpacing.lg),
-          _TimelineRow(label: 'Imported', value: '25 Mar 2026'),
-          _TimelineRow(label: 'Reviewed', value: '25 Mar 2026, 09:45'),
-          _TimelineRow(label: 'Ready for export', value: 'Available'),
+          const Text('Document timeline', style: AppTextStyles.title),
+          const SizedBox(height: AppSpacing.lg),
+          ...rows.map(
+            (row) => _TimelineRow(label: row.label, value: row.value),
+          ),
         ],
       ),
     );

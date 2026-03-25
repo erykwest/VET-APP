@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
+import 'config/app_bootstrap_state.dart';
 
 class VetApp extends StatelessWidget {
-  const VetApp({super.key});
+  const VetApp({
+    super.key,
+    required this.bootstrapState,
+  });
+
+  final AppBootstrapState bootstrapState;
 
   @override
   Widget build(BuildContext context) {
@@ -14,6 +20,18 @@ class VetApp extends StatelessWidget {
       theme: AppTheme.light(),
       initialRoute: AppRouter.splash,
       onGenerateRoute: AppRouter.onGenerateRoute,
+      builder: (context, child) {
+        final body = child ?? const SizedBox.shrink();
+        if (bootstrapState.supabaseEnabled) {
+          return body;
+        }
+
+        return Banner(
+          message: 'DEMO',
+          location: BannerLocation.topEnd,
+          child: body,
+        );
+      },
     );
   }
 }

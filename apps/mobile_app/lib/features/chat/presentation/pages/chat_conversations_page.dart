@@ -68,22 +68,25 @@ class ChatConversationsPage extends StatelessWidget {
                             'Qui compariranno i thread con l assistente veterinario.',
                         actionLabel: 'Avvia la prima chat',
                         onAction: conversations.isEmpty
-                            ? null
-                            : () => _openConversation(context, conversations.first),
-                      ),
+                            ? () => Navigator.of(context).maybePop()
+                            : () =>
+                                _openConversation(context, conversations.first),
+                    ),
                     ChatScreenState.error => ChatErrorState(
                         key: const ValueKey('error'),
                         title: 'Non riusciamo a caricare le chat',
                         subtitle:
                             'Controlla la connessione e riprova tra un momento.',
-                        actionLabel: 'Riprova',
-                        onAction: onRetry,
+                        actionLabel: 'Back',
+                        onAction:
+                            onRetry ?? () => Navigator.of(context).maybePop(),
                       ),
                     ChatScreenState.success => _ConversationList(
                         key: const ValueKey('success'),
                         conversations: conversations,
                         onConversationTap: onConversationTap ??
-                            (conversation) => _openConversation(context, conversation),
+                            (conversation) =>
+                                _openConversation(context, conversation),
                       ),
                   },
                 ),
@@ -101,7 +104,9 @@ class ChatConversationsPage extends StatelessWidget {
   ) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => const ChatConversationDetailPage(),
+        builder: (_) => ChatConversationDetailPage(
+          conversation: ChatSeedData.detailForSummary(conversation),
+        ),
       ),
     );
   }
@@ -156,7 +161,7 @@ class _Header extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '$totalCount thread',
+                '$totalCount thread${totalCount == 1 ? '' : 's'}',
                 style: const TextStyle(
                   color: AppColors.mutedText,
                   fontSize: 12,

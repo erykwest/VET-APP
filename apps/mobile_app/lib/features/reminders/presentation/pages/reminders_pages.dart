@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../../design_system/tokens/app_colors.dart';
 import '../../../../../design_system/tokens/app_radii.dart';
 import '../../../../../design_system/tokens/app_spacing.dart';
 import '../../../../../design_system/tokens/app_text_styles.dart';
+import '../../data/reminders_repository.dart';
 
 enum _ViewState { empty, loading, error, success }
 
@@ -15,7 +18,43 @@ class RemindersListPage extends StatefulWidget {
 }
 
 class _RemindersListPageState extends State<RemindersListPage> {
+  final RemindersRepository _repository = RemindersRepository();
+
+  late Future<List<ReminderEntry>> _remindersFuture;
   _ViewState _state = _ViewState.success;
+
+  @override
+  void initState() {
+    super.initState();
+    _remindersFuture = _repository.loadReminders();
+  }
+
+  Future<void> _reload() async {
+    setState(() {
+      _remindersFuture = _repository.loadReminders();
+    });
+    await _remindersFuture;
+  }
+
+  void _openCreate() {
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const ReminderCreatePage()),
+      ).then((_) {
+        if (mounted) {
+          _reload();
+        }
+      }),
+    );
+  }
+
+  void _openDetail(ReminderEntry reminder) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ReminderDetailPage(reminder: reminder),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +62,7 @@ class _RemindersListPageState extends State<RemindersListPage> {
       title: 'Reminders',
       subtitle: 'Vaccini, trattamenti e visite da tenere sotto controllo.',
       actionLabel: 'Create',
-      onAction: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const ReminderCreatePage()),
-      ),
+      onAction: _openCreate,
       state: _state,
       onStateChanged: (value) => setState(() => _state = value),
       child: switch (_state) {
@@ -35,9 +72,7 @@ class _RemindersListPageState extends State<RemindersListPage> {
             body: 'Create the first vaccine or treatment reminder to stay on schedule.',
             icon: Icons.event_note_outlined,
             actionLabel: 'Create reminder',
-            onAction: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const ReminderCreatePage()),
-            ),
+            onAction: _openCreate,
           ),
         _ViewState.loading => const _LoadingPanel(
             title: 'Loading reminders',
@@ -51,36 +86,68 @@ class _RemindersListPageState extends State<RemindersListPage> {
             actionLabel: 'Retry',
             onAction: () {},
           ),
-        _ViewState.success => const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SummaryCard(
-                title: '5 active reminders',
-                body: 'Next due in 3 days, 2 recurring tasks and 1 manual note.',
-                icon: Icons.schedule_outlined,
-              ),
-              SizedBox(height: AppSpacing.lg),
-              _ReminderTile(
-                title: 'Antiparasitic treatment',
-                subtitle: 'Every 30 days',
-                due: 'Due in 3 days',
-                badge: 'Priority',
-              ),
-              SizedBox(height: AppSpacing.sm),
-              _ReminderTile(
-                title: 'Annual vaccine',
-                subtitle: 'Yearly recurrence',
-                due: 'Due in 27 days',
-                badge: 'Planned',
-              ),
-              SizedBox(height: AppSpacing.sm),
-              _ReminderTile(
-                title: 'Follow-up visit',
-                subtitle: 'Manual reminder',
-                due: 'Tomorrow 11:30',
-                badge: 'Soon',
-              ),
-            ],
+        _ViewState.success => FutureBuilder<List<ReminderEntry>>(
+            future: _remindersFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const _LoadingPanel(
+                  title: 'Loading reminders',
+                  body: 'Reading due dates, repeat rules and owner notes.',
+                );
+              }
+
+              if (snapshot.hasError) {
+                return _StatePanel(
+                  label: 'Sync error',
+                  title: 'Reminder sync failed.',
+                  body: 'The local preview is still available. Retry once the network is back.',
+                  icon: Icons.wifi_off_outlined,
+                  actionLabel: 'Retry',
+                  onAction: () => unawaited(_reload()),
+                );
+              }
+
+              final reminders = snapshot.data ?? const <ReminderEntry>[];
+              if (reminders.isEmpty) {
+                return _StatePanel(
+                  label: 'No reminders',
+                  title: 'Your reminder list is empty.',
+                  body: 'Create the first vaccine or treatment reminder to stay on schedule.',
+                  icon: Icons.event_note_outlined,
+                  actionLabel: 'Create reminder',
+                  onAction: _openCreate,
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SummaryCard(
+                    title: '5 active reminders',
+                    body: 'Next due in 3 days, 2 recurring tasks and 1 manual note.',
+                    icon: Icons.schedule_outlined,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  ...reminders.asMap().entries.expand(
+                    (entry) {
+                      final index = entry.key;
+                      final reminder = entry.value;
+                      return <Widget>[
+                        _ReminderTile(
+                          title: reminder.title,
+                          subtitle: reminder.subtitle,
+                          due: reminder.due,
+                          badge: reminder.badge,
+                          onTap: () => _openDetail(reminder),
+                        ),
+                        if (index != reminders.length - 1)
+                          const SizedBox(height: AppSpacing.sm),
+                      ];
+                    },
+                  ),
+                ],
+              );
+            },
           ),
       },
     );
@@ -96,15 +163,28 @@ class ReminderCreatePage extends StatefulWidget {
 
 class _ReminderCreatePageState extends State<ReminderCreatePage> {
   _ViewState _state = _ViewState.success;
+  final RemindersRepository _repository = RemindersRepository();
 
   @override
   Widget build(BuildContext context) {
     return _Shell(
       title: 'Create reminder',
       subtitle: 'Add a new due date, recurrence and note.',
-      actionLabel: 'Edit',
+      actionLabel: 'Review',
       onAction: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const ReminderEditPage()),
+        MaterialPageRoute<void>(
+          builder: (_) => const ReminderDetailPage(
+            reminder: ReminderEntry(
+              id: 'draft-reminder',
+              title: 'Vaccination reminder',
+              subtitle: 'Every 12 months',
+              due: '25 Apr 2026',
+              badge: 'Draft',
+              note: 'Bring the health booklet',
+              schedule: 'Recurring every 12 months',
+            ),
+          ),
+        ),
       ),
       state: _state,
       onStateChanged: (value) => setState(() => _state = value),
@@ -129,15 +209,31 @@ class _ReminderCreatePageState extends State<ReminderCreatePage> {
             actionLabel: 'Fix fields',
             onAction: () {},
           ),
-        _ViewState.success => const _FormPanel(
+        _ViewState.success => _FormPanel(
             title: 'New reminder',
             body: 'Title, date and recurrence are ready for saving.',
-            items: [
+            items: const [
               _FormItem(label: 'Title', value: 'Vaccination reminder'),
               _FormItem(label: 'Due date', value: '25 Apr 2026'),
               _FormItem(label: 'Recurrence', value: 'Every 12 months'),
               _FormItem(label: 'Note', value: 'Bring the health booklet'),
             ],
+            onSave: () {
+              unawaited(
+                _repository.saveReminder(
+                  const ReminderEntry(
+                    id: 'draft-reminder',
+                    title: 'Vaccination reminder',
+                    subtitle: 'Every 12 months',
+                    due: '25 Apr 2026',
+                    badge: 'Draft',
+                    note: 'Bring the health booklet',
+                    schedule: 'Recurring every 12 months',
+                  ),
+                ),
+              );
+            },
+            onCancel: () => Navigator.of(context).pop(),
           ),
       },
     );
@@ -153,6 +249,7 @@ class ReminderEditPage extends StatefulWidget {
 
 class _ReminderEditPageState extends State<ReminderEditPage> {
   _ViewState _state = _ViewState.success;
+  final RemindersRepository _repository = RemindersRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -184,14 +281,106 @@ class _ReminderEditPageState extends State<ReminderEditPage> {
             actionLabel: 'Retry save',
             onAction: () {},
           ),
-        _ViewState.success => const _FormPanel(
+        _ViewState.success => _FormPanel(
             title: 'Edit reminder',
             body: 'All fields are prefilled and ready to save.',
-            items: [
+            items: const [
               _FormItem(label: 'Title', value: 'Antiparasitic treatment'),
               _FormItem(label: 'Due date', value: '28 Mar 2026'),
               _FormItem(label: 'Recurrence', value: 'Every 30 days'),
               _FormItem(label: 'Alert', value: 'Push notification'),
+            ],
+            onSave: () {
+              unawaited(
+                _repository.saveReminder(
+                  const ReminderEntry(
+                    id: 'antiparasitic-treatment',
+                    title: 'Antiparasitic treatment',
+                    subtitle: 'Every 30 days',
+                    due: '28 Mar 2026',
+                    badge: 'Priority',
+                    note: 'Push notification enabled',
+                    schedule: 'Recurring every 30 days',
+                  ),
+                ),
+              );
+            },
+            onCancel: () => Navigator.of(context).pop(),
+          ),
+      },
+    );
+  }
+}
+
+class ReminderDetailPage extends StatefulWidget {
+  const ReminderDetailPage({super.key, this.reminder});
+
+  final ReminderEntry? reminder;
+
+  @override
+  State<ReminderDetailPage> createState() => _ReminderDetailPageState();
+}
+
+class _ReminderDetailPageState extends State<ReminderDetailPage> {
+  _ViewState _state = _ViewState.success;
+
+  @override
+  Widget build(BuildContext context) {
+    final reminder = widget.reminder;
+
+    return _Shell(
+      title: 'Reminder detail',
+      subtitle: 'Date, recurrence and note.',
+      actionLabel: 'Edit',
+      onAction: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const ReminderEditPage()),
+      ),
+      state: _state,
+      onStateChanged: (value) => setState(() => _state = value),
+      child: switch (_state) {
+        _ViewState.empty => _StatePanel(
+            label: 'No reminder',
+            title: 'Nothing selected to inspect.',
+            body: 'Open a reminder from the list or create a new draft.',
+            icon: Icons.event_available_outlined,
+            actionLabel: 'Back to list',
+            onAction: () => Navigator.of(context).pop(),
+          ),
+        _ViewState.loading => const _LoadingPanel(
+            title: 'Loading reminder',
+            body: 'Reading recurrence, due date and notes.',
+          ),
+        _ViewState.error => _StatePanel(
+            label: 'Preview error',
+            title: 'Reminder preview unavailable.',
+            body: 'Retry or go back to the list to inspect another item.',
+            icon: Icons.broken_image_outlined,
+            actionLabel: 'Retry',
+            onAction: () {},
+          ),
+        _ViewState.success => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SummaryCard(
+                title: reminder?.title ?? 'Antiparasitic treatment',
+                body: reminder?.note ?? 'Recurring reminder tied to the active pet profile.',
+                icon: Icons.verified_outlined,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _FormPanel(
+                title: 'Reminder overview',
+                body: 'The detail view keeps all the key values in one place.',
+                items: [
+                  _FormItem(label: 'Title', value: reminder?.title ?? 'Antiparasitic treatment'),
+                  _FormItem(label: 'Due date', value: reminder?.due ?? '28 Mar 2026'),
+                  _FormItem(label: 'Recurrence', value: reminder?.schedule ?? 'Recurring every 30 days'),
+                  _FormItem(label: 'Status', value: reminder?.badge ?? 'Priority'),
+                ],
+                onSave: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const ReminderEditPage()),
+                ),
+                onCancel: () => Navigator.of(context).pop(),
+              ),
             ],
           ),
       },
@@ -590,50 +779,59 @@ class _ReminderTile extends StatelessWidget {
     required this.subtitle,
     required this.due,
     required this.badge,
+    required this.onTap,
   });
 
   final String title;
   final String subtitle;
   final String due;
   final String badge;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.accentSoft,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Icon(Icons.notifications_active_outlined, color: AppColors.primary),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTextStyles.title.copyWith(fontSize: 17)),
-                const SizedBox(height: AppSpacing.xs),
-                Text(subtitle, style: AppTextStyles.bodySmall),
-                const SizedBox(height: AppSpacing.sm),
-                Text(due, style: AppTextStyles.caption),
-              ],
-            ),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(Icons.notifications_active_outlined, color: AppColors.primary),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.title.copyWith(fontSize: 17)),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(subtitle, style: AppTextStyles.bodySmall),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(due, style: AppTextStyles.caption),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              _Badge(label: badge),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          _Badge(label: badge),
-        ],
+        ),
       ),
     );
   }
@@ -669,11 +867,15 @@ class _FormPanel extends StatelessWidget {
     required this.title,
     required this.body,
     required this.items,
+    required this.onSave,
+    required this.onCancel,
   });
 
   final String title;
   final String body;
   final List<_FormItem> items;
+  final VoidCallback onSave;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -702,12 +904,10 @@ class _FormPanel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: FilledButton(onPressed: () {}, child: const Text('Save')),
+                child: FilledButton(onPressed: onSave, child: const Text('Save')),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: OutlinedButton(onPressed: () {}, child: const Text('Cancel')),
-              ),
+              Expanded(child: OutlinedButton(onPressed: onCancel, child: const Text('Cancel'))),
             ],
           ),
         ],

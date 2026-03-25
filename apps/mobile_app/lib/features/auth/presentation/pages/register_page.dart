@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../shared/auth/auth.dart';
+import '../../data/auth_repository_factory.dart';
 import '../widgets/auth_widgets.dart';
 import 'login_page.dart';
 import 'reset_password_page.dart';
@@ -15,6 +17,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _authRepository = const AuthRepositoryFactory().create();
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -51,27 +54,40 @@ class _RegisterPageState extends State<RegisterPage> {
       _isLoading = true;
       _status = AuthBannerStatus.loading;
       _title = 'Creazione account';
-      _message = 'Simuliamo la richiesta di registrazione per verificare il flusso.';
+      _message = 'Sto creando l account e preparando la sessione iniziale.';
     });
 
-    await Future<void>.delayed(const Duration(milliseconds: 900));
+    final result = await _authRepository.signUpWithPassword(
+      AuthSignUpRequest(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        displayName: _nameController.text.trim(),
+      ),
+    );
 
     if (!mounted) return;
-    final shouldFail = _emailController.text.contains('fail');
-    setState(() {
-      _isLoading = false;
-      if (shouldFail) {
-        _status = AuthBannerStatus.error;
-        _title = 'Account non creato';
-        _message = 'Errore simulato. Usa dati diversi per vedere lo stato successivo.';
-      } else {
-        _status = AuthBannerStatus.success;
-        _title = 'Account pronto';
-        _message = 'Registrazione simulata completata. Ti porto nella home shell.';
-      }
-    });
+    final success = result.fold(
+      onSuccess: (_) {
+        setState(() {
+          _isLoading = false;
+          _status = AuthBannerStatus.success;
+          _title = 'Account pronto';
+          _message = 'Registrazione completata. Ti porto nella home shell.';
+        });
+        return true;
+      },
+      onFailure: (error) {
+        setState(() {
+          _isLoading = false;
+          _status = AuthBannerStatus.error;
+          _title = 'Account non creato';
+          _message = error.message;
+        });
+        return false;
+      },
+    );
 
-    if (!shouldFail) {
+    if (success) {
       await Future<void>.delayed(const Duration(milliseconds: 350));
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
@@ -187,7 +203,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   AuthFooterLink(
                     label: 'Hai gia un account?',
                     onTap: () {
-                      Navigator.of(context).push(
+                      Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
                           builder: (_) => const LoginPage(),
                         ),
@@ -197,7 +213,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   AuthFooterLink(
                     label: 'Hai perso l accesso?',
                     onTap: () {
-                      Navigator.of(context).push(
+                      Navigator.of(context).pushReplacement(
                         MaterialPageRoute<void>(
                           builder: (_) => const ResetPasswordPage(),
                         ),

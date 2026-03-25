@@ -83,6 +83,5 @@ class _ChatComposerState extends State<ChatComposer> {
     if (message.isEmpty) return;
     widget.onSend?.call(message);
     _controller.clear();
-    setState(() {});
   }
 }

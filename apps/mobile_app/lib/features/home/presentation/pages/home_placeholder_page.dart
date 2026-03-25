@@ -4,6 +4,8 @@ import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_radii.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
 import '../../../../design_system/tokens/app_text_styles.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../settings/presentation/pages/settings_page.dart';
 
 enum _HomeScenario { loading, empty, error, success }
 
@@ -16,6 +18,24 @@ class HomePlaceholderPage extends StatefulWidget {
 
 class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
   _HomeScenario _scenario = _HomeScenario.success;
+
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const ProfilePage()),
+    );
+  }
+
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+    );
+  }
+
+  void _showComingSoon(String title) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$title in arrivo nella prossima iterazione.')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +68,8 @@ class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
                   children: [
                     _TopBar(
                       scenario: _scenario,
+                      onOpenProfile: _openProfile,
+                      onOpenSettings: _openSettings,
                       onScenarioChanged: (value) {
                         setState(() {
                           _scenario = value;
@@ -64,7 +86,11 @@ class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const _ShortcutGrid(),
+                    _ShortcutGrid(
+                      onOpenProfile: _openProfile,
+                      onOpenSettings: _openSettings,
+                      onShowComingSoon: _showComingSoon,
+                    ),
                     const SizedBox(height: AppSpacing.xl),
                     Text(
                       'Stato generale',
@@ -105,7 +131,7 @@ class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
           },
         );
       case _HomeScenario.success:
-        return const _SuccessState();
+        return _SuccessState(onOpenProfile: _openProfile);
     }
   }
 
@@ -146,10 +172,14 @@ class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.scenario,
+    required this.onOpenProfile,
+    required this.onOpenSettings,
     required this.onScenarioChanged,
   });
 
   final _HomeScenario scenario;
+  final VoidCallback onOpenProfile;
+  final VoidCallback onOpenSettings;
   final ValueChanged<_HomeScenario> onScenarioChanged;
 
   @override
@@ -192,29 +222,46 @@ class _TopBar extends StatelessWidget {
           ],
         ),
         const Spacer(),
-        PopupMenuButton<_HomeScenario>(
-          initialValue: scenario,
-          onSelected: onScenarioChanged,
-          icon: const Icon(
-            Icons.tune_rounded,
-            color: AppColors.primary,
-          ),
-          itemBuilder: (context) => const [
-            PopupMenuItem(
-              value: _HomeScenario.loading,
-              child: Text('Loading'),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          alignment: WrapAlignment.end,
+          children: [
+            TextButton.icon(
+              onPressed: onOpenProfile,
+              icon: const Icon(Icons.person_outline_rounded, size: 18),
+              label: const Text('Profilo'),
             ),
-            PopupMenuItem(
-              value: _HomeScenario.empty,
-              child: Text('Empty'),
+            TextButton.icon(
+              onPressed: onOpenSettings,
+              icon: const Icon(Icons.settings_outlined, size: 18),
+              label: const Text('Impostazioni'),
             ),
-            PopupMenuItem(
-              value: _HomeScenario.error,
-              child: Text('Error'),
-            ),
-            PopupMenuItem(
-              value: _HomeScenario.success,
-              child: Text('Success'),
+            PopupMenuButton<_HomeScenario>(
+              initialValue: scenario,
+              onSelected: onScenarioChanged,
+              icon: const Icon(
+                Icons.tune_rounded,
+                color: AppColors.primary,
+              ),
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: _HomeScenario.loading,
+                  child: Text('Loading'),
+                ),
+                PopupMenuItem(
+                  value: _HomeScenario.empty,
+                  child: Text('Empty'),
+                ),
+                PopupMenuItem(
+                  value: _HomeScenario.error,
+                  child: Text('Error'),
+                ),
+                PopupMenuItem(
+                  value: _HomeScenario.success,
+                  child: Text('Success'),
+                ),
+              ],
             ),
           ],
         ),
@@ -224,7 +271,11 @@ class _TopBar extends StatelessWidget {
 }
 
 class _SuccessState extends StatelessWidget {
-  const _SuccessState();
+  const _SuccessState({
+    required this.onOpenProfile,
+  });
+
+  final VoidCallback onOpenProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -240,14 +291,15 @@ class _SuccessState extends StatelessWidget {
               style: AppTextStyles.title.copyWith(fontSize: 18),
             ),
             const Spacer(),
-            TextButton(
-              onPressed: () {},
-              child: const Text('Cambia'),
+            TextButton.icon(
+              onPressed: onOpenProfile,
+              icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+              label: const Text('Cambia'),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        const _ActivePetCard(),
+        _ActivePetCard(onTap: onOpenProfile),
       ],
     );
   }
@@ -272,37 +324,37 @@ class _HeroCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
-              const _PillChip(
+              _PillChip(
                 label: 'Chat pronta',
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.onPrimary,
               ),
-              const _PillChip(
+              _PillChip(
                 label: '2 documenti nuovi',
                 backgroundColor: AppColors.warmSurface,
                 foregroundColor: Color(0xFF7B4A2E),
               ),
-              const _PillChip(
+              _PillChip(
                 label: '1 reminder oggi',
                 backgroundColor: AppColors.accentSoft,
                 foregroundColor: Color(0xFF315E55),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xl),
-          const Text(
+          SizedBox(height: AppSpacing.xl),
+          Text(
             'Oggi il tuo pet ha 3 azioni importanti.',
             style: AppTextStyles.heading,
           ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
+          SizedBox(height: AppSpacing.sm),
+          Text(
             'Controlla i reminder, aggiorna i documenti recenti e apri la chat se hai un dubbio.',
             style: AppTextStyles.body,
           ),
@@ -313,7 +365,11 @@ class _HeroCard extends StatelessWidget {
 }
 
 class _ActivePetCard extends StatelessWidget {
-  const _ActivePetCard();
+  const _ActivePetCard({
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -368,7 +424,7 @@ class _ActivePetCard extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: onTap,
             icon: const Icon(Icons.chevron_right_rounded),
           ),
         ],
@@ -378,7 +434,15 @@ class _ActivePetCard extends StatelessWidget {
 }
 
 class _ShortcutGrid extends StatelessWidget {
-  const _ShortcutGrid();
+  const _ShortcutGrid({
+    required this.onOpenProfile,
+    required this.onOpenSettings,
+    required this.onShowComingSoon,
+  });
+
+  final VoidCallback onOpenProfile;
+  final VoidCallback onOpenSettings;
+  final ValueChanged<String> onShowComingSoon;
 
   @override
   Widget build(BuildContext context) {
@@ -391,21 +455,24 @@ class _ShortcutGrid extends StatelessWidget {
         mainAxisSpacing: AppSpacing.sm,
         childAspectRatio: 0.95,
       ),
-      children: const [
+      children: [
         _ShortcutTile(
-          icon: Icons.chat_bubble_rounded,
-          label: 'Chat',
+          icon: Icons.person_outline_rounded,
+          label: 'Profilo',
           caption: 'Apri',
+          onTap: onOpenProfile,
         ),
         _ShortcutTile(
-          icon: Icons.description_rounded,
-          label: 'Documenti',
-          caption: 'Archivi',
+          icon: Icons.settings_outlined,
+          label: 'Impostazioni',
+          caption: 'Preferenze',
+          onTap: onOpenSettings,
         ),
         _ShortcutTile(
           icon: Icons.notifications_active_rounded,
           label: 'Reminder',
-          caption: 'Scadenze',
+          caption: 'In arrivo',
+          onTap: () => onShowComingSoon('Reminder'),
         ),
       ],
     );
@@ -417,54 +484,63 @@ class _ShortcutTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.caption,
+    required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final String caption;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.9),
+    return Material(
+      color: AppColors.surface.withValues(alpha: 0.9),
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.accentSoft,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(
-              icon,
-              color: AppColors.primary,
-              size: 26,
-            ),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.text,
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(
+                  icon,
+                  color: AppColors.primary,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                caption,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.caption,
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            caption,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.caption,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -636,8 +712,8 @@ class _SkeletonBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: const [
+    return const Column(
+      children: [
         _SkeletonLine(widthFactor: 1),
         SizedBox(height: AppSpacing.sm),
         _SkeletonLine(widthFactor: 0.88),

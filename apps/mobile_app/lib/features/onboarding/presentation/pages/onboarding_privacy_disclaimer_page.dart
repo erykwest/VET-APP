@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../../../../design_system/tokens/app_colors.dart';
 import '../../../../../design_system/tokens/app_radii.dart';
 import '../../../../../design_system/tokens/app_spacing.dart';
@@ -18,7 +19,7 @@ class OnboardingPrivacyDisclaimerPage extends StatelessWidget {
           'Prima di entrare, chiarimo come usiamo i dati e cosa non puo sostituire l app.',
       primaryActionLabel: 'Accetto e continua',
       onPrimaryAction: () {
-        Navigator.of(context).pushReplacementNamed('/auth');
+        Navigator.of(context).pushReplacementNamed(AppRouter.auth);
       },
       secondaryActionLabel: 'Torna al valore',
       onSecondaryAction: () {
@@ -86,10 +87,10 @@ class _DisclaimerStateRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
+    return const Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
-      children: const [
+      children: [
         _StatusPill(label: 'Empty', color: Color(0xFFDDEDE8)),
         _StatusPill(label: 'Loading', color: Color(0xFFFFF5EC)),
         _StatusPill(label: 'Error', color: Color(0xFFF5D9D0)),

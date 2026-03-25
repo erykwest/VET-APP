@@ -20,7 +20,8 @@ class PetCreatePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return PetsScaffold(
       title: 'Create a pet profile.',
-      subtitle: 'Keep the first version light: name, species, breed, and the clinical basics.',
+      subtitle:
+          'Keep the first version light: name, species, breed, and the clinical basics.',
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).maybePop(),
@@ -29,15 +30,18 @@ class PetCreatePage extends StatelessWidget {
         ),
       ],
       body: switch (state) {
-        PetsScreenStatus.loading => const PetsLoadingView(label: 'Preparing creation form...'),
+        PetsScreenStatus.loading =>
+          const PetsLoadingView(label: 'Preparing creation form...'),
         PetsScreenStatus.error => PetsErrorView(
             title: 'Creation form failed',
             subtitle: errorMessage,
-            onRetry: () {},
+            actionLabel: 'Close',
+            onRetry: () => Navigator.of(context).maybePop(),
           ),
         PetsScreenStatus.empty => const _PetCreateForm(
             modeLabel: 'Empty draft',
-            helperText: 'Start from scratch and save when the profile is ready.',
+            helperText:
+                'Start from scratch and save when the profile is ready.',
           ),
         PetsScreenStatus.success => const _PetCreateForm(),
       },
@@ -78,7 +82,8 @@ class _PetCreateForm extends StatelessWidget {
               SizedBox(height: 16),
               PetFormField(
                 label: 'Medical notes',
-                hintText: 'Add short notes about diet, medications, or behavior.',
+                hintText:
+                    'Add short notes about diet, medications, or behavior.',
                 maxLines: 4,
               ),
             ],
@@ -94,7 +99,8 @@ class _PetCreateForm extends StatelessWidget {
                 primary: true,
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Pet profile saved locally for now.')),
+                    const SnackBar(
+                        content: Text('Pet profile saved locally for now.')),
                   );
                 },
               ),

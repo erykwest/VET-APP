@@ -24,7 +24,8 @@ class PetsListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return PetsScaffold(
       title: 'Your pets, at a glance.',
-      subtitle: 'Keep every pet profile, note, and health milestone in one place.',
+      subtitle:
+          'Keep every pet profile, note, and health milestone in one place.',
       actions: [
         IconButton(
           onPressed: () => _openCreate(context),
@@ -34,15 +35,18 @@ class PetsListPage extends StatelessWidget {
         ),
       ],
       body: switch (state) {
-        PetsScreenStatus.loading => const PetsLoadingView(label: 'Loading pet list...'),
+        PetsScreenStatus.loading =>
+          const PetsLoadingView(label: 'Loading pet list...'),
         PetsScreenStatus.error => PetsErrorView(
             title: 'Pets not available',
             subtitle: errorMessage,
-            onRetry: () {},
+            actionLabel: 'Go back',
+            onRetry: () => Navigator.of(context).maybePop(),
           ),
         PetsScreenStatus.empty => PetsEmptyView(
             title: 'No pets yet',
-            subtitle: 'Create your first profile to track health, notes, and reminders.',
+            subtitle:
+                'Create your first profile to track health, notes, and reminders.',
             actionLabel: 'Create pet',
             onAction: () => _openCreate(context),
           ),
@@ -87,7 +91,8 @@ class _PetsListContent extends StatelessWidget {
         children: [
           const PetSection(
             title: 'Quick overview',
-            subtitle: 'The MVP keeps the most important pet data visible first.',
+            subtitle:
+                'The MVP keeps the most important pet data visible first.',
             children: [
               Wrap(
                 spacing: 12,
@@ -115,7 +120,8 @@ class _PetsListContent extends StatelessWidget {
           const SizedBox(height: 16),
           PetSection(
             title: 'Pet list',
-            subtitle: 'Tap a profile to open the detail screen or edit it later.',
+            subtitle:
+                'Tap a profile to open the detail screen or edit it later.',
             children: [
               ...pets.map(
                 (pet) => Padding(

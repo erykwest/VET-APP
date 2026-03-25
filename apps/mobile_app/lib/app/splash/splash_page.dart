@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../design_system/tokens/app_colors.dart';
 import '../../design_system/tokens/app_spacing.dart';
 import '../../design_system/tokens/app_text_styles.dart';
+import '../../features/auth/data/auth_repository_factory.dart';
 import '../router/app_router.dart';
 
 class SplashPage extends StatefulWidget {
@@ -15,21 +14,28 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
-  Timer? _timer;
+  final _authRepository = const AuthRepositoryFactory().create();
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(AppRouter.onboardingWelcome);
-    });
+    _restoreSessionAndRoute();
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  Future<void> _restoreSessionAndRoute() async {
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    if (!mounted) return;
+
+    final result = await _authRepository.restoreSession();
+    if (!mounted) return;
+
+    final destination = result.fold(
+      onSuccess: (context) =>
+          context.isSignedIn ? AppRouter.homeShell : AppRouter.onboardingWelcome,
+      onFailure: (_) => AppRouter.onboardingWelcome,
+    );
+
+    Navigator.of(context).pushReplacementNamed(destination);
   }
 
   @override

@@ -41,11 +41,13 @@ class PetsErrorView extends StatelessWidget {
     required this.subtitle,
     super.key,
     this.onRetry,
+    this.actionLabel = 'Try again',
   });
 
   final String title;
   final String subtitle;
   final VoidCallback? onRetry;
+  final String actionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +60,7 @@ class PetsErrorView extends StatelessWidget {
         width: double.infinity,
         child: OutlinedButton(
           onPressed: onRetry,
-          child: const Text('Try again'),
+          child: Text(actionLabel),
         ),
       ),
     );

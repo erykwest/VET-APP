@@ -6,7 +6,6 @@ import '../widgets/pet_sections.dart';
 import '../widgets/pets_scaffold.dart';
 import '../widgets/pets_state_views.dart';
 import 'pet_edit_page.dart';
-import 'pets_list_page.dart';
 
 class PetDetailPage extends StatelessWidget {
   const PetDetailPage({
@@ -36,15 +35,18 @@ class PetDetailPage extends StatelessWidget {
         ),
       ],
       body: switch (state) {
-        PetsScreenStatus.loading => const PetsLoadingView(label: 'Loading pet detail...'),
+        PetsScreenStatus.loading =>
+          const PetsLoadingView(label: 'Loading pet detail...'),
         PetsScreenStatus.error => PetsErrorView(
             title: 'Pet detail unavailable',
             subtitle: errorMessage,
-            onRetry: () {},
+            actionLabel: 'Back to list',
+            onRetry: () => _backToList(context),
           ),
         PetsScreenStatus.empty => PetsEmptyView(
             title: 'No pet selected',
-            subtitle: 'Choose a profile from the list to inspect details, notes, and next steps.',
+            subtitle:
+                'Choose a profile from the list to inspect details, notes, and next steps.',
             actionLabel: 'Back to list',
             onAction: () => _backToList(context),
           ),
@@ -58,15 +60,14 @@ class PetDetailPage extends StatelessWidget {
   }
 
   void _openEdit(BuildContext context) {
+    final profile = pet ?? samplePets.first;
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => PetEditPage(pet: pet ?? samplePets.first)),
+      MaterialPageRoute<void>(builder: (_) => PetEditPage(pet: profile)),
     );
   }
 
   void _backToList(BuildContext context) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const PetsListPage()),
-    );
+    Navigator.of(context).maybePop();
   }
 }
 
@@ -156,7 +157,8 @@ class _PetDetailContent extends StatelessWidget {
           const SizedBox(height: 16),
           PetSection(
             title: 'Medical note',
-            subtitle: 'Short context that helps the vet and the owner keep continuity.',
+            subtitle:
+                'Short context that helps the vet and the owner keep continuity.',
             children: [
               Text(
                 pet.medicalNote,

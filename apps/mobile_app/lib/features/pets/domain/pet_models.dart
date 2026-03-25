@@ -36,7 +36,7 @@ class PetProfile {
   final String avatarEmoji;
   final Color accentColor;
 
-  String get title => '$name • $species';
+  String get title => '$name - $species';
 
   PetProfile copyWith({
     String? id,

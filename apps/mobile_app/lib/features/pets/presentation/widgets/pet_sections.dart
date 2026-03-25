@@ -107,7 +107,8 @@ class PetMetricChip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.primary)),
+          Text(label,
+              style: AppTextStyles.caption.copyWith(color: AppColors.primary)),
           const SizedBox(height: AppSpacing.xs),
           Text(
             value,
@@ -138,8 +139,10 @@ class PetActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = primary ? AppColors.primary : const Color(0xFFF2E9DE);
-    final foregroundColor = primary ? AppColors.onPrimary : const Color(0xFF6C4A36);
+    final backgroundColor =
+        primary ? AppColors.primary : const Color(0xFFF2E9DE);
+    final foregroundColor =
+        primary ? AppColors.onPrimary : const Color(0xFF6C4A36);
 
     return SizedBox(
       width: double.infinity,
