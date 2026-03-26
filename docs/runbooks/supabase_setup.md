@@ -69,6 +69,18 @@ Policy model:
 ## Next step after schema
 When the tables exist, start the app normally. The bootstrap container will use Supabase repositories and Supabase auth automatically from `.env`.
 
+To seed stable demo data directly into Supabase and immediately verify readback on the same tables, run:
+- `python scripts/setup/seed_demo_supabase.py --reset`
+
+What this script does:
+- uses `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from local `.env`
+- seeds `pet_profiles`, `conversations`, and `reminders` for `BOOTSTRAP_USER_ID` by default
+- re-reads the same rows from Supabase and prints a JSON summary with counts and pet names
+
+Current scope:
+- this validates the core Python persistence path against real Supabase tables
+- Flutter preview sections that still rely on local seed stores, such as some dashboard/chat/medical-record widgets, remain outside this seed flow until their repositories are aligned to the same schema
+
 For the LLM path, the recommended flow is:
 - import journal rankings into registry tables and normalize them to percentiles
 - curate allowed hosts in `ai.trusted_source_domains`
