@@ -46,52 +46,54 @@ class HomeDashboardPage extends StatelessWidget {
       ),
     ];
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF9F6F1),
-            Color(0xFFF4EFE7),
-            Color(0xFFEDE6DC),
-          ],
+    return SizedBox.expand(
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFF9F6F1),
+              Color(0xFFF4EFE7),
+              Color(0xFFEDE6DC),
+            ],
+          ),
         ),
-      ),
-      child: Stack(
-        children: [
-          const Positioned(
-            top: -120,
-            right: -40,
-            child: _SoftGlow(
-              size: 320,
-              color: Color(0x33A9C4BB),
+        child: Stack(
+          children: [
+            const Positioned(
+              top: -120,
+              right: -40,
+              child: _SoftGlow(
+                size: 320,
+                color: Color(0x33A9C4BB),
+              ),
             ),
-          ),
-          const Positioned(
-            left: -60,
-            top: 220,
-            child: _SoftGlow(
-              size: 240,
-              color: Color(0x26E6B9A8),
+            const Positioned(
+              left: -60,
+              top: 220,
+              child: _SoftGlow(
+                size: 240,
+                color: Color(0x26E6B9A8),
+              ),
             ),
-          ),
-          SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xl,
-              AppSpacing.xl,
-              AppSpacing.xl,
-              AppSpacing.xxxl,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1320),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _DashboardTopBar(
-                      pet: activePet,
-                      alertCount: seed.alertCount,
+            Positioned.fill(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xl,
+                  AppSpacing.xl,
+                  AppSpacing.xl,
+                  AppSpacing.xxxl,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1320),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _DashboardTopBar(
+                          pet: activePet,
+                          alertCount: seed.alertCount,
                       onOpenProfile: () => _openProfile(context),
                       onOpenSettings: () => _openSettings(context),
                     ),
@@ -209,12 +211,14 @@ class HomeDashboardPage extends StatelessWidget {
                         );
                       },
                     ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

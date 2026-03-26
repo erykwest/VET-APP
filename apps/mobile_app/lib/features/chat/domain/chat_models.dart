@@ -62,4 +62,20 @@ class ChatConversationDetail {
   final String petName;
   final String statusLabel;
   final List<ChatMessage> messages;
+
+  ChatConversationDetail copyWith({
+    String? id,
+    String? title,
+    String? petName,
+    String? statusLabel,
+    List<ChatMessage>? messages,
+  }) {
+    return ChatConversationDetail(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      petName: petName ?? this.petName,
+      statusLabel: statusLabel ?? this.statusLabel,
+      messages: messages ?? this.messages,
+    );
+  }
 }

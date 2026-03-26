@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../data/pet_demo_store.dart';
 import '../../domain/pet_models.dart';
 import '../widgets/pet_avatar.dart';
 import '../widgets/pet_sections.dart';
@@ -7,12 +8,12 @@ import '../widgets/pets_scaffold.dart';
 import '../widgets/pets_state_views.dart';
 import 'pet_edit_page.dart';
 
-class PetDetailPage extends StatelessWidget {
+class PetDetailPage extends StatefulWidget {
   const PetDetailPage({
     super.key,
     this.pet,
     this.state = PetsScreenStatus.success,
-    this.errorMessage = 'Questo profilo pet non è disponibile al momento.',
+    this.errorMessage = 'Questo profilo pet non e disponibile al momento.',
   });
 
   final PetProfile? pet;
@@ -20,26 +21,42 @@ class PetDetailPage extends StatelessWidget {
   final String errorMessage;
 
   @override
+  State<PetDetailPage> createState() => _PetDetailPageState();
+}
+
+class _PetDetailPageState extends State<PetDetailPage> {
+  PetProfile? _pet;
+
+  @override
+  void initState() {
+    super.initState();
+    _pet = widget.pet ?? PetDemoStore.instance.list().firstOrNull;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final pet = _pet ?? widget.pet ?? PetDemoStore.instance.list().firstOrNull;
+
     return PetsScaffold(
       title: pet?.name ?? 'Dettaglio pet',
       subtitle: pet == null
           ? 'Apri un profilo per vedere tutta la cronologia.'
           : 'Tutte le informazioni chiave di questo profilo.',
+      onBack: () => Navigator.of(context).maybePop(),
       actions: [
         IconButton(
-          onPressed: pet == null ? null : () => _openEdit(context),
+          onPressed: pet == null ? null : () => _openEdit(context, pet),
           icon: const Icon(Icons.edit_outlined),
           color: Colors.white,
           style: IconButton.styleFrom(backgroundColor: const Color(0xFF163A35)),
         ),
       ],
-      body: switch (state) {
+      body: switch (widget.state) {
         PetsScreenStatus.loading =>
           const PetsLoadingView(label: 'Carico il dettaglio pet...'),
         PetsScreenStatus.error => PetsErrorView(
             title: 'Dettaglio pet non disponibile',
-            subtitle: errorMessage,
+            subtitle: widget.errorMessage,
             actionLabel: 'Torna alla lista',
             onRetry: () => _backToList(context),
           ),
@@ -51,19 +68,27 @@ class PetDetailPage extends StatelessWidget {
             onAction: () => _backToList(context),
           ),
         PetsScreenStatus.success => _PetDetailContent(
-            pet: pet ?? samplePets.first,
-            onEdit: () => _openEdit(context),
+            pet: pet ?? PetDemoStore.instance.list().first,
+            onEdit: pet == null ? null : () => _openEdit(context, pet),
             onBackToList: () => _backToList(context),
           ),
       },
     );
   }
 
-  void _openEdit(BuildContext context) {
-    final profile = pet ?? samplePets.first;
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => PetEditPage(pet: profile)),
+  Future<void> _openEdit(BuildContext context, PetProfile pet) async {
+    final updated = await Navigator.of(context).push<PetProfile>(
+      MaterialPageRoute<PetProfile>(
+        builder: (_) => PetEditPage(pet: pet),
+      ),
     );
+
+    if (!mounted) return;
+    if (updated != null) {
+      setState(() {
+        _pet = updated;
+      });
+    }
   }
 
   void _backToList(BuildContext context) {
@@ -79,7 +104,7 @@ class _PetDetailContent extends StatelessWidget {
   });
 
   final PetProfile pet;
-  final VoidCallback onEdit;
+  final VoidCallback? onEdit;
   final VoidCallback onBackToList;
 
   @override
@@ -148,7 +173,7 @@ class _PetDetailContent extends StatelessWidget {
             title: 'Riepilogo profilo',
             children: [
               PetInfoRow(label: 'Specie', value: pet.species),
-              PetInfoRow(label: 'Razza', value: pet.breed),
+              PetInfoRow(label: 'Razza', value: pet.breedLabel),
               PetInfoRow(label: 'Data di nascita', value: pet.birthDateLabel),
               PetInfoRow(label: 'Sesso', value: pet.sex),
               PetInfoRow(label: 'Peso', value: pet.weightLabel),
@@ -158,7 +183,7 @@ class _PetDetailContent extends StatelessWidget {
           PetSection(
             title: 'Nota clinica',
             subtitle:
-                'Contesto breve che aiuta vet e owner a mantenere continuità.',
+                'Contesto breve che aiuta vet e owner a mantenere continuita.',
             children: [
               Text(
                 pet.medicalNote,
@@ -194,4 +219,8 @@ class _PetDetailContent extends StatelessWidget {
       ),
     );
   }
+}
+
+extension _IterableFirstOrNull<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }

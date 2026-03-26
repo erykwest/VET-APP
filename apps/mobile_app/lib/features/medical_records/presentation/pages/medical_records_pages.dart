@@ -22,6 +22,7 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
 
   late Future<List<MedicalRecordEntry>> _recordsFuture;
   _ViewState _state = _ViewState.success;
+  String? _selectedPetName;
 
   @override
   void initState() {
@@ -54,6 +55,12 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
         builder: (_) => MedicalRecordDetailPage(record: record),
       ),
     );
+  }
+
+  void _selectPet(String? petName) {
+    setState(() {
+      _selectedPetName = petName;
+    });
   }
 
   @override
@@ -105,6 +112,20 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
               }
 
               final records = snapshot.data ?? const <MedicalRecordEntry>[];
+              final petNames = records
+                  .map((record) => record.petName)
+                  .toSet()
+                  .toList()
+                ..sort();
+              final selectedPetName = petNames.contains(_selectedPetName)
+                  ? _selectedPetName
+                  : null;
+              final filteredRecords = selectedPetName == null
+                  ? records
+                  : records
+                      .where((record) => record.petName == selectedPetName)
+                      .toList(growable: false);
+
               if (records.isEmpty) {
                 return _EmptyState(
                   title: 'Nessun documento ancora',
@@ -118,35 +139,64 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const _SummaryCard(
-                    title: '3 documenti attivi',
-                    body: '1 referto pronto da condividere, 1 esame da rivedere e 1 nota archiviata.',
+                  _PetFilterBar(
+                    petNames: petNames,
+                    selectedPetName: selectedPetName,
+                    onChanged: _selectPet,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _SummaryCard(
+                    title: selectedPetName == null
+                        ? '${records.length} documenti attivi'
+                        : '${filteredRecords.length} documenti di $selectedPetName',
+                    body: selectedPetName == null
+                        ? '1 referto pronto da condividere, 1 esame da rivedere e 1 nota archiviata.'
+                        : 'Filtri attivi sul profilo di $selectedPetName. Apri i documenti piu utili senza rumore.',
                     icon: Icons.description_outlined,
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  const _SummaryCard(
+                  _SummaryCard(
                     title: 'Prossima azione',
-                    body: 'Apri il referto vaccinale di Moka e condividilo con Francesco.',
+                    body: selectedPetName == null
+                        ? 'Apri il referto vaccinale di Moka e condividilo con Francesco.'
+                        : 'Condividi il documento piu recente di $selectedPetName e conserva la nota nel profilo.',
                     icon: Icons.verified_outlined,
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  ...records.asMap().entries.expand(
+                  ...filteredRecords.asMap().entries.expand(
                     (entry) {
                       final index = entry.key;
                       final record = entry.value;
                       return <Widget>[
                         _RecordTile(
+                          petName: record.petName,
                           title: record.title,
                           subtitle: record.subtitle,
                           meta: record.meta,
                           badge: record.badge,
                           onTap: () => _openDetail(record),
                         ),
-                        if (index != records.length - 1)
+                        if (index != filteredRecords.length - 1)
                           const SizedBox(height: AppSpacing.sm),
                       ];
                     },
                   ),
+                  if (filteredRecords.isEmpty)
+                    _EmptyState(
+                      title: selectedPetName == null
+                          ? 'Nessun documento ancora'
+                          : 'Nessun documento per $selectedPetName',
+                      body: selectedPetName == null
+                          ? 'Carica il primo referto per costruire la cartella clinica.'
+                          : 'Cambia filtro oppure carica un nuovo documento per questo pet.',
+                      icon: Icons.folder_open_outlined,
+                      actionLabel: selectedPetName == null
+                          ? 'Carica il primo file'
+                          : 'Rimuovi filtro',
+                      onAction: selectedPetName == null
+                          ? _openUpload
+                          : () => _selectPet(null),
+                    ),
                 ],
               );
             },
@@ -169,6 +219,7 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
   _ViewState _state = _ViewState.success;
   final MedicalRecordEntry _draftRecord = const MedicalRecordEntry(
     id: 'moka-richiamo-vaccinale-draft',
+    petName: 'Moka',
     title: 'richiamo_vaccinale_moka.pdf',
     subtitle: 'Caricato con successo e pronto per la revisione dei metadati.',
     meta: 'Caricato con successo',
@@ -283,7 +334,7 @@ class _MedicalRecordDetailPageState extends State<MedicalRecordDetailPage> {
               _SummaryCard(
                 title: widget.record?.title ?? 'richiamo_vaccinale_moka.pdf',
                 body: widget.record?.detailSource ??
-                    'Documento clinico collegato al profilo attivo di Moka.',
+                    'Documento clinico collegato al profilo attivo di ${widget.record?.petName ?? 'Moka'}.',
                 icon: Icons.verified_outlined,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -295,6 +346,7 @@ class _MedicalRecordDetailPageState extends State<MedicalRecordDetailPage> {
               const SizedBox(height: AppSpacing.lg),
               _MetaGrid(
                 items: [
+                  _MetaItem('Pet', widget.record?.petName ?? 'Moka'),
                   _MetaItem('Clinica', widget.record?.detailSource ?? 'Clinica Vet Roma'),
                   _MetaItem('Creato', widget.record?.createdAt ?? '25 Mar 2026, 09:32'),
                   const _MetaItem('Pagine', '2'),
@@ -352,15 +404,27 @@ class _FeatureScaffold extends StatelessWidget {
               AppSpacing.xxl,
               AppSpacing.xxl,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Header(title: title, subtitle: subtitle, actionLabel: actionLabel, onAction: onAction),
-                const SizedBox(height: AppSpacing.lg),
-                _StateChips(value: state, onChanged: onStateChanged),
-                const SizedBox(height: AppSpacing.lg),
-                child,
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 760;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Header(
+                      title: title,
+                      subtitle: subtitle,
+                      actionLabel: actionLabel,
+                      onAction: onAction,
+                      compact: isCompact,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _StateChips(value: state, onChanged: onStateChanged),
+                    const SizedBox(height: AppSpacing.lg),
+                    child,
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -375,15 +439,35 @@ class _Header extends StatelessWidget {
     required this.subtitle,
     required this.actionLabel,
     required this.onAction,
+    required this.compact,
   });
 
   final String title;
   final String subtitle;
   final String actionLabel;
   final VoidCallback onAction;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    if (compact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _BrandPill(),
+          const SizedBox(height: AppSpacing.lg),
+          Text(title, style: AppTextStyles.heading),
+          const SizedBox(height: AppSpacing.sm),
+          Text(subtitle, style: AppTextStyles.body),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(onPressed: onAction, child: Text(actionLabel)),
+          ),
+        ],
+      );
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -681,43 +765,68 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.accentSoft,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Icon(icon, color: AppColors.primary),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 520;
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppColors.border),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: AppTextStyles.title),
-                const SizedBox(height: AppSpacing.sm),
-                Text(body, style: AppTextStyles.bodySmall),
-              ],
-            ),
-          ),
-        ],
-      ),
+          child: compact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentSoft,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(icon, color: AppColors.primary),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(title, style: AppTextStyles.title),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(body, style: AppTextStyles.bodySmall),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentSoft,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(icon, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(title, style: AppTextStyles.title),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(body, style: AppTextStyles.bodySmall),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+        );
+      },
     );
   }
 }
 
 class _RecordTile extends StatelessWidget {
   const _RecordTile({
+    required this.petName,
     required this.title,
     required this.subtitle,
     required this.meta,
@@ -725,6 +834,7 @@ class _RecordTile extends StatelessWidget {
     required this.onTap,
   });
 
+  final String petName;
   final String title;
   final String subtitle;
   final String meta;
@@ -746,32 +856,45 @@ class _RecordTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppColors.border),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: AppColors.accentSoft,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: const Icon(Icons.description_outlined, color: AppColors.primary),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentSoft,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Icon(Icons.description_outlined, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: AppTextStyles.title.copyWith(fontSize: 17)),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(subtitle, style: AppTextStyles.bodySmall),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(meta, style: AppTextStyles.caption),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: AppTextStyles.title.copyWith(fontSize: 17)),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(subtitle, style: AppTextStyles.bodySmall),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(meta, style: AppTextStyles.caption),
-                  ],
-                ),
+              const SizedBox(height: AppSpacing.md),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                children: [
+                  _PetBadge(label: petName),
+                  _Badge(label: badge),
+                ],
               ),
-              const SizedBox(width: AppSpacing.md),
-              _Badge(label: badge),
             ],
           ),
         ),
@@ -799,6 +922,31 @@ class _Badge extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w700,
           color: Color(0xFF8B5B3E),
+        ),
+      ),
+    );
+  }
+}
+
+class _PetBadge extends StatelessWidget {
+  const _PetBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.accentSoft,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF315E55),
         ),
       ),
     );
@@ -946,8 +1094,87 @@ class _TimelineRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          Expanded(child: Text(label, style: AppTextStyles.bodySmall.copyWith(color: AppColors.text))),
-          Text(value, style: AppTextStyles.caption),
+          Expanded(
+            child: Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.text),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: AppTextStyles.caption,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PetFilterBar extends StatelessWidget {
+  const _PetFilterBar({
+    required this.petNames,
+    required this.selectedPetName,
+    required this.onChanged,
+  });
+
+  final List<String> petNames;
+  final String? selectedPetName;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    if (petNames.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        children: [
+          ChoiceChip(
+            label: Text('Tutti (${petNames.length})'),
+            selected: selectedPetName == null,
+            onSelected: (_) => onChanged(null),
+            labelStyle: TextStyle(
+              color: selectedPetName == null ? AppColors.onPrimary : AppColors.secondaryText,
+              fontWeight: FontWeight.w700,
+            ),
+            selectedColor: AppColors.primary,
+            backgroundColor: AppColors.surface,
+            side: const BorderSide(color: AppColors.border),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+            ),
+          ),
+          ...petNames.map(
+            (petName) => ChoiceChip(
+              label: Text(petName),
+              selected: selectedPetName == petName,
+              onSelected: (_) => onChanged(petName),
+              labelStyle: TextStyle(
+                color: selectedPetName == petName ? AppColors.onPrimary : AppColors.secondaryText,
+                fontWeight: FontWeight.w700,
+              ),
+              selectedColor: AppColors.primary,
+              backgroundColor: AppColors.surface,
+              side: const BorderSide(color: AppColors.border),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -12,11 +12,13 @@ class PetsScaffold extends StatelessWidget {
     super.key,
     this.subtitle,
     this.actions,
+    this.onBack,
   });
 
   final String title;
   final String? subtitle;
   final List<Widget>? actions;
+  final VoidCallback? onBack;
   final Widget body;
 
   @override
@@ -47,6 +49,17 @@ class PetsScaffold extends StatelessWidget {
               children: [
                 Row(
                   children: [
+                    if (onBack != null) ...[
+                      IconButton(
+                        onPressed: onBack,
+                        icon: const Icon(Icons.arrow_back_rounded),
+                        color: Colors.white,
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFF163A35),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                    ],
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,

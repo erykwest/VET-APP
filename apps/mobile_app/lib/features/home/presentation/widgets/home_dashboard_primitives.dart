@@ -135,13 +135,11 @@ class DashboardBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = DashboardPrimitivePalette.colorsFor(tone, filled: filled);
-    final textStyle = (compact
-            ? AppTextStyles.caption
-            : AppTextStyles.bodySmall)
-        .copyWith(
-          color: palette.foreground,
-          fontWeight: FontWeight.w600,
-        );
+    final textStyle =
+        (compact ? AppTextStyles.caption : AppTextStyles.bodySmall).copyWith(
+      color: palette.foreground,
+      fontWeight: FontWeight.w600,
+    );
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -230,11 +228,11 @@ class DashboardActionButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.large),
         border: Border.all(color: borderColor),
         boxShadow: filled
-            ? [
+            ? const [
                 BoxShadow(
                   color: AppColors.shadow,
                   blurRadius: 16,
-                  offset: const Offset(0, 8),
+                  offset: Offset(0, 8),
                 ),
               ]
             : const [],

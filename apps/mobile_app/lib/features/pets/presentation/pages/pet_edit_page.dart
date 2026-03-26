@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
+import '../../data/pet_demo_store.dart';
 import '../../domain/pet_models.dart';
-import '../widgets/pet_form_field.dart';
-import '../widgets/pet_sections.dart';
+import '../widgets/pet_profile_form.dart';
 import '../widgets/pets_scaffold.dart';
 import '../widgets/pets_state_views.dart';
 
@@ -23,7 +23,8 @@ class PetEditPage extends StatelessWidget {
     return PetsScaffold(
       title: 'Modifica ${pet.name}.',
       subtitle:
-          "Aggiorna i dettagli del profilo senza perdere il tono dell'app, pronto per web e mobile.",
+          'Aggiorna i dettagli del profilo senza perdere il tono dell app, con campi validati e selezioni guidate.',
+      onBack: () => Navigator.of(context).maybePop(),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).maybePop(),
@@ -40,21 +41,20 @@ class PetEditPage extends StatelessWidget {
             actionLabel: 'Chiudi',
             onRetry: () => Navigator.of(context).maybePop(),
           ),
-        PetsScreenStatus.empty => _PetEditForm(
+        PetsScreenStatus.empty => _EditForm(
             pet: pet,
             helperText: 'Nessun dato caricato, quindi la bozza parte pulita.',
           ),
-        PetsScreenStatus.success => _PetEditForm(pet: pet),
+        PetsScreenStatus.success => _EditForm(pet: pet),
       },
     );
   }
 }
 
-class _PetEditForm extends StatelessWidget {
-  const _PetEditForm({
+class _EditForm extends StatelessWidget {
+  const _EditForm({
     required this.pet,
-    this.helperText =
-        'Aggiorna i campi da cambiare e lascia invariato il resto.',
+    this.helperText = 'Aggiorna i campi da cambiare e lascia invariato il resto.',
   });
 
   final PetProfile pet;
@@ -62,68 +62,49 @@ class _PetEditForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          PetSection(
-            title: 'Bozza profilo',
-            subtitle: helperText,
-            children: [
-              PetFormField(label: 'Nome', initialValue: pet.name),
-              const SizedBox(height: 16),
-              PetFormField(label: 'Specie', initialValue: pet.species),
-              const SizedBox(height: 16),
-              PetFormField(label: 'Razza', initialValue: pet.breed),
-              const SizedBox(height: 16),
-              PetFormField(
-                  label: 'Data di nascita', initialValue: pet.birthDateLabel),
-              const SizedBox(height: 16),
-              PetFormField(label: 'Sesso', initialValue: pet.sex),
-              const SizedBox(height: 16),
-              PetFormField(label: 'Peso', initialValue: pet.weightLabel),
-              const SizedBox(height: 16),
-              PetFormField(
-                label: 'Note cliniche',
-                initialValue: pet.medicalNote,
-                maxLines: 4,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          PetSection(
-            title: 'Salva modifiche',
-            subtitle: 'La schermata resta leggera finche non attiviamo la release completa.',
-            children: [
-              PetActionButton(
-                label: 'Salva modifiche',
-                icon: Icons.save_rounded,
-                primary: true,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Modifiche salvate per la demo.'),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              PetActionButton(
-                label: 'Archivia profilo',
-                icon: Icons.archive_outlined,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("L'azione di archivio e un segnaposto temporaneo."),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
+    return PetProfileForm(
+      title: 'Bozza profilo',
+      helperText: helperText,
+      initialPet: pet,
+      submitLabel: 'Salva modifiche',
+      onSubmit: (draft) async {
+        final updated = pet.copyWith(
+          name: draft.name,
+          species: draft.species,
+          breed: draft.breed ?? '',
+          birthDateLabel: _formatDate(draft.birthDate),
+          sex: draft.sex,
+          weightLabel: _formatWeight(draft.weightKg),
+          medicalNote: draft.medicalNote,
+        );
+        PetDemoStore.instance.upsert(updated);
+        Navigator.of(context).pop(updated);
+      },
     );
   }
-}
 
+  String _formatWeight(double weightKg) {
+    final normalized =
+        weightKg.toStringAsFixed(weightKg.truncateToDouble() == weightKg ? 0 : 1);
+    return '${normalized.replaceAll('.', ',')} kg';
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Gen',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mag',
+      'Giu',
+      'Lug',
+      'Ago',
+      'Set',
+      'Ott',
+      'Nov',
+      'Dic',
+    ];
+
+    return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
+  }
+}

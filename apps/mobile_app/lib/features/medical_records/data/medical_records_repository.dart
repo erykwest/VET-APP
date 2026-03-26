@@ -5,6 +5,7 @@ import '../../../../shared/config/app_runtime_config_loader.dart';
 class MedicalRecordEntry {
   const MedicalRecordEntry({
     required this.id,
+    required this.petName,
     required this.title,
     required this.subtitle,
     required this.meta,
@@ -15,6 +16,7 @@ class MedicalRecordEntry {
   });
 
   final String id;
+  final String petName;
   final String title;
   final String subtitle;
   final String meta;
@@ -60,18 +62,24 @@ class MedicalRecordsRepository {
   Future<void> saveRecord(MedicalRecordEntry record) async {
     final client = _resolveClient();
     if (client == null) {
+      _upsertPreviewRecord(record);
       return;
     }
 
-    await client.from('medical_records').upsert({
-      'id': record.id,
-      'title': record.title,
-      'subtitle': record.subtitle,
-      'meta': record.meta,
-      'badge': record.badge,
-      'detail_source': record.detailSource,
-      'created_at': record.createdAt,
-    });
+    try {
+      await client.from('medical_records').upsert({
+        'id': record.id,
+        'pet_name': record.petName,
+        'title': record.title,
+        'subtitle': record.subtitle,
+        'meta': record.meta,
+        'badge': record.badge,
+        'detail_source': record.detailSource,
+        'created_at': record.createdAt,
+      });
+    } catch (_) {
+      return;
+    }
   }
 
   static List<MedicalRecordEntry> get previewRecords =>
@@ -93,24 +101,28 @@ class MedicalRecordsRepository {
     }
 
     try {
-      final response = await client
-          .from('medical_records')
-          .select('id,title,subtitle,meta,badge,detail_source,created_at');
+      final response = await client.from('medical_records').select(
+          'id,pet_name,title,subtitle,meta,badge,detail_source,created_at');
       final rows = response as List<dynamic>;
       return rows
           .map(
             (row) => MedicalRecordEntry(
               id: (row['id'] ?? '').toString(),
+              petName: (row['pet_name'] ?? 'Moka').toString(),
               title: (row['title'] ?? 'Referto clinico').toString(),
-              subtitle: (row['subtitle'] ?? 'Documento sincronizzato').toString(),
+              subtitle:
+                  (row['subtitle'] ?? 'Documento sincronizzato').toString(),
               meta: (row['meta'] ?? 'Sincronizzato da Supabase').toString(),
               badge: (row['badge'] ?? 'Sincronizzato').toString(),
               detailSource: (row['detail_source'] ?? 'Supabase').toString(),
               createdAt: (row['created_at'] ?? 'Adesso').toString(),
               timeline: const [
-                MedicalRecordTimelineEntry(label: 'Importato', value: 'Sincronizzato'),
-                MedicalRecordTimelineEntry(label: 'Revisionato', value: 'In attesa'),
-                MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'Disponibile'),
+                MedicalRecordTimelineEntry(
+                    label: 'Importato', value: 'Sincronizzato'),
+                MedicalRecordTimelineEntry(
+                    label: 'Revisionato', value: 'In attesa'),
+                MedicalRecordTimelineEntry(
+                    label: "Pronto per l'invio", value: 'Disponibile'),
               ],
             ),
           )
@@ -137,9 +149,10 @@ class MedicalRecordsRepository {
     }
   }
 
-  static const List<MedicalRecordEntry> _previewRecords = [
-    MedicalRecordEntry(
+  static final List<MedicalRecordEntry> _previewRecords = [
+    const MedicalRecordEntry(
       id: 'moka-richiamo-vaccinale',
+      petName: 'Moka',
       title: 'Richiamo vaccinale di Moka',
       subtitle: 'PDF - 2 pagine - Clinica Vet Roma',
       meta: 'Caricato oggi, pronto da mostrare a Francesco',
@@ -148,12 +161,15 @@ class MedicalRecordsRepository {
       createdAt: '25 Mar 2026, 09:32',
       timeline: [
         MedicalRecordTimelineEntry(label: 'Importato', value: '25 Mar 2026'),
-        MedicalRecordTimelineEntry(label: 'Revisionato', value: '25 Mar 2026, 09:45'),
-        MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'Disponibile'),
+        MedicalRecordTimelineEntry(
+            label: 'Revisionato', value: '25 Mar 2026, 09:45'),
+        MedicalRecordTimelineEntry(
+            label: "Pronto per l'invio", value: 'Disponibile'),
       ],
     ),
-    MedicalRecordEntry(
+    const MedicalRecordEntry(
       id: 'moka-esame-ematico',
+      petName: 'Moka',
       title: 'Esame ematico di Moka',
       subtitle: 'PDF - 4 pagine - controlli di routine',
       meta: 'Letto ieri, richiede un controllo rapido',
@@ -162,12 +178,15 @@ class MedicalRecordsRepository {
       createdAt: '24 Mar 2026, 17:08',
       timeline: [
         MedicalRecordTimelineEntry(label: 'Importato', value: '24 Mar 2026'),
-        MedicalRecordTimelineEntry(label: 'Revisionato', value: '24 Mar 2026, 18:20'),
-        MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'In attesa di nota'),
+        MedicalRecordTimelineEntry(
+            label: 'Revisionato', value: '24 Mar 2026, 18:20'),
+        MedicalRecordTimelineEntry(
+            label: "Pronto per l'invio", value: 'In attesa di nota'),
       ],
     ),
-    MedicalRecordEntry(
+    const MedicalRecordEntry(
       id: 'moka-controllo-peso',
+      petName: 'Moka',
       title: 'Nota clinica controllo peso',
       subtitle: 'Immagine - follow-up breve',
       meta: 'Archiviato il 12 marzo, utile come storico',
@@ -176,9 +195,38 @@ class MedicalRecordsRepository {
       createdAt: '12 Mar 2026, 14:10',
       timeline: [
         MedicalRecordTimelineEntry(label: 'Importato', value: '12 Mar 2026'),
-        MedicalRecordTimelineEntry(label: 'Revisionato', value: '13 Mar 2026, 10:00'),
-        MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'Archiviato'),
+        MedicalRecordTimelineEntry(
+            label: 'Revisionato', value: '13 Mar 2026, 10:00'),
+        MedicalRecordTimelineEntry(
+            label: "Pronto per l'invio", value: 'Archiviato'),
+      ],
+    ),
+    const MedicalRecordEntry(
+      id: 'oliver-dentale',
+      petName: 'Oliver',
+      title: 'Controllo dentale di Oliver',
+      subtitle: 'PDF - 3 pagine - ambulatorio di fiducia',
+      meta: 'Utile per il follow-up dentale della prossima settimana',
+      badge: 'In revisione',
+      detailSource: 'Ambulatorio San Marco',
+      createdAt: '18 Mar 2026, 11:20',
+      timeline: [
+        MedicalRecordTimelineEntry(label: 'Importato', value: '18 Mar 2026'),
+        MedicalRecordTimelineEntry(
+            label: 'Revisionato', value: '18 Mar 2026, 12:05'),
+        MedicalRecordTimelineEntry(
+            label: "Pronto per l'invio", value: 'Da controllare'),
       ],
     ),
   ];
+
+  static void _upsertPreviewRecord(MedicalRecordEntry record) {
+    final index = _previewRecords.indexWhere((item) => item.id == record.id);
+    if (index == -1) {
+      _previewRecords.insert(0, record);
+      return;
+    }
+
+    _previewRecords[index] = record;
+  }
 }

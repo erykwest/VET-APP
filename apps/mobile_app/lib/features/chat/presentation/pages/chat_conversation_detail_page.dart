@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
+import '../../data/chat_demo_store.dart';
 import '../../data/chat_seed_data.dart';
 import '../../domain/chat_models.dart';
 import '../widgets/chat_composer.dart';
@@ -10,78 +11,152 @@ import '../widgets/chat_error_state.dart';
 import '../widgets/chat_loading_state.dart';
 import '../widgets/chat_message_bubble.dart';
 
-class ChatConversationDetailPage extends StatelessWidget {
+class ChatConversationDetailPage extends StatefulWidget {
   const ChatConversationDetailPage({
     super.key,
+    required this.conversationId,
+    this.initialConversation,
     this.state = ChatScreenState.success,
-    this.conversation = ChatSeedData.detail,
-    this.onSendMessage,
     this.onRetry,
   });
 
+  final String conversationId;
+  final ChatConversationDetail? initialConversation;
   final ChatScreenState state;
-  final ChatConversationDetail conversation;
-  final ValueChanged<String>? onSendMessage;
   final VoidCallback? onRetry;
+
+  @override
+  State<ChatConversationDetailPage> createState() =>
+      _ChatConversationDetailPageState();
+}
+
+class _ChatConversationDetailPageState extends State<ChatConversationDetailPage> {
+  final ChatDemoStore _store = ChatDemoStore.instance;
+  final ScrollController _scrollController = ScrollController();
+
+  bool _isSending = false;
+  int _lastRenderedMessageCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _store.openConversation(widget.conversationId);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.xxl,
-                AppSpacing.lg,
-                AppSpacing.xxl,
-                AppSpacing.md,
-              ),
-              child: _Header(conversation: conversation),
-            ),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                child: switch (state) {
-                  ChatScreenState.loading => const ChatLoadingState(
-                      key: ValueKey('loading'),
-                      title: 'Apriamo la conversazione',
-                      subtitle:
-                          'Stiamo caricando il thread e l ultimo contesto disponibile.',
-                    ),
-                  ChatScreenState.empty => ChatEmptyState(
-                      key: const ValueKey('empty'),
-                      title: 'La conversazione e vuota',
-                      subtitle:
-                          'Scrivi il primo messaggio per iniziare il dialogo con l assistente.',
-                      actionLabel: 'Scrivi ora',
-                      onAction: onSendMessage == null
-                          ? null
-                          : () => onSendMessage!
-                              .call('Ciao, ho una domanda per Moka.'),
-                    ),
-                  ChatScreenState.error => ChatErrorState(
-                      key: const ValueKey('error'),
-                      title: 'Conversazione non disponibile',
-                      subtitle:
-                          'Qualcosa e andato storto nel recupero del thread.',
-                      actionLabel: 'Torna alle chat',
-                      onAction:
-                          onRetry ?? () => Navigator.of(context).maybePop(),
-                    ),
-                  ChatScreenState.success => _SuccessConversationView(
-                      key: const ValueKey('success'),
-                      conversation: conversation,
-                      onSendMessage: onSendMessage,
-                    ),
-                },
-              ),
-            ),
-          ],
+        child: AnimatedBuilder(
+          animation: _store,
+          builder: (context, _) {
+            final conversation = _store.conversationById(widget.conversationId) ??
+                widget.initialConversation ??
+                ChatSeedData.detail;
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.xxl,
+                    AppSpacing.lg,
+                    AppSpacing.xxl,
+                    AppSpacing.md,
+                  ),
+                  child: _Header(conversation: conversation),
+                ),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    child: switch (widget.state) {
+                      ChatScreenState.loading => const ChatLoadingState(
+                          key: ValueKey('loading'),
+                          title: 'Apriamo la conversazione',
+                          subtitle:
+                              'Stiamo caricando il thread e l ultimo contesto disponibile.',
+                        ),
+                      ChatScreenState.empty => ChatEmptyState(
+                          key: const ValueKey('empty'),
+                          title: 'La conversazione e vuota',
+                          subtitle:
+                              'Scrivi il primo messaggio per iniziare il dialogo con l assistente.',
+                          actionLabel: 'Scrivi ora',
+                          onAction: () => _sendMessage(
+                            'Ciao, ho una domanda per ${conversation.petName}.',
+                          ),
+                        ),
+                      ChatScreenState.error => ChatErrorState(
+                          key: const ValueKey('error'),
+                          title: 'Conversazione non disponibile',
+                          subtitle:
+                              'Qualcosa e andato storto nel recupero del thread.',
+                          actionLabel: 'Torna alle chat',
+                          onAction:
+                              widget.onRetry ?? () => Navigator.of(context).maybePop(),
+                        ),
+                      ChatScreenState.success => _SuccessConversationView(
+                          key: const ValueKey('success'),
+                          conversation: conversation,
+                          isSending: _isSending,
+                          onSendMessage: _sendMessage,
+                          scrollController: _scrollController,
+                        ),
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
+  }
+
+  Future<void> _sendMessage(String message) async {
+    if (_isSending) return;
+
+    final cleanMessage = message.trim();
+    if (cleanMessage.isEmpty) return;
+
+    setState(() {
+      _isSending = true;
+    });
+
+    try {
+      await _store.sendMessage(widget.conversationId, cleanMessage);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+        _scrollToBottom();
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) {
+        return;
+      }
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    });
+  }
+
+  void _scheduleScrollIfNeeded(int messageCount) {
+    if (_lastRenderedMessageCount == messageCount) {
+      return;
+    }
+
+    _lastRenderedMessageCount = messageCount;
+    _scrollToBottom();
   }
 }
 
@@ -114,8 +189,10 @@ class _Header extends StatelessWidget {
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Icon(Icons.chat_bubble_outline,
-                color: AppColors.onPrimary),
+            child: const Icon(
+              Icons.chat_bubble_outline,
+              color: AppColors.onPrimary,
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -155,50 +232,68 @@ class _SuccessConversationView extends StatelessWidget {
   const _SuccessConversationView({
     super.key,
     required this.conversation,
+    required this.isSending,
     required this.onSendMessage,
+    required this.scrollController,
   });
 
   final ChatConversationDetail conversation;
-  final ValueChanged<String>? onSendMessage;
+  final bool isSending;
+  final ValueChanged<String> onSendMessage;
+  final ScrollController scrollController;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
-          child: _ContextBanner(conversation: conversation),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.xxl,
-              0,
-              AppSpacing.xxl,
-              AppSpacing.md,
+    return Builder(
+      builder: (context) {
+        final totalItems = conversation.messages.length + (isSending ? 1 : 0);
+        final state = context
+            .findAncestorStateOfType<_ChatConversationDetailPageState>();
+        state?._scheduleScrollIfNeeded(totalItems);
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+              child: _ContextBanner(conversation: conversation),
             ),
-            itemBuilder: (context, index) {
-              final message = conversation.messages[index];
-              return ChatMessageBubble(message: message);
-            },
-            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-            itemCount: conversation.messages.length,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xxl,
-            0,
-            AppSpacing.xxl,
-            AppSpacing.xxl,
-          ),
-          child: ChatComposer(
-            hintText: 'Scrivi una domanda su ${conversation.petName}',
-            onSend: onSendMessage,
-          ),
-        ),
-      ],
+            const SizedBox(height: AppSpacing.md),
+            Expanded(
+              child: ListView.separated(
+                controller: scrollController,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xxl,
+                  0,
+                  AppSpacing.xxl,
+                  AppSpacing.md,
+                ),
+                itemBuilder: (context, index) {
+                  if (index < conversation.messages.length) {
+                    final message = conversation.messages[index];
+                    return ChatMessageBubble(message: message);
+                  }
+
+                  return const _TypingBubble();
+                },
+                separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                itemCount: totalItems,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xxl,
+                0,
+                AppSpacing.xxl,
+                AppSpacing.xxl,
+              ),
+              child: ChatComposer(
+                hintText: 'Scrivi una domanda su ${conversation.petName}',
+                onSend: onSendMessage,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -258,6 +353,47 @@ class _ContextBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TypingBubble extends StatelessWidget {
+  const _TypingBubble();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: AppSpacing.sm),
+            Text(
+              'Sta scrivendo una risposta...',
+              style: TextStyle(
+                color: AppColors.secondaryText,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

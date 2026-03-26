@@ -37,6 +37,8 @@ class PetProfile {
   final Color accentColor;
 
   String get title => '$name - $species';
+  String get breedLabel =>
+      breed.trim().isEmpty ? 'Razza non specificata' : breed.trim();
 
   PetProfile copyWith({
     String? id,

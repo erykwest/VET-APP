@@ -19,12 +19,12 @@ class HomeShellPage extends StatefulWidget {
 class _HomeShellPageState extends State<HomeShellPage> {
   late int _currentIndex = widget.initialIndex;
 
-  late final List<Widget> _pages = const [
-    HomeDashboardPage(),
-    PetsListPage(),
-    ChatConversationsPage(),
-    MedicalRecordsListPage(),
-    SettingsPage(),
+  late final List<_ShellTabNavigator> _pages = const [
+    _ShellTabNavigator(rootPage: HomeDashboardPage()),
+    _ShellTabNavigator(rootPage: PetsListPage()),
+    _ShellTabNavigator(rootPage: ChatConversationsPage()),
+    _ShellTabNavigator(rootPage: MedicalRecordsListPage()),
+    _ShellTabNavigator(rootPage: SettingsPage()),
   ];
 
   @override
@@ -185,6 +185,33 @@ class _HomeShellPageState extends State<HomeShellPage> {
           label: 'Settings',
         ),
       ];
+}
+
+class _ShellTabNavigator extends StatefulWidget {
+  const _ShellTabNavigator({
+    required this.rootPage,
+  });
+
+  final Widget rootPage;
+
+  @override
+  State<_ShellTabNavigator> createState() => _ShellTabNavigatorState();
+}
+
+class _ShellTabNavigatorState extends State<_ShellTabNavigator> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      key: _navigatorKey,
+      onGenerateRoute: (_) {
+        return MaterialPageRoute<void>(
+          builder: (_) => widget.rootPage,
+        );
+      },
+    );
+  }
 }
 
 class _ShellBrand extends StatelessWidget {

@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
+import '../../data/pet_demo_store.dart';
 import '../../domain/pet_models.dart';
-import '../widgets/pet_form_field.dart';
-import '../widgets/pet_sections.dart';
+import '../widgets/pet_profile_form.dart';
 import '../widgets/pets_scaffold.dart';
 import '../widgets/pets_state_views.dart';
 
@@ -21,7 +21,8 @@ class PetCreatePage extends StatelessWidget {
     return PetsScaffold(
       title: 'Crea un profilo pet.',
       subtitle:
-          'Manteniamo la prima versione leggera: nome, specie, razza e basi cliniche, pronta per web e mobile.',
+          'Nome, specie, razza opzionale, data di nascita e peso validato per evitare inserimenti errati.',
+      onBack: () => Navigator.of(context).maybePop(),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).maybePop(),
@@ -38,78 +39,40 @@ class PetCreatePage extends StatelessWidget {
             actionLabel: 'Chiudi',
             onRetry: () => Navigator.of(context).maybePop(),
           ),
-        PetsScreenStatus.empty => const _PetCreateForm(
-            modeLabel: 'Bozza vuota',
-            helperText:
-                'Parti da zero e salva quando il profilo e pronto.',
+        PetsScreenStatus.empty => const _CreateForm(
+            helperText: 'Parti da zero e salva quando il profilo e pronto.',
           ),
-        PetsScreenStatus.success => const _PetCreateForm(),
+        PetsScreenStatus.success => const _CreateForm(),
       },
     );
   }
 }
 
-class _PetCreateForm extends StatelessWidget {
-  const _PetCreateForm({
-    this.modeLabel = 'Nuovo profilo',
-    this.helperText = 'Compila i campi minimi per iniziare.',
+class _CreateForm extends StatelessWidget {
+  const _CreateForm({
+    this.helperText = 'Compila i campi richiesti per iniziare.',
   });
 
-  final String modeLabel;
   final String helperText;
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          PetSection(
-            title: modeLabel,
-            subtitle: helperText,
-            children: const [
-              PetFormField(label: 'Nome', hintText: 'Moka'),
-              SizedBox(height: 16),
-              PetFormField(label: 'Specie', hintText: 'Cane'),
-              SizedBox(height: 16),
-              PetFormField(label: 'Razza', hintText: 'Border Collie'),
-              SizedBox(height: 16),
-              PetFormField(label: 'Data di nascita', hintText: 'Apr 2021'),
-              SizedBox(height: 16),
-              PetFormField(label: 'Sesso', hintText: 'Femmina'),
-              SizedBox(height: 16),
-              PetFormField(label: 'Peso', hintText: '18,4 kg'),
-              SizedBox(height: 16),
-              PetFormField(
-                label: 'Note cliniche',
-                hintText:
-                    'Aggiungi note brevi su dieta, farmaci o comportamento.',
-                maxLines: 4,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          PetSection(
-            title: 'Salva bozza',
-            subtitle: "Questa MVP mantiene l azione semplice in attesa della release completa.",
-            children: [
-              PetActionButton(
-                label: 'Salva profilo pet',
-                icon: Icons.save_rounded,
-                primary: true,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Profilo pet salvato per la demo.'),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
+    return PetProfileForm(
+      title: 'Nuovo profilo',
+      helperText: helperText,
+      submitLabel: 'Salva profilo pet',
+      onSubmit: (draft) async {
+        final pet = PetDemoStore.instance.create(
+          name: draft.name,
+          species: draft.species,
+          breed: draft.breed,
+          birthDate: draft.birthDate,
+          sex: draft.sex,
+          weightKg: draft.weightKg,
+          medicalNote: draft.medicalNote,
+        );
+        Navigator.of(context).pop(pet);
+      },
     );
   }
 }
-
