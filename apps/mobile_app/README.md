@@ -30,6 +30,9 @@ If the terminal does not have administrator rights, prefer:
 2. `flutter run -d web-server --web-hostname 127.0.0.1 --web-port 8080`
 3. Open the printed URL manually in your browser
 
+For `flutter analyze` on this machine, use the no-admin runbook:
+- [docs/runbooks/flutter_analyze_no_admin.md](/C:/Users/vasta/OneDrive%20-%20Techbau%20SpA/Documenti/PERS/VET%20APP/GIT/docs/runbooks/flutter_analyze_no_admin.md)
+
 ## Current scope
 
 The app currently includes:
@@ -65,3 +68,4 @@ For demo and founder review:
 
 See the current implementation/state here:
 - [docs/frontend/09-mobile-preview-state.md](/C:/Users/vasta/OneDrive%20-%20Techbau%20SpA/Documenti/PERS/VET%20APP/GIT/docs/frontend/09-mobile-preview-state.md)
+- [docs/frontend/10-ux-review-2026-03-26.md](/C:/Users/vasta/OneDrive%20-%20Techbau%20SpA/Documenti/PERS/VET%20APP/GIT/docs/frontend/10-ux-review-2026-03-26.md)
