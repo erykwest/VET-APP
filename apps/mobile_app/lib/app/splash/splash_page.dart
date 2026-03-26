@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../design_system/tokens/app_colors.dart';
 import '../../design_system/tokens/app_spacing.dart';
 import '../../design_system/tokens/app_text_styles.dart';
 import '../../features/auth/data/auth_repository_factory.dart';
+import '../../shared/config/app_runtime_config_loader.dart';
 import '../router/app_router.dart';
 
 class SplashPage extends StatefulWidget {
@@ -15,6 +17,7 @@ class SplashPage extends StatefulWidget {
 
 class _SplashPageState extends State<SplashPage> {
   final _authRepository = const AuthRepositoryFactory().create();
+  final _runtimeConfig = const AppRuntimeConfigLoader().load();
 
   @override
   void initState() {
@@ -23,6 +26,11 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _restoreSessionAndRoute() async {
+    if (kIsWeb && !_runtimeConfig.hasSupabaseCredentials) {
+      Navigator.of(context).pushReplacementNamed(AppRouter.previewDashboard);
+      return;
+    }
+
     await Future<void>.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
 
