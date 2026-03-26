@@ -1,14 +1,28 @@
-from typing import Any
-
-from supabase import Client
+from typing import Any, TYPE_CHECKING
 
 from packages.core.application.ports.auth_provider import AuthProvider, AuthSession, AuthenticatedUser
 from packages.shared.auth_context import get_access_token
 from packages.shared.errors.base import AuthenticationError
 
+if TYPE_CHECKING:
+    from supabase import Client as SupabaseClient
+else:
+    SupabaseClient = Any
+
+try:
+    from supabase import Client as _SupabaseClient
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised by local runtime environments
+    _SUPABASE_IMPORT_ERROR = exc
+else:
+    _SUPABASE_IMPORT_ERROR = None
+
 
 class SupabaseAuthProvider(AuthProvider):
-    def __init__(self, public_client: Client, admin_client: Client) -> None:
+    def __init__(self, public_client: SupabaseClient, admin_client: SupabaseClient) -> None:
+        if _SUPABASE_IMPORT_ERROR is not None:
+            raise AuthenticationError(
+                "Supabase auth provider requires the optional 'supabase' dependency"
+            ) from _SUPABASE_IMPORT_ERROR
         self._public_client = public_client
         self._admin_client = admin_client
 

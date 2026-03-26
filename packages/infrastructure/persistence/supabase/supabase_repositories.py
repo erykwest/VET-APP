@@ -1,7 +1,5 @@
 from datetime import date, datetime
-from typing import Any
-
-from supabase import Client
+from typing import TYPE_CHECKING, Any
 
 from packages.core.application.ports.conversation_repository import ConversationRepository
 from packages.core.application.ports.pet_profile_repository import PetProfileRepository
@@ -9,6 +7,9 @@ from packages.core.application.ports.reminder_repository import ReminderReposito
 from packages.core.domain.conversation.models import Conversation
 from packages.core.domain.pet_profile.models import PetProfile
 from packages.core.domain.reminders.models import Reminder
+
+if TYPE_CHECKING:
+    from supabase import Client
 
 
 def _serialize_payload(payload: dict[str, Any]) -> dict[str, Any]:

@@ -54,6 +54,8 @@ def test_chat_and_reminder_flow() -> None:
     chat_response = client.post("/chat", json={"pet_id": pet_id, "user_message": "Mangia poco"})
     assert chat_response.status_code == 200
     assert chat_response.json()["reply"]["role"] == "assistant"
+    assert chat_response.json()["mode"] == "evidence"
+    assert "confidence" in chat_response.json()
 
     reminder_create = client.post(
         "/reminders",

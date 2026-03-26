@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     llm_provider: str = Field(default="echo", alias="LLM_PROVIDER")
     llm_model: str = Field(default="demo-model", alias="LLM_MODEL")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
+    llm_base_url: str = Field(default="https://api.groq.com/openai/v1", alias="LLM_BASE_URL")
+    llm_timeout_seconds: int = Field(default=30, alias="LLM_TIMEOUT_SECONDS")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     enable_telemetry: bool = Field(default=False, alias="ENABLE_TELEMETRY")
 
@@ -50,6 +52,16 @@ class Settings(BaseSettings):
                     "SUPABASE_URL": self.supabase_url,
                     "SUPABASE_ANON_KEY": self.supabase_anon_key,
                     "SUPABASE_SERVICE_ROLE_KEY": self.supabase_service_role_key,
+                },
+            )
+
+        if self.llm_provider == "groq":
+            self._require_fields(
+                "LLM_PROVIDER=groq",
+                {
+                    "LLM_MODEL": self.llm_model,
+                    "LLM_API_KEY": self.llm_api_key,
+                    "LLM_BASE_URL": self.llm_base_url,
                 },
             )
 

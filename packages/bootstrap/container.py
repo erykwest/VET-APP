@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from packages.core.application.ports.auth_provider import AuthProvider
+from packages.core.application.services.chat_orchestrator import ChatOrchestrator
 from packages.core.application.services.create_pet_profile import CreatePetProfileService
 from packages.core.application.services.create_reminder import CreateReminderService
 from packages.core.application.services.get_pet_profile import GetPetProfileService
@@ -10,21 +11,15 @@ from packages.core.application.services.list_reminders import ListRemindersServi
 from packages.core.application.services.send_chat_message import SendChatMessageService
 from packages.core.application.services.update_pet_profile import UpdatePetProfileService
 from packages.infrastructure.auth.bootstrap_auth_provider import BootstrapAuthProvider
-from packages.infrastructure.auth.supabase_auth_provider import SupabaseAuthProvider
 from packages.infrastructure.llm.providers.echo_llm_client import EchoLLMClient
+from packages.infrastructure.llm.providers.groq_llm_client import GroqLLMClient
+from packages.infrastructure.llm.retrieval.in_memory_evidence_retriever import (
+    InMemoryEvidenceRetriever,
+)
 from packages.infrastructure.persistence.in_memory_repositories import (
     InMemoryConversationRepository,
     InMemoryPetProfileRepository,
     InMemoryReminderRepository,
-)
-from packages.infrastructure.persistence.supabase.client import (
-    build_supabase_client,
-    build_supabase_public_client,
-)
-from packages.infrastructure.persistence.supabase.supabase_repositories import (
-    SupabaseConversationRepository,
-    SupabasePetProfileRepository,
-    SupabaseReminderRepository,
 )
 from packages.shared.config.settings import Settings, get_settings
 
@@ -38,7 +33,9 @@ class ApplicationContainer:
             self.conversation_repository,
             self.reminder_repository,
         ) = self._build_repositories()
-        self.llm_client = EchoLLMClient(settings)
+        self.llm_client = self._build_llm_client()
+        self.evidence_retriever = InMemoryEvidenceRetriever()
+        self.chat_orchestrator = ChatOrchestrator(self.llm_client, self.evidence_retriever)
 
     def create_pet_profile_service(self) -> CreatePetProfileService:
         return CreatePetProfileService(self.pet_profile_repository)
@@ -55,7 +52,7 @@ class ApplicationContainer:
     def send_chat_message_service(self) -> SendChatMessageService:
         return SendChatMessageService(
             self.conversation_repository,
-            self.llm_client,
+            self.chat_orchestrator,
             self.pet_profile_repository,
         )
 
@@ -70,31 +67,63 @@ class ApplicationContainer:
 
     def _build_auth_provider(self) -> AuthProvider:
         if self.settings.auth_backend == "supabase":
-            return SupabaseAuthProvider(
-                public_client=build_supabase_public_client(self.settings),
-                admin_client=build_supabase_client(self.settings),
-            )
+            try:
+                from packages.infrastructure.auth.supabase_auth_provider import (
+                    SupabaseAuthProvider,
+                )
+                from packages.infrastructure.persistence.supabase.client import (
+                    build_supabase_client,
+                    build_supabase_public_client,
+                )
+
+                return SupabaseAuthProvider(
+                    public_client=build_supabase_public_client(self.settings),
+                    admin_client=build_supabase_client(self.settings),
+                )
+            except ModuleNotFoundError:
+                if self.settings.environment != "production":
+                    return BootstrapAuthProvider(self.settings)
+                raise
         return BootstrapAuthProvider(self.settings)
 
     def _build_repositories(
         self,
-    ) -> tuple[
-        InMemoryPetProfileRepository | SupabasePetProfileRepository,
-        InMemoryConversationRepository | SupabaseConversationRepository,
-        InMemoryReminderRepository | SupabaseReminderRepository,
-    ]:
+    ) -> tuple[object, object, object]:
         if self.settings.persistence_backend == "supabase":
-            client = build_supabase_client(self.settings)
-            return (
-                SupabasePetProfileRepository(client),
-                SupabaseConversationRepository(client),
-                SupabaseReminderRepository(client),
-            )
+            try:
+                from packages.infrastructure.persistence.supabase.client import (
+                    build_supabase_client,
+                )
+                from packages.infrastructure.persistence.supabase.supabase_repositories import (
+                    SupabaseConversationRepository,
+                    SupabasePetProfileRepository,
+                    SupabaseReminderRepository,
+                )
+
+                client = build_supabase_client(self.settings)
+                return (
+                    SupabasePetProfileRepository(client),
+                    SupabaseConversationRepository(client),
+                    SupabaseReminderRepository(client),
+                )
+            except ModuleNotFoundError:
+                if self.settings.environment != "production":
+                    return (
+                        InMemoryPetProfileRepository(),
+                        InMemoryConversationRepository(),
+                        InMemoryReminderRepository(),
+                    )
+                raise
         return (
             InMemoryPetProfileRepository(),
             InMemoryConversationRepository(),
             InMemoryReminderRepository(),
         )
+
+    def _build_llm_client(self) -> EchoLLMClient | GroqLLMClient:
+        if self.settings.llm_provider == "groq":
+            return GroqLLMClient(self.settings)
+        return EchoLLMClient(self.settings)
 
 
 @lru_cache(maxsize=1)
