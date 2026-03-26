@@ -32,11 +32,14 @@ If the terminal does not have administrator rights, prefer:
 
 ## Current scope
 
-The app is bootstrapped with:
+The app currently includes:
 
 - global theme tokens
-- onboarding welcome screen
-- placeholder routes for auth and home
+- warm-clinical dashboard preview
+- desktop-first shell with persistent sidebar
+- pet management demo flows
+- chat demo flows with send/reply behavior
+- records archive with per-pet filtering
 
 ## Notes
 
@@ -52,3 +55,13 @@ For the founder demo, this folder can be deployed as its own Vercel project:
 4. The preview output is `build/web`.
 
 This keeps the Flutter web demo independent from the root FastAPI deployment and matches the current web-first roadmap.
+
+## Preview mode
+
+For demo and founder review:
+- web preview can start from a dedicated preview route
+- when Supabase is not configured, the app can route directly into the preview dashboard flow
+- the preview is meant to show seeded UX, not production auth behavior
+
+See the current implementation/state here:
+- [docs/frontend/09-mobile-preview-state.md](/C:/Users/vasta/OneDrive%20-%20Techbau%20SpA/Documenti/PERS/VET%20APP/GIT/docs/frontend/09-mobile-preview-state.md)
