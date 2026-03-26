@@ -78,7 +78,7 @@ See `docs/runbooks/vercel_deploy.md` for the deployment checklist.
 ## Architecture notes
 - Flutter is the primary demo client.
 - FastAPI routes stay thin and delegate to application services.
-- Domain models do not depend on Streamlit, FastAPI, or external providers.
+- Domain models do not depend on Flutter, FastAPI, or external providers.
 - In-memory adapters keep the bootstrap runnable while Supabase/Postgres adapters are prepared as extension points.
 - LLM integration is still a demo stub in this first bootstrap push.
 - Supabase auth flow is now wired for runtime email/password login and bearer-token user resolution.
