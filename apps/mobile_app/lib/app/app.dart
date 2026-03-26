@@ -19,7 +19,8 @@ class VetApp extends StatelessWidget {
       title: 'VET APP',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      initialRoute: AppRouter.splash,
+      initialRoute:
+          bootstrapState.supabaseEnabled ? AppRouter.splash : AppRouter.homeShell,
       onGenerateRoute: AppRouter.onGenerateRoute,
       builder: (context, child) {
         final body = child ?? const SizedBox.shrink();
