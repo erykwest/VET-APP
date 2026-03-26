@@ -21,6 +21,9 @@ class MemoryAuthSessionStore implements AuthSessionStore {
   AuthContext read() => _context;
 
   @override
+  Future<AuthContext> restore() async => _context;
+
+  @override
   Future<void> write(AuthContext context) async {
     _context = context;
     if (!_controller.isClosed) {

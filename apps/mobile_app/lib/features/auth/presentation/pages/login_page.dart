@@ -182,7 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Suggerimento demo: usa credenziali di test per passare subito alla home.',
+                      'Suggerimento demo: usa demo@vetapp.local / VETAPP oppure registra un nuovo account di prova.',
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.35,

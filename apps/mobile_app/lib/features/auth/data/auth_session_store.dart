@@ -5,6 +5,8 @@ abstract interface class AuthSessionStore {
 
   AuthContext read();
 
+  Future<AuthContext> restore();
+
   Future<void> write(AuthContext context);
 
   Future<void> clear();

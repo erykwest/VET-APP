@@ -28,7 +28,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Result<AuthContext>> restoreSession() async {
-    final context = _sessionStore.read();
+    final context = await _sessionStore.restore();
     return Result.success(context);
   }
 

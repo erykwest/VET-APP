@@ -1,4 +1,7 @@
 import 'dart:math';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../shared/auth/auth.dart';
 import '../../../shared/errors/app_auth_error.dart';
@@ -9,15 +12,30 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   FakeAuthRemoteDataSource({
     Map<String, FakeUserRecord>? seededUsers,
   }) : _users = {
+          ..._defaultSeededUsers,
           ...?seededUsers,
         };
 
+  static const _usersStorageKey = 'vet_app.fake_auth_users';
+  static final Map<String, FakeUserRecord> _defaultSeededUsers = {
+    'demo@vetapp.local': FakeUserRecord(
+      id: 'user_demo',
+      email: 'demo@vetapp.local',
+      password: 'VETAPP',
+      displayName: 'Demo',
+      createdAt: DateTime.utc(2026, 3, 26),
+      onboardingCompleted: true,
+    ),
+  };
+
   final Map<String, FakeUserRecord> _users;
+  final SharedPreferencesAsync _preferences = SharedPreferencesAsync();
 
   @override
   Future<Result<AppSession>> signInWithPassword(
     AuthEmailPasswordCredentials credentials,
   ) async {
+    await _restorePersistedUsers();
     final normalizedEmail = credentials.email.trim().toLowerCase();
     final user = _users[normalizedEmail];
     if (user == null || user.password != credentials.password) {
@@ -36,6 +54,7 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<Result<AppSession>> signUpWithPassword(
     AuthSignUpRequest request,
   ) async {
+    await _restorePersistedUsers();
     final normalizedEmail = request.email.trim().toLowerCase();
     if (_users.containsKey(normalizedEmail)) {
       return Result.failure(
@@ -57,12 +76,14 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
       onboardingCompleted: false,
     );
     _users[normalizedEmail] = user;
+    await _persistUsers();
 
     return Result.success(_sessionFor(user.toAppUser()));
   }
 
   @override
   Future<Result<void>> resetPasswordForEmail(String email) async {
+    await _restorePersistedUsers();
     final normalizedEmail = email.trim().toLowerCase();
     if (!_users.containsKey(normalizedEmail)) {
       return Result.failure(
@@ -79,6 +100,35 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<Result<void>> signOut() async {
     return Result.success(null);
+  }
+
+  Future<void> _restorePersistedUsers() async {
+    final raw = await _preferences.getString(_usersStorageKey);
+    if (raw == null || raw.isEmpty) {
+      return;
+    }
+
+    try {
+      final payload = jsonDecode(raw);
+      if (payload is! List) {
+        return;
+      }
+
+      for (final entry in payload) {
+        if (entry is! Map) {
+          continue;
+        }
+        final record = FakeUserRecord.fromMap(Map<String, dynamic>.from(entry));
+        _users[record.email.trim().toLowerCase()] = record;
+      }
+    } catch (_) {
+      return;
+    }
+  }
+
+  Future<void> _persistUsers() async {
+    final payload = _users.values.map((user) => user.toMap()).toList(growable: false);
+    await _preferences.setString(_usersStorageKey, jsonEncode(payload));
   }
 
   AppSession _sessionFor(AppUser user) {
@@ -122,6 +172,29 @@ class FakeUserRecord {
       displayName: displayName,
       createdAt: createdAt,
       onboardingCompleted: onboardingCompleted,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'email': email,
+      'password': password,
+      'display_name': displayName,
+      'created_at': createdAt.toIso8601String(),
+      'onboarding_completed': onboardingCompleted,
+    };
+  }
+
+  factory FakeUserRecord.fromMap(Map<String, dynamic> map) {
+    return FakeUserRecord(
+      id: map['id'] as String? ?? '',
+      email: map['email'] as String? ?? '',
+      password: map['password'] as String? ?? '',
+      displayName: map['display_name'] as String?,
+      createdAt: DateTime.tryParse(map['created_at'] as String? ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      onboardingCompleted: map['onboarding_completed'] as bool? ?? false,
     );
   }
 }

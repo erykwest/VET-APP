@@ -5,6 +5,7 @@ import '../../../shared/config/app_runtime_config_loader.dart';
 import 'auth_repository_impl.dart';
 import 'fake_auth_remote_data_source.dart';
 import 'memory_auth_session_store.dart';
+import 'persistent_auth_session_store.dart';
 import 'supabase_auth_remote_data_source.dart';
 
 class AuthRepositoryFactory {
@@ -24,9 +25,11 @@ class AuthRepositoryFactory {
     final config = _configLoader.load();
     final hasSupabaseClient =
         config.hasSupabaseCredentials && _hasSupabaseClient();
-    final sessionStore = MemoryAuthSessionStore(
-      initialContext: hasSupabaseClient ? _readSupabaseContext() : null,
-    );
+    final sessionStore = hasSupabaseClient
+        ? MemoryAuthSessionStore(
+            initialContext: _readSupabaseContext(),
+          )
+        : PersistentAuthSessionStore();
     final remoteDataSource = hasSupabaseClient
         ? SupabaseAuthRemoteDataSource(config: config)
         : FakeAuthRemoteDataSource();
