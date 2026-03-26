@@ -16,7 +16,7 @@ class VetApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final initialRoute = !bootstrapState.supabaseEnabled && kIsWeb
-        ? AppRouter.homeShell
+        ? AppRouter.previewDashboard
         : AppRouter.splash;
 
     return MaterialApp(
