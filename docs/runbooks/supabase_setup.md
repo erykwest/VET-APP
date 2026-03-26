@@ -47,6 +47,15 @@ The script now includes:
 - Row Level Security
 - owner-scoped policies for `pet_profiles`, `conversations`, and `reminders`
 
+For the LLM evidence layer, also run `scripts/setup/supabase_llm_sources_schema.sql`.
+
+That schema adds:
+- a curated registry of trusted domains and base URLs
+- a catalog of approved source documents with trust metadata
+- vector-ready chunks for retrieval
+- an audit table for tracking which sources were used in answers
+- an `ai.match_source_chunks(...)` RPC-ready SQL function
+
 Policy model:
 - users can only read/update/delete rows where `owner_id = auth.uid()::text`
 - insert on `conversations` and `reminders` is allowed only if the referenced pet belongs to the same authenticated user
@@ -58,3 +67,9 @@ Policy model:
 
 ## Next step after schema
 When the tables exist, start the app normally. The bootstrap container will use Supabase repositories and Supabase auth automatically from `.env`.
+
+For the LLM path, the recommended flow is:
+- curate allowed hosts in `ai.trusted_source_domains`
+- ingest only documents that belong to those hosts into `ai.source_documents`
+- chunk and embed approved text into `ai.source_document_chunks`
+- call `ai.match_source_chunks(...)` before sending context to Groq
