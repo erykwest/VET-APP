@@ -74,6 +74,18 @@ class MedicalRecordsRepository {
     });
   }
 
+  static List<MedicalRecordEntry> get previewRecords =>
+      List<MedicalRecordEntry>.unmodifiable(_previewRecords);
+
+  static MedicalRecordEntry? previewRecordById(String id) {
+    for (final record in _previewRecords) {
+      if (record.id == id) {
+        return record;
+      }
+    }
+    return _previewRecords.isEmpty ? null : _previewRecords.first;
+  }
+
   Future<List<MedicalRecordEntry>> _tryLoadRemoteRecords() async {
     final client = _resolveClient();
     if (client == null) {

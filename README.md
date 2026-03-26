@@ -22,10 +22,18 @@ Web-first pet-tech product with a Flutter client and a Python backend bootstrap.
 3. Choose one backend pair:
    - `AUTH_BACKEND=bootstrap` and `PERSISTENCE_BACKEND=in_memory` for browser demo mode
    - `AUTH_BACKEND=supabase` and `PERSISTENCE_BACKEND=supabase` for real Supabase mode
-4. Keep `LLM_PROVIDER=echo` for browser demo runs. Switch to `LLM_PROVIDER=groq` only when you want to exercise the hosted LLM path and have set `LLM_API_KEY`.
-5. Install dependencies with `make setup`.
-6. Start the API with `make run-api`.
-7. Start the Flutter web client with `cd apps/mobile_app && flutter pub get && flutter run -d chrome`.
+4. Choose the evidence backend:
+   - `EVIDENCE_BACKEND=in_memory` for preview mode
+   - `EVIDENCE_BACKEND=supabase` for the RPC-backed trusted-sources retriever
+5. Keep `LLM_PROVIDER=echo` for browser demo runs. Switch to `LLM_PROVIDER=groq` only when you want to exercise the hosted LLM path and have set `LLM_API_KEY`.
+6. Install dependencies with `make setup`.
+7. Start the API with `make run-api`.
+8. Start the Flutter web client with `cd apps/mobile_app && flutter pub get && flutter run -d chrome`.
+
+For the trusted-sources rubric in Supabase:
+- run `scripts/setup/supabase_llm_sources_schema.sql`
+- preview the initial registry seed with `python scripts/setup/seed_source_registry.py`
+- write it with `python scripts/setup/seed_source_registry.py --apply`
 
 ## Main commands
 - `make format`
@@ -65,6 +73,7 @@ Configuration is centralized in `packages/shared/config/settings.py`. The bootst
 - `API_HOST`
 - `API_PORT`
 - `DATABASE_URL`
+- `EVIDENCE_BACKEND`
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`

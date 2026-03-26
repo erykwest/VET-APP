@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/tokens/app_colors.dart';
 import '../../features/chat/chat.dart';
-import '../../features/home/presentation/pages/home_placeholder_page.dart';
+import '../../features/home/presentation/pages/home_dashboard_page.dart';
 import '../../features/medical_records/presentation/pages/medical_records_pages.dart';
 import '../../features/pets/pets.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
@@ -20,7 +20,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
   late int _currentIndex = widget.initialIndex;
 
   late final List<Widget> _pages = const [
-    HomePlaceholderPage(),
+    HomeDashboardPage(),
     PetsListPage(),
     ChatConversationsPage(),
     MedicalRecordsListPage(),
@@ -30,47 +30,224 @@ class _HomeShellPageState extends State<HomeShellPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 900;
+            final isExtendedRail = constraints.maxWidth >= 1240;
+
+            if (isCompact) {
+              return IndexedStack(
+                index: _currentIndex,
+                children: _pages,
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x14000000),
+                        blurRadius: 28,
+                        offset: Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      NavigationRail(
+                        extended: isExtendedRail,
+                        minExtendedWidth: 228,
+                        backgroundColor: AppColors.primary,
+                        indicatorColor: AppColors.accentSoft,
+                        selectedIndex: _currentIndex,
+                        onDestinationSelected: _handleDestinationSelected,
+                        labelType: isExtendedRail
+                            ? NavigationRailLabelType.none
+                            : NavigationRailLabelType.selected,
+                        selectedLabelTextStyle: const TextStyle(
+                          color: AppColors.onPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        unselectedLabelTextStyle: const TextStyle(
+                          color: Color(0xFFE7EEE9),
+                        ),
+                        leading: Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 20, 18, 12),
+                          child: _ShellBrand(extended: isExtendedRail),
+                        ),
+                        trailing: Padding(
+                          padding: const EdgeInsets.fromLTRB(18, 12, 18, 20),
+                          child: _RailFooter(extended: isExtendedRail),
+                        ),
+                        destinations: _destinations,
+                      ),
+                      Expanded(
+                        child: ClipRect(
+                          child: IndexedStack(
+                            index: _currentIndex,
+                            children: _pages,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 76,
-        backgroundColor: Colors.white,
-        indicatorColor: AppColors.accentSoft,
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (value) {
-          setState(() {
-            _currentIndex = value;
-          });
+      bottomNavigationBar: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= 900) {
+            return const SizedBox.shrink();
+          }
+
+          return NavigationBar(
+            height: 76,
+            backgroundColor: Colors.white,
+            indicatorColor: AppColors.accentSoft,
+            selectedIndex: _currentIndex,
+            onDestinationSelected: _handleDestinationSelected,
+            destinations: _bottomDestinations,
+          );
         },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
+      ),
+    );
+  }
+
+  void _handleDestinationSelected(int value) {
+    setState(() {
+      _currentIndex = value;
+    });
+  }
+
+  List<NavigationRailDestination> get _destinations => const [
+        NavigationRailDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home_rounded),
+          label: Text('Home'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.pets_outlined),
+          selectedIcon: Icon(Icons.pets_rounded),
+          label: Text('Pets'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.chat_bubble_outline_rounded),
+          selectedIcon: Icon(Icons.chat_bubble_rounded),
+          label: Text('Chat'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.description_outlined),
+          selectedIcon: Icon(Icons.description_rounded),
+          label: Text('Records'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings_rounded),
+          label: Text('Settings'),
+        ),
+      ];
+
+  List<NavigationDestination> get _bottomDestinations => const [
+        NavigationDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home_rounded),
+          label: 'Home',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.pets_outlined),
+          selectedIcon: Icon(Icons.pets_rounded),
+          label: 'Pets',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.chat_bubble_outline_rounded),
+          selectedIcon: Icon(Icons.chat_bubble_rounded),
+          label: 'Chat',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.description_outlined),
+          selectedIcon: Icon(Icons.description_rounded),
+          label: 'Records',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings_rounded),
+          label: 'Settings',
+        ),
+      ];
+}
+
+class _ShellBrand extends StatelessWidget {
+  const _ShellBrand({required this.extended});
+
+  final bool extended;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.accentSoft.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(14),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.pets_outlined),
-            selectedIcon: Icon(Icons.pets_rounded),
-            label: 'Pets',
+          child: const Icon(
+            Icons.pets_rounded,
+            color: AppColors.onPrimary,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline_rounded),
-            selectedIcon: Icon(Icons.chat_bubble_rounded),
-            label: 'Chat',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.description_outlined),
-            selectedIcon: Icon(Icons.description_rounded),
-            label: 'Records',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings_rounded),
-            label: 'Settings',
+        ),
+        if (extended) ...[
+          const SizedBox(width: 12),
+          const SizedBox(
+            width: 132,
+            child: Text(
+              'VET APP',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.onPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _RailFooter extends StatelessWidget {
+  const _RailFooter({required this.extended});
+
+  final bool extended;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!extended) {
+      return const SizedBox.shrink();
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        'Warm clinical workspace',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: const Color(0xFFCEE0D8),
+            ),
       ),
     );
   }

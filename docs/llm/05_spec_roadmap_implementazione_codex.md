@@ -128,3 +128,10 @@ Alla fine delle milestone iniziali, il sistema deve essere in grado di:
 - limitarsi in assenza di evidenza;
 - reindirizzare a veterinario quando necessario;
 - essere tecnicamente pronto al passaggio da Groq a provider premium.
+
+## Nota futura — Gestione admin delle fonti
+Nelle fasi successive deve essere prevista un'interfaccia di amministrazione per:
+- aggiornare manualmente la rubrica delle fonti affidabili
+- importare e revisionare snapshot dei ranking esterni
+- pianificare aggiornamenti periodici dei dati di discovery e classificazione
+- promuovere o bloccare documenti candidati all'ingestione e alla vettorializzazione

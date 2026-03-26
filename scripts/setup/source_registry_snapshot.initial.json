@@ -1,0 +1,9 @@
+[
+  {
+    "registry_key": "avma_direct",
+    "host": "avmajournals.avma.org",
+    "journal_title": "AVMA Journals",
+    "normalized_percentile": 1.0,
+    "source_url": "https://avmajournals.avma.org"
+  }
+]

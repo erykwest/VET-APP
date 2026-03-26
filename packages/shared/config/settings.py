@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000, alias="API_PORT")
     persistence_backend: str = Field(default="in_memory", alias="PERSISTENCE_BACKEND")
     auth_backend: str = Field(default="bootstrap", alias="AUTH_BACKEND")
+    evidence_backend: str = Field(default="in_memory", alias="EVIDENCE_BACKEND")
     database_url: str = Field(default="", alias="DATABASE_URL")
     supabase_url: str = Field(default="", alias="SUPABASE_URL")
     supabase_anon_key: str = Field(default="", alias="SUPABASE_ANON_KEY")
@@ -51,6 +52,15 @@ class Settings(BaseSettings):
                 {
                     "SUPABASE_URL": self.supabase_url,
                     "SUPABASE_ANON_KEY": self.supabase_anon_key,
+                    "SUPABASE_SERVICE_ROLE_KEY": self.supabase_service_role_key,
+                },
+            )
+
+        if self.evidence_backend == "supabase":
+            self._require_fields(
+                "EVIDENCE_BACKEND=supabase",
+                {
+                    "SUPABASE_URL": self.supabase_url,
                     "SUPABASE_SERVICE_ROLE_KEY": self.supabase_service_role_key,
                 },
             )

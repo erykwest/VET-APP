@@ -51,10 +51,11 @@ For the LLM evidence layer, also run `scripts/setup/supabase_llm_sources_schema.
 
 That schema adds:
 - a curated registry of trusted domains and base URLs
+- external ranking registries with normalized scores
 - a catalog of approved source documents with trust metadata
 - vector-ready chunks for retrieval
 - an audit table for tracking which sources were used in answers
-- an `ai.match_source_chunks(...)` RPC-ready SQL function
+- RPC-ready SQL functions such as `ai.rank_source_documents(...)` and `ai.match_source_chunks(...)`
 
 Policy model:
 - users can only read/update/delete rows where `owner_id = auth.uid()::text`
@@ -69,7 +70,18 @@ Policy model:
 When the tables exist, start the app normally. The bootstrap container will use Supabase repositories and Supabase auth automatically from `.env`.
 
 For the LLM path, the recommended flow is:
+- import journal rankings into registry tables and normalize them to percentiles
 - curate allowed hosts in `ai.trusted_source_domains`
 - ingest only documents that belong to those hosts into `ai.source_documents`
-- chunk and embed approved text into `ai.source_document_chunks`
-- call `ai.match_source_chunks(...)` before sending context to Groq
+- chunk and embed only approved text marked `eligible_for_rag = true`
+- call `ai.rank_source_documents(...)` first, then `ai.match_source_chunks(...)` before sending context to Groq
+
+Recommended backend toggle:
+- `EVIDENCE_BACKEND=in_memory` for preview mode
+- `EVIDENCE_BACKEND=supabase` when the RPC-backed evidence retriever is enabled
+
+Initial registry seed workflow:
+- run the schema SQL first
+- dry-run the registry seed with `python scripts/setup/seed_source_registry.py`
+- apply it with `python scripts/setup/seed_source_registry.py --apply`
+- optionally import curated registry snapshots with `--snapshot-json path/to/export.json`

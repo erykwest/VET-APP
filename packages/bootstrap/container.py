@@ -34,7 +34,7 @@ class ApplicationContainer:
             self.reminder_repository,
         ) = self._build_repositories()
         self.llm_client = self._build_llm_client()
-        self.evidence_retriever = InMemoryEvidenceRetriever()
+        self.evidence_retriever = self._build_evidence_retriever()
         self.chat_orchestrator = ChatOrchestrator(self.llm_client, self.evidence_retriever)
 
     def create_pet_profile_service(self) -> CreatePetProfileService:
@@ -124,6 +124,23 @@ class ApplicationContainer:
         if self.settings.llm_provider == "groq":
             return GroqLLMClient(self.settings)
         return EchoLLMClient(self.settings)
+
+    def _build_evidence_retriever(self) -> InMemoryEvidenceRetriever | object:
+        if self.settings.evidence_backend == "supabase":
+            try:
+                from packages.infrastructure.llm.retrieval.supabase_evidence_retriever import (
+                    SupabaseEvidenceRetriever,
+                )
+                from packages.infrastructure.persistence.supabase.client import (
+                    build_supabase_client,
+                )
+
+                return SupabaseEvidenceRetriever(build_supabase_client(self.settings))
+            except ModuleNotFoundError:
+                if self.settings.environment != "production":
+                    return InMemoryEvidenceRetriever()
+                raise
+        return InMemoryEvidenceRetriever()
 
 
 @lru_cache(maxsize=1)

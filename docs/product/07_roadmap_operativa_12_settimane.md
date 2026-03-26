@@ -101,3 +101,10 @@ Esiste una decisione scritta, non intuitiva, su cosa succede dopo.
 - nessuna nuova macro-feature entra senza impatto diretto sul core loop
 - nessuna estensione B2B entra prima del check di validazione consumer
 - ogni settimana deve produrre un output verificabile
+
+## Nota futura — Gestione admin delle fonti
+Dopo la v1 dovra' essere prevista una superficie di amministrazione dedicata per:
+- aggiornare manualmente la rubrica delle fonti affidabili
+- importare o revisionare snapshot dei ranking esterni
+- lanciare refresh periodici dei dati di discovery e classificazione
+- promuovere o bloccare documenti per l'ingestione e la vettorializzazione
