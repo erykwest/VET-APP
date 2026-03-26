@@ -26,6 +26,11 @@ class ChatConversationsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final totalUnread = conversations.fold<int>(
+      0,
+      (sum, conversation) => sum + conversation.unreadCount,
+    );
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Container(
@@ -49,7 +54,13 @@ class ChatConversationsPage extends StatelessWidget {
                   AppSpacing.xxl,
                   AppSpacing.md,
                 ),
-                child: _Header(totalCount: conversations.length),
+                child: _Header(
+                  totalCount: conversations.length,
+                  totalUnread: totalUnread,
+                  activePetName: conversations.isEmpty
+                      ? 'Moka'
+                      : conversations.first.activePetName,
+                ),
               ),
               Expanded(
                 child: AnimatedSwitcher(
@@ -57,16 +68,16 @@ class ChatConversationsPage extends StatelessWidget {
                   child: switch (state) {
                     ChatScreenState.loading => const ChatLoadingState(
                         key: ValueKey('loading'),
-                        title: 'Carichiamo le conversazioni',
+                        title: 'Carichiamo la chat del pet',
                         subtitle:
-                            'Stiamo recuperando le ultime chat del tuo account.',
+                            'Stiamo recuperando i thread piu utili del tuo profilo demo.',
                       ),
                     ChatScreenState.empty => ChatEmptyState(
                         key: const ValueKey('empty'),
                         title: 'Nessuna conversazione ancora',
                         subtitle:
-                            'Qui compariranno i thread con l assistente veterinario.',
-                        actionLabel: 'Avvia la prima chat',
+                            'Qui compariranno le conversazioni con il tuo assistente veterinario.',
+                        actionLabel: 'Apri la prima chat',
                         onAction: conversations.isEmpty
                             ? () => Navigator.of(context).maybePop()
                             : () =>
@@ -77,7 +88,7 @@ class ChatConversationsPage extends StatelessWidget {
                         title: 'Non riusciamo a caricare le chat',
                         subtitle:
                             'Controlla la connessione e riprova tra un momento.',
-                        actionLabel: 'Back',
+                        actionLabel: 'Indietro',
                         onAction:
                             onRetry ?? () => Navigator.of(context).maybePop(),
                       ),
@@ -115,9 +126,13 @@ class ChatConversationsPage extends StatelessWidget {
 class _Header extends StatelessWidget {
   const _Header({
     required this.totalCount,
+    required this.totalUnread,
+    required this.activePetName,
   });
 
   final int totalCount;
+  final int totalUnread;
+  final String activePetName;
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +176,7 @@ class _Header extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '$totalCount thread${totalCount == 1 ? '' : 's'}',
+                '$totalCount conversazion${totalCount == 1 ? 'e' : 'i'}',
                 style: const TextStyle(
                   color: AppColors.mutedText,
                   fontSize: 12,
@@ -171,8 +186,8 @@ class _Header extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          const Text(
-            'Le tue conversazioni con l assistente veterinario',
+          Text(
+            '$activePetName e le sue conversazioni',
             style: TextStyle(
               color: AppColors.text,
               fontSize: 20,
@@ -182,7 +197,7 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           const Text(
-            'Tieni tutto il contesto del pet attivo in un unico posto: domande, risposte e prossimi passi.',
+            'Domande, risposte e prossimi passi nello stesso flusso, senza perdere il contesto del pet.',
             style: TextStyle(
               color: AppColors.secondaryText,
               fontSize: 14,
@@ -190,7 +205,63 @@ class _Header extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _HeaderChip(
+                label: '$totalCount conversazioni',
+                backgroundColor: AppColors.accentSoft,
+                foregroundColor: AppColors.primary,
+              ),
+              _HeaderChip(
+                label: '$totalUnread non lett${totalUnread == 1 ? 'a' : 'e'}',
+                backgroundColor: AppColors.warmSurface,
+                foregroundColor: const Color(0xFF8B5B3E),
+              ),
+              const _HeaderChip(
+                label: 'Demo pronta',
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary,
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeaderChip extends StatelessWidget {
+  const _HeaderChip({
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: foregroundColor,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

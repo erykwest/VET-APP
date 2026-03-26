@@ -28,7 +28,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _showLogoutPreview() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Logout preview: qui collegheremo il flusso reale.')),
+      const SnackBar(content: Text('Logout pronto per essere collegato al flusso account reale.')),
     );
   }
 
@@ -64,26 +64,26 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: AppSpacing.lg),
                 switch (_state) {
                   _ViewState.empty => _StateCard(
-                      label: 'Preferences',
-                      title: 'No preferences configured yet.',
-                      body: 'Start from profile, theme and notification settings.',
+                      label: 'Preferenze',
+                      title: 'Nessuna preferenza configurata.',
+                      body: 'Parti da profilo, notifiche e consenso dati per completare l esperienza web.',
                       icon: Icons.tune_outlined,
-                      actionLabel: 'Open profile',
+                      actionLabel: 'Apri profilo',
                       onAction: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(builder: (_) => const ProfilePage()),
                       ),
                       footer: const _LogoutPreview(),
                     ),
                   _ViewState.loading => const _LoadingCard(
-                      title: 'Loading preferences',
-                      body: 'Fetching theme, language and account flags.',
+                      title: 'Caricamento preferenze',
+                      body: 'Sto recuperando lingua, notifiche e impostazioni account.',
                     ),
                   _ViewState.error => _StateCard(
-                      label: 'Settings error',
-                      title: 'Preferences could not be loaded.',
-                      body: 'Retry after checking your connection or continue with defaults.',
+                      label: 'Errore impostazioni',
+                      title: 'Le preferenze non sono disponibili.',
+                      body: 'Riprova oppure continua con la configurazione demo web.',
                       icon: Icons.sync_problem_outlined,
-                      actionLabel: 'Retry',
+                      actionLabel: 'Riprova',
                       onAction: () => setState(() => _state = _ViewState.success),
                       footer: const _LogoutPreview(),
                     ),
@@ -92,10 +92,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       children: [
                         _StateCard(
                           label: 'Account',
-                          title: 'Profile and preferences',
-                          body: 'Update the owner profile, theme and alert behavior.',
+                          title: 'Profilo e preferenze',
+                          body: 'Gestisci owner, notifiche e comportamenti principali della web app.',
                           icon: Icons.person_outline,
-                          actionLabel: 'Open profile',
+                          actionLabel: 'Apri profilo',
                           onAction: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(builder: (_) => const ProfilePage()),
                           ),
@@ -103,15 +103,15 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         const SizedBox(height: AppSpacing.lg),
                         _ToggleCard(
-                          title: 'Push notifications',
-                          body: 'Receive due date and reminder alerts.',
+                          title: 'Notifiche push',
+                          body: 'Ricevi promemoria per visite, vaccini e trattamenti.',
                           value: _notifications,
                           onChanged: (value) => setState(() => _notifications = value),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         _ToggleCard(
-                          title: 'Analytics',
-                          body: 'Share anonymized usage to improve the app.',
+                          title: 'Analisi d uso',
+                          body: 'Condividi dati anonimi per migliorare l esperienza prodotto.',
                           value: _analytics,
                           onChanged: (value) => setState(() => _analytics = value),
                         ),
@@ -171,9 +171,9 @@ class _Header extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         const _BrandPill(),
         const SizedBox(height: AppSpacing.lg),
-        const Text('Settings', style: AppTextStyles.heading),
+        const Text('Impostazioni', style: AppTextStyles.heading),
         const SizedBox(height: AppSpacing.sm),
-        const Text('Preferences, account controls and debug space.', style: AppTextStyles.body),
+        const Text('Preferenze, account e controlli principali in una schermata unica della web app.', style: AppTextStyles.body),
       ],
     );
   }
@@ -220,10 +220,10 @@ class _StateChips extends StatelessWidget {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
-        _Chip(label: 'Empty', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
-        _Chip(label: 'Loading', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
-        _Chip(label: 'Error', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
-        _Chip(label: 'Success', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
+        _Chip(label: 'Vuoto', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
+        _Chip(label: 'Caricamento', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
+        _Chip(label: 'Errore', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
+        _Chip(label: 'Pronto', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
       ],
     );
   }
@@ -336,7 +336,7 @@ class _LoadingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _AccentPill(label: 'Loading'),
+          const _AccentPill(label: 'Caricamento'),
           const SizedBox(height: AppSpacing.lg),
           Text(title, style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.sm),
@@ -450,12 +450,12 @@ class _DebugCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Debug area',
+            'Roadmap breve',
             style: TextStyle(color: AppColors.onPrimary, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           SizedBox(height: AppSpacing.sm),
           Text(
-            'Version info, local flags and future diagnostics go here.',
+            'Da qui possiamo estendere preferenze, privacy e automazioni senza toccare il cuore della web app.',
             style: TextStyle(color: AppColors.onPrimary, fontSize: 14, height: 1.45),
           ),
         ],
@@ -481,7 +481,7 @@ class _LogoutPreview extends StatelessWidget {
         children: [
           const Icon(Icons.logout_outlined, color: AppColors.secondaryText),
           const SizedBox(width: AppSpacing.sm),
-          Text('Logout action preview', style: AppTextStyles.bodySmall.copyWith(color: AppColors.text)),
+          Text('Logout pronto per il collegamento finale', style: AppTextStyles.bodySmall.copyWith(color: AppColors.text)),
         ],
       ),
     );

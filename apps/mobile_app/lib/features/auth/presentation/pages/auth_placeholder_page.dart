@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../widgets/auth_widgets.dart';
 import 'login_page.dart';
@@ -12,11 +12,11 @@ class AuthPlaceholderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return AuthScreenScaffold(
       eyebrow: 'Accesso protetto',
-      title: 'Prendi in mano il profilo del tuo pet.',
+      title: 'Entra nel profilo del tuo pet in pochi secondi.',
       subtitle:
-          'Login, registrazione e reset password in un unico spazio leggero, pensato per mobile e browser.',
+          'Login, registrazione e recupero accesso in un unico flusso pensato per la web app responsive e la futura release mobile.',
       primaryActionLabel: 'Vai al login',
-      secondaryActionLabel: 'Crea account',
+      secondaryActionLabel: 'Crea un account',
       onPrimaryAction: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -36,18 +36,18 @@ class AuthPlaceholderPage extends StatelessWidget {
         children: [
           const AuthStateBanner(
             status: AuthBannerStatus.info,
-            title: 'Pronto per il test',
+            title: 'Demo pronta da mostrare',
             message:
-                'Questa feature usa solo logica locale. Nessuna chiamata backend reale ancora.',
+                'L accesso qui e gia navigabile; alcune integrazioni restano in preview mentre prepariamo la release web-first.',
           ),
           const SizedBox(height: 16),
           AuthSurfaceCard(
-            title: 'Percorsi rapidi',
+            title: 'Percorso demo',
             child: Column(
               children: [
                 _AuthQuickTile(
-                  title: 'Login',
-                  subtitle: 'Entra con email e password',
+                  title: 'Accesso',
+                  subtitle: 'Accedi e continua nel flusso principale.',
                   icon: Icons.login_rounded,
                   onTap: () {
                     Navigator.of(context).push(
@@ -60,7 +60,7 @@ class AuthPlaceholderPage extends StatelessWidget {
                 const SizedBox(height: 12),
                 _AuthQuickTile(
                   title: 'Registrazione',
-                  subtitle: 'Crea il tuo account e accetta i termini',
+                  subtitle: 'Prepara il profilo owner per la prova.',
                   icon: Icons.person_add_alt_1_rounded,
                   onTap: () {
                     Navigator.of(context).push(
@@ -72,8 +72,8 @@ class AuthPlaceholderPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 _AuthQuickTile(
-                  title: 'Reset password',
-                  subtitle: 'Recupera l accesso in pochi secondi',
+                  title: 'Recupero password',
+                  subtitle: 'Simula il recupero accesso senza attrito.',
                   icon: Icons.lock_reset_rounded,
                   onTap: () {
                     Navigator.of(context).push(
@@ -85,6 +85,13 @@ class AuthPlaceholderPage extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 16),
+          const AuthStateBanner(
+            status: AuthBannerStatus.success,
+            title: 'Flusso web gia leggibile',
+            message:
+                'Lo scopo di questa schermata e far partire subito il percorso web: auth, home, pet, chat e reminder.',
           ),
         ],
       ),
@@ -108,7 +115,7 @@ class _AuthQuickTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFF6F1E9),
+      color: const Color(0xFFF6F2E8),
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         onTap: onTap,
@@ -144,7 +151,7 @@ class _AuthQuickTile extends StatelessWidget {
                       subtitle,
                       style: const TextStyle(
                         fontSize: 13,
-                        height: 1.35,
+                        height: 1.3,
                         color: Color(0xFF5C726D),
                       ),
                     ),
@@ -159,3 +166,4 @@ class _AuthQuickTile extends StatelessWidget {
     );
   }
 }
+

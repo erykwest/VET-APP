@@ -4,6 +4,9 @@ import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_radii.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
 import '../../../../design_system/tokens/app_text_styles.dart';
+import '../../../chat/presentation/pages/chat_conversations_page.dart';
+import '../../../medical_records/presentation/pages/medical_records_pages.dart';
+import '../../../reminders/presentation/pages/reminders_pages.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 
@@ -19,6 +22,9 @@ class HomePlaceholderPage extends StatefulWidget {
 class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
   _HomeScenario _scenario = _HomeScenario.success;
 
+  static const _ownerName = 'Roberto';
+  static const _activePetName = 'Moka';
+
   void _openProfile() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const ProfilePage()),
@@ -31,9 +37,27 @@ class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
     );
   }
 
+  void _openChat() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const ChatConversationsPage()),
+    );
+  }
+
+  void _openRecords() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const MedicalRecordsListPage()),
+    );
+  }
+
+  void _openReminders() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const RemindersListPage()),
+    );
+  }
+
   void _showComingSoon(String title) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$title in arrivo nella prossima iterazione.')),
+      SnackBar(content: Text('$title in arrivo nella prossima release.')),
     );
   }
 
@@ -79,25 +103,45 @@ class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
                     const SizedBox(height: AppSpacing.xl),
                     _scenarioContent(),
                     const SizedBox(height: AppSpacing.xl),
-                    Text(
-                      'Scorciatoie rapide',
-                      style: AppTextStyles.title.copyWith(
-                        fontSize: 18,
-                      ),
+                    const _MetricsRow(),
+                    const SizedBox(height: AppSpacing.xl),
+                    Text('Cabina di regia', style: AppTextStyles.title.copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.md),
+                    _ControlPanel(
+                      ownerName: _ownerName,
+                      activePetName: _activePetName,
+                      onOpenChat: _openChat,
+                      onOpenRecords: _openRecords,
+                      onOpenReminders: _openReminders,
                     ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Text('Pet attivo', style: AppTextStyles.title.copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.md),
+                    _ActivePetCard(onTap: _openProfile),
+                    const SizedBox(height: AppSpacing.xl),
+                    Text('Prossima scadenza', style: AppTextStyles.title.copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.md),
+                    const _ReminderCard(),
+                    const SizedBox(height: AppSpacing.xl),
+                    Text('Ultima chat e ultimo record', style: AppTextStyles.title.copyWith(fontSize: 18)),
+                    const SizedBox(height: AppSpacing.md),
+                    _PreviewRow(
+                      onOpenChat: _openChat,
+                      onOpenRecords: _openRecords,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    Text('Scorciatoie rapide', style: AppTextStyles.title.copyWith(fontSize: 18)),
                     const SizedBox(height: AppSpacing.md),
                     _ShortcutGrid(
                       onOpenProfile: _openProfile,
                       onOpenSettings: _openSettings,
+                      onOpenChat: _openChat,
+                      onOpenRecords: _openRecords,
+                      onOpenReminders: _openReminders,
                       onShowComingSoon: _showComingSoon,
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    Text(
-                      'Stato generale',
-                      style: AppTextStyles.title.copyWith(
-                        fontSize: 18,
-                      ),
-                    ),
+                    Text('Stato generale', style: AppTextStyles.title.copyWith(fontSize: 18)),
                     const SizedBox(height: AppSpacing.md),
                     _buildStatusCard(),
                   ],
@@ -131,7 +175,7 @@ class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
           },
         );
       case _HomeScenario.success:
-        return _SuccessState(onOpenProfile: _openProfile);
+        return const _SuccessState();
     }
   }
 
@@ -154,14 +198,14 @@ class _HomePlaceholderPageState extends State<HomePlaceholderPage> {
       case _HomeScenario.error:
         return const _StatusCard(
           title: 'Riepilogo non disponibile',
-          subtitle: 'C\'e stato un problema nel recupero dei dati locali.',
+          subtitle: 'C e stato un problema nel recupero dei dati.',
           icon: Icons.cloud_off_rounded,
           accentColor: Color(0xFFF7DDD2),
         );
       case _HomeScenario.success:
         return const _StatusCard(
           title: 'Tutto sotto controllo',
-          subtitle: "Reminder, documenti e chat sono pronti per l'uso.",
+          subtitle: 'Pet, reminder, chat e documenti sono pronti per la demo.',
           icon: Icons.check_circle_rounded,
           accentColor: AppColors.accentSoft,
         );
@@ -216,7 +260,7 @@ class _TopBar extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             const Text(
-              "La giornata del tuo pet, in un colpo d'occhio.",
+              "La giornata del tuo pet, in un colpo d'occhio nella web app responsive.",
               style: AppTextStyles.body,
             ),
           ],
@@ -247,19 +291,19 @@ class _TopBar extends StatelessWidget {
               itemBuilder: (context) => const [
                 PopupMenuItem(
                   value: _HomeScenario.loading,
-                  child: Text('Loading'),
+                  child: Text('Caricamento'),
                 ),
                 PopupMenuItem(
                   value: _HomeScenario.empty,
-                  child: Text('Empty'),
+                  child: Text('Vuoto'),
                 ),
                 PopupMenuItem(
                   value: _HomeScenario.error,
-                  child: Text('Error'),
+                  child: Text('Errore'),
                 ),
                 PopupMenuItem(
                   value: _HomeScenario.success,
-                  child: Text('Success'),
+                  child: Text('Pronto'),
                 ),
               ],
             ),
@@ -271,46 +315,12 @@ class _TopBar extends StatelessWidget {
 }
 
 class _SuccessState extends StatelessWidget {
-  const _SuccessState({
-    required this.onOpenProfile,
-  });
-
-  final VoidCallback onOpenProfile;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _HeroCard(),
-        const SizedBox(height: AppSpacing.xl),
-        Row(
-          children: [
-            Text(
-              'Pet attivo',
-              style: AppTextStyles.title.copyWith(fontSize: 18),
-            ),
-            const Spacer(),
-            TextButton.icon(
-              onPressed: onOpenProfile,
-              icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-              label: const Text('Cambia'),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        _ActivePetCard(onTap: onOpenProfile),
-      ],
-    );
-  }
-}
-
-class _HeroCard extends StatelessWidget {
-  const _HeroCard();
+  const _SuccessState();
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         color: AppColors.surface.withValues(alpha: 0.92),
@@ -332,30 +342,32 @@ class _HeroCard extends StatelessWidget {
             runSpacing: AppSpacing.sm,
             children: [
               _PillChip(
-                label: 'Chat pronta',
+                label: '1 pet attivo',
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.onPrimary,
               ),
               _PillChip(
-                label: '2 documenti nuovi',
+                label: '1 reminder imminente',
                 backgroundColor: AppColors.warmSurface,
                 foregroundColor: Color(0xFF7B4A2E),
               ),
               _PillChip(
-                label: '1 reminder oggi',
+                label: 'Chat pronta',
                 backgroundColor: AppColors.accentSoft,
                 foregroundColor: Color(0xFF315E55),
+              ),
+              _PillChip(
+                label: 'Record disponibile',
+                backgroundColor: Color(0xFFE7EEF8),
+                foregroundColor: Color(0xFF355B78),
               ),
             ],
           ),
           SizedBox(height: AppSpacing.xl),
-          Text(
-            'Oggi il tuo pet ha 3 azioni importanti.',
-            style: AppTextStyles.heading,
-          ),
+          Text('Moka e pronta per la giornata.', style: AppTextStyles.heading),
           SizedBox(height: AppSpacing.sm),
           Text(
-            'Controlla i reminder, aggiorna i documenti recenti e apri la chat se hai un dubbio.',
+            'Hai gia il quadro chiaro: prossimo controllo, ultima chat utile e documento clinico recente in vista.',
             style: AppTextStyles.body,
           ),
         ],
@@ -407,7 +419,7 @@ class _ActivePetCard extends StatelessWidget {
                 ),
                 SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Gatto europeo, 3 anni, 4.6 kg',
+                  'Cane meticcio, 4 anni, 17.8 kg',
                   style: AppTextStyles.bodySmall,
                 ),
                 SizedBox(height: AppSpacing.xs),
@@ -433,15 +445,439 @@ class _ActivePetCard extends StatelessWidget {
   }
 }
 
+class _MetricsRow extends StatelessWidget {
+  const _MetricsRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Wrap(
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.md,
+      children: [
+        _MetricCard(
+          label: 'Pet registrati',
+          value: '1',
+          hint: 'Moka attiva',
+          backgroundColor: Color(0xFFE1F0EA),
+          icon: Icons.pets_rounded,
+        ),
+        _MetricCard(
+          label: 'Scadenze',
+          value: '1',
+          hint: 'Entro 3 giorni',
+          backgroundColor: Color(0xFFF6EADF),
+          icon: Icons.notifications_active_rounded,
+        ),
+        _MetricCard(
+          label: 'Chat',
+          value: '1',
+          hint: 'Thread pronto',
+          backgroundColor: Color(0xFFE7EEF8),
+          icon: Icons.chat_bubble_rounded,
+        ),
+      ],
+    );
+  }
+}
+
+class _ControlPanel extends StatelessWidget {
+  const _ControlPanel({
+    required this.ownerName,
+    required this.activePetName,
+    required this.onOpenChat,
+    required this.onOpenRecords,
+    required this.onOpenReminders,
+  });
+
+  final String ownerName;
+  final String activePetName;
+  final VoidCallback onOpenChat;
+  final VoidCallback onOpenRecords;
+  final VoidCallback onOpenReminders;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(Icons.dashboard_rounded, color: AppColors.primary),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('$ownerName x $activePetName', style: AppTextStyles.title),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Tutto quello che serve per la prova della web app in un solo punto.',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _ActionPill(
+                label: 'Apri chat',
+                icon: Icons.chat_bubble_outline_rounded,
+                onTap: onOpenChat,
+              ),
+              _ActionPill(
+                label: 'Apri record',
+                icon: Icons.description_outlined,
+                onTap: onOpenRecords,
+              ),
+              _ActionPill(
+                label: 'Vedi reminder',
+                icon: Icons.notifications_active_outlined,
+                onTap: onOpenReminders,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReminderCard extends StatelessWidget {
+  const _ReminderCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.warmSurface,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.notifications_active_outlined,
+              color: Color(0xFF8B5B3E),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Antiparassitario', style: AppTextStyles.title),
+                SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Scade tra 3 giorni, da tenere allineato con il calendario.',
+                  style: AppTextStyles.bodySmall,
+                ),
+                SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Promemoria attivo per Moka',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.mutedText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          const _Badge(label: 'Presto'),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewRow extends StatelessWidget {
+  const _PreviewRow({
+    required this.onOpenChat,
+    required this.onOpenRecords,
+  });
+
+  final VoidCallback onOpenChat;
+  final VoidCallback onOpenRecords;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sideBySide = constraints.maxWidth >= 420;
+        final chatCard = _PreviewCard(
+          title: 'Ultima chat',
+          subtitle: 'Puoi dirmi se questo calo di appetito merita una visita?',
+          meta: 'Risposta utile, tono rassicurante e contesto attivo',
+          icon: Icons.chat_bubble_outline_rounded,
+          onTap: onOpenChat,
+        );
+        final recordCard = _PreviewCard(
+          title: 'Ultimo record',
+          subtitle: 'Richiamo vaccinale di Moka',
+          meta: '25 Mar 2026 - Clinica Vet Roma - pronto da condividere',
+          icon: Icons.description_outlined,
+          onTap: onOpenRecords,
+        );
+
+        if (sideBySide) {
+          return Row(
+            children: [
+              Expanded(child: chatCard),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: recordCard),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            chatCard,
+            const SizedBox(height: AppSpacing.md),
+            recordCard,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PreviewCard extends StatelessWidget {
+  const _PreviewCard({
+    required this.title,
+    required this.subtitle,
+    required this.meta,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final String meta;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(26),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(icon, color: AppColors.primary),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(title, style: AppTextStyles.title.copyWith(fontSize: 17)),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodySmall,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(meta, style: AppTextStyles.caption),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    required this.hint,
+    required this.backgroundColor,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final String hint;
+  final Color backgroundColor;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 148,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, size: 22, color: AppColors.primary),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(hint, style: AppTextStyles.caption),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionPill extends StatelessWidget {
+  const _ActionPill({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.background,
+      borderRadius: BorderRadius.circular(AppRadii.pill),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.warmSurface,
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF8B5B3E),
+        ),
+      ),
+    );
+  }
+}
+
 class _ShortcutGrid extends StatelessWidget {
   const _ShortcutGrid({
     required this.onOpenProfile,
     required this.onOpenSettings,
+    required this.onOpenChat,
+    required this.onOpenRecords,
+    required this.onOpenReminders,
     required this.onShowComingSoon,
   });
 
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenSettings;
+  final VoidCallback onOpenChat;
+  final VoidCallback onOpenRecords;
+  final VoidCallback onOpenReminders;
   final ValueChanged<String> onShowComingSoon;
 
   @override
@@ -463,16 +899,34 @@ class _ShortcutGrid extends StatelessWidget {
           onTap: onOpenProfile,
         ),
         _ShortcutTile(
+          icon: Icons.chat_bubble_outline_rounded,
+          label: 'Chat',
+          caption: 'Apri',
+          onTap: onOpenChat,
+        ),
+        _ShortcutTile(
+          icon: Icons.description_outlined,
+          label: 'Record',
+          caption: 'Apri',
+          onTap: onOpenRecords,
+        ),
+        _ShortcutTile(
+          icon: Icons.notifications_active_outlined,
+          label: 'Reminder',
+          caption: 'Apri',
+          onTap: onOpenReminders,
+        ),
+        _ShortcutTile(
           icon: Icons.settings_outlined,
           label: 'Impostazioni',
           caption: 'Preferenze',
           onTap: onOpenSettings,
         ),
         _ShortcutTile(
-          icon: Icons.notifications_active_rounded,
-          label: 'Reminder',
+          icon: Icons.medical_services_outlined,
+          label: 'Clinica',
           caption: 'In arrivo',
-          onTap: () => onShowComingSoon('Reminder'),
+          onTap: () => onShowComingSoon('Clinica'),
         ),
       ],
     );

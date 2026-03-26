@@ -59,14 +59,14 @@ class ChatConversationDetailPage extends StatelessWidget {
                       onAction: onSendMessage == null
                           ? null
                           : () => onSendMessage!
-                              .call('Ciao, ho una domanda per Cocco.'),
+                              .call('Ciao, ho una domanda per Moka.'),
                     ),
                   ChatScreenState.error => ChatErrorState(
                       key: const ValueKey('error'),
                       title: 'Conversazione non disponibile',
                       subtitle:
                           'Qualcosa e andato storto nel recupero del thread.',
-                      actionLabel: 'Back to chats',
+                      actionLabel: 'Torna alle chat',
                       onAction:
                           onRetry ?? () => Navigator.of(context).maybePop(),
                     ),

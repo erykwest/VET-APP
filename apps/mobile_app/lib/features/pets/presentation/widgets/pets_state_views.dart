@@ -6,7 +6,7 @@ import '../../../../design_system/tokens/app_spacing.dart';
 import '../../../../design_system/tokens/app_text_styles.dart';
 
 class PetsLoadingView extends StatelessWidget {
-  const PetsLoadingView({super.key, this.label = 'Loading pets...'});
+  const PetsLoadingView({super.key, this.label = 'Caricamento pet...'});
 
   final String label;
 
@@ -15,7 +15,7 @@ class PetsLoadingView extends StatelessWidget {
     return _StateSurface(
       icon: Icons.hourglass_top_rounded,
       title: label,
-      subtitle: 'Please wait while the screen is prepared.',
+      subtitle: 'Attendi un istante mentre prepariamo la schermata.',
       child: Column(
         children: List.generate(
           3,
@@ -41,7 +41,7 @@ class PetsErrorView extends StatelessWidget {
     required this.subtitle,
     super.key,
     this.onRetry,
-    this.actionLabel = 'Try again',
+    this.actionLabel = 'Riprova',
   });
 
   final String title;

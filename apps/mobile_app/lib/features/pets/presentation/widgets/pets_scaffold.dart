@@ -62,7 +62,7 @@ class PetsScaffold extends StatelessWidget {
                           Icon(Icons.pets, size: 14, color: AppColors.accent),
                           SizedBox(width: AppSpacing.sm),
                           Text(
-                            'Pets',
+                            'Pet',
                             style: TextStyle(
                               color: AppColors.onPrimary,
                               fontSize: 12,

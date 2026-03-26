@@ -1,5 +1,5 @@
 name: vet_app_mobile
-description: Mobile-first Flutter client for VET APP.
+description: Web-first Flutter client for VET APP, with mobile-ready support.
 publish_to: "none"
 version: 0.1.0+1
 

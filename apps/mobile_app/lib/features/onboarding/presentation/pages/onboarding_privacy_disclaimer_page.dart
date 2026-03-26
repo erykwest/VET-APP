@@ -91,10 +91,10 @@ class _DisclaimerStateRow extends StatelessWidget {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
-        _StatusPill(label: 'Empty', color: Color(0xFFDDEDE8)),
-        _StatusPill(label: 'Loading', color: Color(0xFFFFF5EC)),
-        _StatusPill(label: 'Error', color: Color(0xFFF5D9D0)),
-        _StatusPill(label: 'Success', color: Color(0xFFD8E8DD)),
+        _StatusPill(label: 'Privacy chiara', color: Color(0xFFDDEDE8)),
+        _StatusPill(label: 'Uso responsabile IA', color: Color(0xFFFFF5EC)),
+        _StatusPill(label: 'Supporto, non diagnosi', color: Color(0xFFF5D9D0)),
+        _StatusPill(label: 'Consenso esplicito', color: Color(0xFFD8E8DD)),
       ],
     );
   }

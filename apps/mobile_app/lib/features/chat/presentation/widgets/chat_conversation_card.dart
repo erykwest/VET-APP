@@ -68,6 +68,8 @@ class ChatConversationCard extends StatelessWidget {
                                 color: AppColors.text,
                                 fontWeight: FontWeight.w700,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Text(
@@ -80,6 +82,8 @@ class ChatConversationCard extends StatelessWidget {
                       Text(
                         conversation.subtitle,
                         style: AppTextStyles.bodySmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -132,6 +136,8 @@ class ChatConversationCard extends StatelessWidget {
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.text,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

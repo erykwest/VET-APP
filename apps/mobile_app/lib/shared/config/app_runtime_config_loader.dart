@@ -18,15 +18,15 @@ class AppRuntimeConfigLoader {
       ),
       apiBaseUrl: const String.fromEnvironment(
         AppEnvKeys.apiBaseUrl,
-        defaultValue: 'http://127.0.0.1:8000',
+        defaultValue: '',
       ),
       supabaseUrl: const String.fromEnvironment(
         AppEnvKeys.supabaseUrl,
-        defaultValue: 'https://ywbuzgwbkrmkukkpysbz.supabase.co',
+        defaultValue: '',
       ),
       supabaseAnonKey: const String.fromEnvironment(
         AppEnvKeys.supabaseAnonKey,
-        defaultValue: 'sb_publishable_t5vFAehg91FYPh_rFLOiUQ_Wv9tFh5m',
+        defaultValue: '',
       ),
       logLevel: const String.fromEnvironment(
         AppEnvKeys.logLevel,

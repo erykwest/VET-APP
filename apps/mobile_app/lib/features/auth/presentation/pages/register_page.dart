@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -27,7 +27,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   AuthBannerStatus _status = AuthBannerStatus.info;
   String _title = 'Crea il tuo account.';
-  String _message = 'Registrazione locale pronta per il test degli stati UI.';
+  String _message = 'Registrazione pronta per testare il flusso web responsive e il futuro mobile.';
 
   @override
   void dispose() {
@@ -103,7 +103,7 @@ class _RegisterPageState extends State<RegisterPage> {
       eyebrow: 'Registrazione',
       title: 'Costruiamo il profilo di partenza.',
       subtitle:
-          'Pochi campi, un consenso chiaro e una UI pronta a passare al backend quando saremo pronti.',
+          'Pochi campi, un consenso chiaro e una UI pronta a passare alla prossima fase quando saremo pronti.',
       primaryActionLabel: 'Crea account',
       secondaryActionLabel: 'Ho gia un account',
       onPrimaryAction: _submit,
@@ -229,3 +229,4 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 }
+

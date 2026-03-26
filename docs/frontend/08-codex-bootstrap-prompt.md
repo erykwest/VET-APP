@@ -6,7 +6,7 @@ Di seguito un prompt base da dare a Codex per far generare la struttura iniziale
 
 ## Prompt
 
-Sei un senior Flutter engineer. Devi costruire la struttura iniziale di un'app mobile veterinaria, con approccio mobile-first, architettura modulare e backend Supabase.
+Sei un senior Flutter engineer. Devi costruire la struttura iniziale di una web app veterinaria in Flutter, con approccio web-first, configurazione mobile-ready, architettura modulare e backend Supabase.
 
 ### Obiettivi
 - creare una codebase Flutter pulita e scalabile

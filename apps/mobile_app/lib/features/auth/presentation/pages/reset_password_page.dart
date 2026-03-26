@@ -76,12 +76,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return AuthScreenScaffold(
-      eyebrow: 'Reset password',
+      eyebrow: 'Recupero password',
       title: 'Nessun problema, ricominciamo.',
       subtitle:
           'Inserisci la tua email e simula l invio del link di recupero accesso.',
       primaryActionLabel: 'Invia link',
-      secondaryActionLabel: 'Torna al login',
+      secondaryActionLabel: 'Torna all accesso',
       onPrimaryAction: _submit,
       onSecondaryAction: () {
         Navigator.of(context).pushReplacement(

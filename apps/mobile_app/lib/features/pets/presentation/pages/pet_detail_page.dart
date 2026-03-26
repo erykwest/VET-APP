@@ -12,7 +12,7 @@ class PetDetailPage extends StatelessWidget {
     super.key,
     this.pet,
     this.state = PetsScreenStatus.success,
-    this.errorMessage = 'This pet profile is unavailable right now.',
+    this.errorMessage = 'Questo profilo pet non è disponibile al momento.',
   });
 
   final PetProfile? pet;
@@ -22,10 +22,10 @@ class PetDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PetsScaffold(
-      title: pet?.name ?? 'Pet detail',
+      title: pet?.name ?? 'Dettaglio pet',
       subtitle: pet == null
-          ? 'Open a profile to see the full history.'
-          : 'All the key info for this profile.',
+          ? 'Apri un profilo per vedere tutta la cronologia.'
+          : 'Tutte le informazioni chiave di questo profilo.',
       actions: [
         IconButton(
           onPressed: pet == null ? null : () => _openEdit(context),
@@ -36,18 +36,18 @@ class PetDetailPage extends StatelessWidget {
       ],
       body: switch (state) {
         PetsScreenStatus.loading =>
-          const PetsLoadingView(label: 'Loading pet detail...'),
+          const PetsLoadingView(label: 'Carico il dettaglio pet...'),
         PetsScreenStatus.error => PetsErrorView(
-            title: 'Pet detail unavailable',
+            title: 'Dettaglio pet non disponibile',
             subtitle: errorMessage,
-            actionLabel: 'Back to list',
+            actionLabel: 'Torna alla lista',
             onRetry: () => _backToList(context),
           ),
         PetsScreenStatus.empty => PetsEmptyView(
-            title: 'No pet selected',
+            title: 'Nessun pet selezionato',
             subtitle:
-                'Choose a profile from the list to inspect details, notes, and next steps.',
-            actionLabel: 'Back to list',
+                'Scegli un profilo dalla lista per vedere dettagli, note e prossimi passi.',
+            actionLabel: 'Torna alla lista',
             onAction: () => _backToList(context),
           ),
         PetsScreenStatus.success => _PetDetailContent(
@@ -145,20 +145,20 @@ class _PetDetailContent extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           PetSection(
-            title: 'Profile summary',
+            title: 'Riepilogo profilo',
             children: [
-              PetInfoRow(label: 'Species', value: pet.species),
-              PetInfoRow(label: 'Breed', value: pet.breed),
-              PetInfoRow(label: 'Birth date', value: pet.birthDateLabel),
-              PetInfoRow(label: 'Sex', value: pet.sex),
-              PetInfoRow(label: 'Weight', value: pet.weightLabel),
+              PetInfoRow(label: 'Specie', value: pet.species),
+              PetInfoRow(label: 'Razza', value: pet.breed),
+              PetInfoRow(label: 'Data di nascita', value: pet.birthDateLabel),
+              PetInfoRow(label: 'Sesso', value: pet.sex),
+              PetInfoRow(label: 'Peso', value: pet.weightLabel),
             ],
           ),
           const SizedBox(height: 16),
           PetSection(
-            title: 'Medical note',
+            title: 'Nota clinica',
             subtitle:
-                'Short context that helps the vet and the owner keep continuity.',
+                'Contesto breve che aiuta vet e owner a mantenere continuità.',
             children: [
               Text(
                 pet.medicalNote,
@@ -169,22 +169,22 @@ class _PetDetailContent extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              PetInfoRow(label: 'Next visit', value: pet.nextVisitLabel),
+              PetInfoRow(label: 'Prossima visita', value: pet.nextVisitLabel),
             ],
           ),
           const SizedBox(height: 16),
           PetSection(
-            title: 'Actions',
+            title: 'Azioni',
             children: [
               PetActionButton(
-                label: 'Edit profile',
+                label: 'Modifica profilo',
                 icon: Icons.edit_rounded,
                 primary: true,
                 onPressed: onEdit,
               ),
               const SizedBox(height: 12),
               PetActionButton(
-                label: 'Back to list',
+                label: 'Torna alla lista',
                 icon: Icons.list_rounded,
                 onPressed: onBackToList,
               ),

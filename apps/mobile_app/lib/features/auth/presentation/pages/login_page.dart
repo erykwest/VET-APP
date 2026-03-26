@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -23,8 +23,8 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
 
   AuthBannerStatus _status = AuthBannerStatus.info;
-  String _title = 'Compila i campi per entrare.';
-  String _message = 'Usiamo solo stato locale, senza backend reale.';
+  String _title = 'Inserisci le credenziali demo.';
+  String _message = 'Il flusso e gia pronto per la prova, con esperienza web responsive e mobile-ready.';
   bool _isLoading = false;
 
   @override
@@ -39,8 +39,9 @@ class _LoginPageState extends State<LoginPage> {
     if (!isValid) {
       setState(() {
         _status = AuthBannerStatus.error;
-        _title = 'Controlla i dati';
-        _message = 'Serve un indirizzo email valido e una password di almeno 6 caratteri.';
+        _title = 'Controlla i campi';
+        _message =
+            'Servono una email valida e una password di almeno 6 caratteri.';
       });
       return;
     }
@@ -48,8 +49,9 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _isLoading = true;
       _status = AuthBannerStatus.loading;
-      _title = 'Verifica in corso';
-      _message = 'Sto verificando le credenziali e preparando la sessione.';
+      _title = 'Accesso in corso';
+      _message =
+          'Sto verificando le credenziali demo e preparando la home del prodotto.';
     });
 
     final result = await _authRepository.signInWithPassword(
@@ -65,8 +67,9 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           _isLoading = false;
           _status = AuthBannerStatus.success;
-          _title = 'Login riuscito';
-          _message = 'Sessione pronta. Ti porto nella home shell.';
+          _title = 'Accesso completato';
+          _message =
+              'La sessione e pronta. Ti porto nel flusso principale.';
         });
         return true;
       },
@@ -74,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {
           _isLoading = false;
           _status = AuthBannerStatus.error;
-          _title = 'Login non riuscito';
+          _title = 'Accesso non riuscito';
           _message = error.message;
         });
         return false;
@@ -94,9 +97,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return AuthScreenScaffold(
-      eyebrow: 'Login',
+      eyebrow: 'Accesso',
       title: 'Bentornato.',
-      subtitle: 'Accedi per ritrovare il pet attivo, i promemoria e i documenti salvati.',
+      subtitle:
+          'Accedi per ritrovare pet attivo, reminder e documenti in una vista gia pronta per web e mobile.',
       primaryActionLabel: 'Entra',
       secondaryActionLabel: 'Vai alla registrazione',
       onPrimaryAction: _submit,
@@ -117,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 16),
           AuthSurfaceCard(
-            title: 'Accesso rapido',
+            title: 'Credenziali demo',
             child: Form(
               key: _formKey,
               child: Column(
@@ -174,6 +178,18 @@ class _LoginPageState extends State<LoginPage> {
                       );
                     },
                   ),
+                  const SizedBox(height: 12),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Suggerimento demo: usa credenziali di test per passare subito alla home.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        color: Color(0xFF5C726D),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -183,3 +199,4 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+

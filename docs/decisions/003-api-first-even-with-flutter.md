@@ -1,4 +1,4 @@
-# ADR 003: API First Even With Streamlit
+# ADR 003: API First Even With Flutter
 
 ## Status
 Accepted
@@ -7,6 +7,6 @@ Accepted
 Organize the codebase as if multiple clients will consume the same use cases.
 
 ## Consequences
-- Route handlers and UI stay thin
+- Route handlers and Flutter widgets stay thin
 - Application services become the stable entry point
-- Future Flutter/mobile adoption is simplified
+- Future clients can be added without rewriting the core

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../domain/pet_models.dart';
 import '../widgets/pet_form_field.dart';
@@ -11,7 +11,7 @@ class PetEditPage extends StatelessWidget {
     required this.pet,
     super.key,
     this.state = PetsScreenStatus.success,
-    this.errorMessage = 'We could not open this pet profile for editing.',
+    this.errorMessage = 'Non riesco ad aprire questo profilo pet per la modifica.',
   });
 
   final PetProfile pet;
@@ -21,28 +21,28 @@ class PetEditPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PetsScaffold(
-      title: 'Edit ${pet.name}.',
+      title: 'Modifica ${pet.name}.',
       subtitle:
-          'Adjust profile details without losing the original tone of the app.',
+          "Aggiorna i dettagli del profilo senza perdere il tono dell'app, pronto per web e mobile.",
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).maybePop(),
           style: TextButton.styleFrom(foregroundColor: Colors.white),
-          child: const Text('Close'),
+          child: const Text('Chiudi'),
         ),
       ],
       body: switch (state) {
         PetsScreenStatus.loading =>
-          const PetsLoadingView(label: 'Loading edit form...'),
+          const PetsLoadingView(label: 'Carico il form di modifica...'),
         PetsScreenStatus.error => PetsErrorView(
-            title: 'Edit unavailable',
+            title: 'Modifica non disponibile',
             subtitle: errorMessage,
-            actionLabel: 'Close',
+            actionLabel: 'Chiudi',
             onRetry: () => Navigator.of(context).maybePop(),
           ),
         PetsScreenStatus.empty => _PetEditForm(
             pet: pet,
-            helperText: 'No data was loaded, so this draft starts clean.',
+            helperText: 'Nessun dato caricato, quindi la bozza parte pulita.',
           ),
         PetsScreenStatus.success => _PetEditForm(pet: pet),
       },
@@ -54,7 +54,7 @@ class _PetEditForm extends StatelessWidget {
   const _PetEditForm({
     required this.pet,
     this.helperText =
-        'Update the fields you want to change and keep the rest intact.',
+        'Aggiorna i campi da cambiare e lascia invariato il resto.',
   });
 
   final PetProfile pet;
@@ -67,24 +67,24 @@ class _PetEditForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           PetSection(
-            title: 'Profile draft',
+            title: 'Bozza profilo',
             subtitle: helperText,
             children: [
-              PetFormField(label: 'Name', initialValue: pet.name),
+              PetFormField(label: 'Nome', initialValue: pet.name),
               const SizedBox(height: 16),
-              PetFormField(label: 'Species', initialValue: pet.species),
+              PetFormField(label: 'Specie', initialValue: pet.species),
               const SizedBox(height: 16),
-              PetFormField(label: 'Breed', initialValue: pet.breed),
-              const SizedBox(height: 16),
-              PetFormField(
-                  label: 'Birth date', initialValue: pet.birthDateLabel),
-              const SizedBox(height: 16),
-              PetFormField(label: 'Sex', initialValue: pet.sex),
-              const SizedBox(height: 16),
-              PetFormField(label: 'Weight', initialValue: pet.weightLabel),
+              PetFormField(label: 'Razza', initialValue: pet.breed),
               const SizedBox(height: 16),
               PetFormField(
-                label: 'Medical notes',
+                  label: 'Data di nascita', initialValue: pet.birthDateLabel),
+              const SizedBox(height: 16),
+              PetFormField(label: 'Sesso', initialValue: pet.sex),
+              const SizedBox(height: 16),
+              PetFormField(label: 'Peso', initialValue: pet.weightLabel),
+              const SizedBox(height: 16),
+              PetFormField(
+                label: 'Note cliniche',
                 initialValue: pet.medicalNote,
                 maxLines: 4,
               ),
@@ -92,29 +92,30 @@ class _PetEditForm extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           PetSection(
-            title: 'Save changes',
-            subtitle: 'The edit screen stays local until backend wiring lands.',
+            title: 'Salva modifiche',
+            subtitle: 'La schermata resta leggera finche non attiviamo la release completa.',
             children: [
               PetActionButton(
-                label: 'Save changes',
+                label: 'Salva modifiche',
                 icon: Icons.save_rounded,
                 primary: true,
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Changes saved locally for now.')),
+                      content: Text('Modifiche salvate per la demo.'),
+                    ),
                   );
                 },
               ),
               const SizedBox(height: 12),
               PetActionButton(
-                label: 'Archive profile',
+                label: 'Archivia profilo',
                 icon: Icons.archive_outlined,
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content:
-                            Text('Archive action is a local placeholder.')),
+                      content: Text("L'azione di archivio e un segnaposto temporaneo."),
+                    ),
                   );
                 },
               ),
@@ -125,3 +126,4 @@ class _PetEditForm extends StatelessWidget {
     );
   }
 }
+

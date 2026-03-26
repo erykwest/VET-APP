@@ -125,17 +125,17 @@ class _StateCard extends StatelessWidget {
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('Cosa copre subito', style: AppTextStyles.title),
+        children: [
+          Text('Cosa puoi mostrare subito', style: AppTextStyles.title),
           SizedBox(height: AppSpacing.md),
-          const Wrap(
+          Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
-              _StatusChip(label: 'Empty ready', color: Color(0xFFDDEDE8)),
-              _StatusChip(label: 'Loading', color: Color(0xFFFFF5EC)),
-              _StatusChip(label: 'Error', color: Color(0xFFF5D9D0)),
-              _StatusChip(label: 'Success', color: Color(0xFFD8E8DD)),
+              _StatusChip(label: 'Onboarding guidato', color: Color(0xFFDDEDE8)),
+              _StatusChip(label: 'Pet profile chiaro', color: Color(0xFFFFF5EC)),
+              _StatusChip(label: 'Chat contestuale', color: Color(0xFFF5D9D0)),
+              _StatusChip(label: 'Reminder visibili', color: Color(0xFFD8E8DD)),
             ],
           ),
         ],
@@ -189,12 +189,12 @@ class _BenefitGrid extends StatelessWidget {
           children: [
             _BenefitCard(
               width: cardWidth,
-              title: 'Più controllo',
+              title: 'Piu controllo',
               body: 'Tutto il percorso del pet diventa facile da seguire.',
             ),
             _BenefitCard(
               width: cardWidth,
-              title: 'Più velocita',
+              title: 'Piu velocita',
               body: 'Le azioni importanti sono a un tap dalla home.',
             ),
           ],

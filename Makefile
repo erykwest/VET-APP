@@ -19,5 +19,11 @@ test:
 run-api:
 	$(UV) run uvicorn apps.api.main:app --reload
 
-run-streamlit:
-	$(UV) run streamlit run apps/streamlit_app/app.py
+run-web:
+	cd apps/mobile_app && flutter pub get && flutter run -d chrome
+
+run-web-server:
+	cd apps/mobile_app && flutter pub get && flutter run -d web-server --web-hostname 127.0.0.1 --web-port 8080
+
+build-web:
+	cd apps/mobile_app && flutter pub get && flutter build web

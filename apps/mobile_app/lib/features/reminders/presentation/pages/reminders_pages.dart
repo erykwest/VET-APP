@@ -59,31 +59,31 @@ class _RemindersListPageState extends State<RemindersListPage> {
   @override
   Widget build(BuildContext context) {
     return _Shell(
-      title: 'Reminders',
+      title: 'Promemoria',
       subtitle: 'Vaccini, trattamenti e visite da tenere sotto controllo.',
-      actionLabel: 'Create',
+      actionLabel: 'Crea',
       onAction: _openCreate,
       state: _state,
       onStateChanged: (value) => setState(() => _state = value),
       child: switch (_state) {
         _ViewState.empty => _StatePanel(
-            label: 'No reminders',
-            title: 'Your reminder list is empty.',
-            body: 'Create the first vaccine or treatment reminder to stay on schedule.',
+            label: 'Nessun promemoria',
+            title: 'La lista dei promemoria e vuota.',
+            body: 'Crea il primo promemoria per vaccino o trattamento e resta in carreggiata.',
             icon: Icons.event_note_outlined,
-            actionLabel: 'Create reminder',
+            actionLabel: 'Crea promemoria',
             onAction: _openCreate,
           ),
         _ViewState.loading => const _LoadingPanel(
-            title: 'Loading reminders',
-            body: 'Reading due dates, repeat rules and owner notes.',
+            title: 'Caricamento promemoria',
+            body: 'Sto leggendo date, ricorrenze e note del proprietario.',
           ),
         _ViewState.error => _StatePanel(
-            label: 'Sync error',
-            title: 'Reminder sync failed.',
-            body: 'The local preview is still available. Retry once the network is back.',
+            label: 'Errore sync',
+            title: 'Sincronizzazione promemoria fallita.',
+            body: 'La sorgente demo e ancora disponibile. Riprova quando la rete torna su.',
             icon: Icons.wifi_off_outlined,
-            actionLabel: 'Retry',
+            actionLabel: 'Riprova',
             onAction: () {},
           ),
         _ViewState.success => FutureBuilder<List<ReminderEntry>>(
@@ -91,18 +91,18 @@ class _RemindersListPageState extends State<RemindersListPage> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const _LoadingPanel(
-                  title: 'Loading reminders',
-                  body: 'Reading due dates, repeat rules and owner notes.',
+                  title: 'Caricamento promemoria',
+                  body: 'Sto leggendo date, ricorrenze e note del proprietario.',
                 );
               }
 
               if (snapshot.hasError) {
                 return _StatePanel(
-                  label: 'Sync error',
-                  title: 'Reminder sync failed.',
-                  body: 'The local preview is still available. Retry once the network is back.',
+                  label: 'Errore sync',
+                  title: 'Sincronizzazione promemoria fallita.',
+                  body: 'La sorgente demo e ancora disponibile. Riprova quando la rete torna su.',
                   icon: Icons.wifi_off_outlined,
-                  actionLabel: 'Retry',
+                  actionLabel: 'Riprova',
                   onAction: () => unawaited(_reload()),
                 );
               }
@@ -110,11 +110,11 @@ class _RemindersListPageState extends State<RemindersListPage> {
               final reminders = snapshot.data ?? const <ReminderEntry>[];
               if (reminders.isEmpty) {
                 return _StatePanel(
-                  label: 'No reminders',
-                  title: 'Your reminder list is empty.',
-                  body: 'Create the first vaccine or treatment reminder to stay on schedule.',
+                  label: 'Nessun promemoria',
+                  title: 'La lista dei promemoria e vuota.',
+                  body: 'Crea il primo promemoria per vaccino o trattamento e resta in carreggiata.',
                   icon: Icons.event_note_outlined,
-                  actionLabel: 'Create reminder',
+                  actionLabel: 'Crea promemoria',
                   onAction: _openCreate,
                 );
               }
@@ -123,9 +123,15 @@ class _RemindersListPageState extends State<RemindersListPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const _SummaryCard(
-                    title: '5 active reminders',
-                    body: 'Next due in 3 days, 2 recurring tasks and 1 manual note.',
+                    title: '3 promemoria attivi',
+                    body: 'Il prossimo scade tra 3 giorni e il controllo peso e gia fissato per domani.',
                     icon: Icons.schedule_outlined,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  const _SummaryCard(
+                    title: 'Prossima azione',
+                    body: 'Apri il promemoria antiparassitario e avvisa Francesco con un tap.',
+                    icon: Icons.notifications_active_outlined,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   ...reminders.asMap().entries.expand(
@@ -168,20 +174,20 @@ class _ReminderCreatePageState extends State<ReminderCreatePage> {
   @override
   Widget build(BuildContext context) {
     return _Shell(
-      title: 'Create reminder',
-      subtitle: 'Add a new due date, recurrence and note.',
-      actionLabel: 'Review',
+      title: 'Crea promemoria',
+      subtitle: 'Aggiungi una nuova scadenza, la ricorrenza e una nota.',
+      actionLabel: 'Rivedi',
       onAction: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => const ReminderDetailPage(
             reminder: ReminderEntry(
-              id: 'draft-reminder',
-              title: 'Vaccination reminder',
-              subtitle: 'Every 12 months',
+              id: 'promemoria-bozza-vaccino',
+              title: 'Richiamo vaccinale di Moka',
+              subtitle: 'Ogni 12 mesi',
               due: '25 Apr 2026',
-              badge: 'Draft',
-              note: 'Bring the health booklet',
-              schedule: 'Recurring every 12 months',
+              badge: 'Bozza',
+              note: 'Porta il libretto sanitario e conferma la disponibilita con Francesco.',
+              schedule: 'Ricorrente ogni 12 mesi',
             ),
           ),
         ),
@@ -190,45 +196,45 @@ class _ReminderCreatePageState extends State<ReminderCreatePage> {
       onStateChanged: (value) => setState(() => _state = value),
       child: switch (_state) {
         _ViewState.empty => _StatePanel(
-            label: 'Draft',
-            title: 'Start with a quick reminder draft.',
-            body: 'We will capture title, date, recurrence and a short note.',
+            label: 'Bozza',
+            title: 'Parti da una bozza rapida.',
+            body: 'Raccogliamo titolo, data, ricorrenza e una nota breve.',
             icon: Icons.edit_calendar_outlined,
-            actionLabel: 'Continue',
+            actionLabel: 'Continua',
             onAction: () {},
           ),
         _ViewState.loading => const _LoadingPanel(
-            title: 'Preparing form',
-            body: 'Loading recurrence options and reminder defaults.',
+            title: 'Preparazione form',
+            body: 'Sto caricando le opzioni di ricorrenza e i valori predefiniti.',
           ),
         _ViewState.error => _StatePanel(
-            label: 'Validation error',
-            title: 'Some fields are missing.',
-            body: 'Fill the title and due date before saving the reminder.',
+            label: 'Errore validazione',
+            title: 'Mancano alcuni campi.',
+            body: 'Compila titolo e scadenza prima di salvare il promemoria.',
             icon: Icons.rule_outlined,
-            actionLabel: 'Fix fields',
+            actionLabel: 'Correggi campi',
             onAction: () {},
           ),
         _ViewState.success => _FormPanel(
-            title: 'New reminder',
-            body: 'Title, date and recurrence are ready for saving.',
+            title: 'Nuovo promemoria',
+            body: 'Titolo, data e ricorrenza sono pronti per il salvataggio.',
             items: const [
-              _FormItem(label: 'Title', value: 'Vaccination reminder'),
-              _FormItem(label: 'Due date', value: '25 Apr 2026'),
-              _FormItem(label: 'Recurrence', value: 'Every 12 months'),
-              _FormItem(label: 'Note', value: 'Bring the health booklet'),
+              _FormItem(label: 'Titolo', value: 'Richiamo vaccinale di Moka'),
+              _FormItem(label: 'Scadenza', value: '25 Apr 2026'),
+              _FormItem(label: 'Ricorrenza', value: 'Ogni 12 mesi'),
+              _FormItem(label: 'Nota', value: 'Porta il libretto sanitario'),
             ],
             onSave: () {
               unawaited(
                 _repository.saveReminder(
                   const ReminderEntry(
-                    id: 'draft-reminder',
-                    title: 'Vaccination reminder',
-                    subtitle: 'Every 12 months',
+                    id: 'promemoria-bozza-vaccino',
+                    title: 'Richiamo vaccinale di Moka',
+                    subtitle: 'Ogni 12 mesi',
                     due: '25 Apr 2026',
-                    badge: 'Draft',
-                    note: 'Bring the health booklet',
-                    schedule: 'Recurring every 12 months',
+                    badge: 'Bozza',
+                    note: 'Porta il libretto sanitario',
+                    schedule: 'Ricorrente ogni 12 mesi',
                   ),
                 ),
               );
@@ -254,53 +260,53 @@ class _ReminderEditPageState extends State<ReminderEditPage> {
   @override
   Widget build(BuildContext context) {
     return _Shell(
-      title: 'Edit reminder',
-      subtitle: 'Adjust recurrence, note and due date.',
-      actionLabel: 'Back',
+      title: 'Modifica promemoria',
+      subtitle: 'Aggiorna ricorrenza, nota e scadenza.',
+      actionLabel: 'Indietro',
       onAction: () => Navigator.of(context).pop(),
       state: _state,
       onStateChanged: (value) => setState(() => _state = value),
       child: switch (_state) {
         _ViewState.empty => _StatePanel(
-            label: 'Edit mode',
-            title: 'Nothing selected to edit.',
-            body: 'Choose a reminder from the list to update its date or note.',
+            label: 'Modalita modifica',
+            title: 'Nessun elemento selezionato.',
+            body: 'Scegli un promemoria dalla lista per aggiornarne data o nota.',
             icon: Icons.tune_outlined,
-            actionLabel: 'Back',
+            actionLabel: 'Indietro',
             onAction: () => Navigator.of(context).pop(),
           ),
         _ViewState.loading => const _LoadingPanel(
-            title: 'Loading reminder',
-            body: 'Reading repeat rules, local notes and alert settings.',
+            title: 'Caricamento promemoria',
+            body: 'Sto leggendo regole di ricorrenza, note locali e avvisi.',
           ),
         _ViewState.error => _StatePanel(
-            label: 'Save failed',
-            title: 'The reminder update was not saved.',
-            body: 'Try again after checking the due date and recurrence values.',
+            label: 'Salvataggio fallito',
+            title: 'L aggiornamento non e stato salvato.',
+            body: 'Riprova dopo aver controllato data e ricorrenza.',
             icon: Icons.save_outlined,
-            actionLabel: 'Retry save',
+            actionLabel: 'Riprova salvataggio',
             onAction: () {},
           ),
         _ViewState.success => _FormPanel(
-            title: 'Edit reminder',
-            body: 'All fields are prefilled and ready to save.',
+            title: 'Modifica promemoria',
+            body: 'Tutti i campi sono gia compilati e pronti per il salvataggio.',
             items: const [
-              _FormItem(label: 'Title', value: 'Antiparasitic treatment'),
-              _FormItem(label: 'Due date', value: '28 Mar 2026'),
-              _FormItem(label: 'Recurrence', value: 'Every 30 days'),
-              _FormItem(label: 'Alert', value: 'Push notification'),
+              _FormItem(label: 'Titolo', value: 'Antiparassitario di Moka'),
+              _FormItem(label: 'Scadenza', value: '28 Mar 2026'),
+              _FormItem(label: 'Ricorrenza', value: 'Ogni 30 giorni'),
+              _FormItem(label: 'Avviso', value: 'Notifica push'),
             ],
             onSave: () {
               unawaited(
                 _repository.saveReminder(
                   const ReminderEntry(
-                    id: 'antiparasitic-treatment',
-                    title: 'Antiparasitic treatment',
-                    subtitle: 'Every 30 days',
+                    id: 'moka-antiparassitario',
+                    title: 'Antiparassitario di Moka',
+                    subtitle: 'Ogni 30 giorni',
                     due: '28 Mar 2026',
-                    badge: 'Priority',
-                    note: 'Push notification enabled',
-                    schedule: 'Recurring every 30 days',
+                    badge: 'Prioritario',
+                    note: 'Notifica push attiva',
+                    schedule: 'Ricorrente ogni 30 giorni',
                   ),
                 ),
               );
@@ -329,9 +335,9 @@ class _ReminderDetailPageState extends State<ReminderDetailPage> {
     final reminder = widget.reminder;
 
     return _Shell(
-      title: 'Reminder detail',
-      subtitle: 'Date, recurrence and note.',
-      actionLabel: 'Edit',
+      title: 'Dettaglio promemoria',
+      subtitle: 'Data, ricorrenza e nota del promemoria.',
+      actionLabel: 'Modifica',
       onAction: () => Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const ReminderEditPage()),
       ),
@@ -339,42 +345,42 @@ class _ReminderDetailPageState extends State<ReminderDetailPage> {
       onStateChanged: (value) => setState(() => _state = value),
       child: switch (_state) {
         _ViewState.empty => _StatePanel(
-            label: 'No reminder',
-            title: 'Nothing selected to inspect.',
-            body: 'Open a reminder from the list or create a new draft.',
+            label: 'Nessun promemoria',
+            title: 'Nessun elemento da ispezionare.',
+            body: 'Apri un promemoria dalla lista oppure crea una bozza nuova.',
             icon: Icons.event_available_outlined,
-            actionLabel: 'Back to list',
+            actionLabel: 'Torna alla lista',
             onAction: () => Navigator.of(context).pop(),
           ),
         _ViewState.loading => const _LoadingPanel(
-            title: 'Loading reminder',
-            body: 'Reading recurrence, due date and notes.',
+            title: 'Caricamento promemoria',
+            body: 'Sto leggendo ricorrenza, scadenza e note.',
           ),
         _ViewState.error => _StatePanel(
-            label: 'Preview error',
-            title: 'Reminder preview unavailable.',
-            body: 'Retry or go back to the list to inspect another item.',
+            label: 'Errore anteprima',
+            title: 'Anteprima del promemoria non disponibile.',
+            body: 'Riprova oppure torna alla lista per aprire un altro elemento.',
             icon: Icons.broken_image_outlined,
-            actionLabel: 'Retry',
+            actionLabel: 'Riprova',
             onAction: () {},
           ),
         _ViewState.success => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _SummaryCard(
-                title: reminder?.title ?? 'Antiparasitic treatment',
-                body: reminder?.note ?? 'Recurring reminder tied to the active pet profile.',
+                title: reminder?.title ?? 'Antiparassitario di Moka',
+                body: reminder?.note ?? 'Promemoria ricorrente collegato al profilo attivo di Moka.',
                 icon: Icons.verified_outlined,
               ),
               const SizedBox(height: AppSpacing.lg),
               _FormPanel(
-                title: 'Reminder overview',
-                body: 'The detail view keeps all the key values in one place.',
+                title: 'Riepilogo promemoria',
+                body: 'La vista dettaglio mantiene tutti i valori chiave in un solo posto.',
                 items: [
-                  _FormItem(label: 'Title', value: reminder?.title ?? 'Antiparasitic treatment'),
-                  _FormItem(label: 'Due date', value: reminder?.due ?? '28 Mar 2026'),
-                  _FormItem(label: 'Recurrence', value: reminder?.schedule ?? 'Recurring every 30 days'),
-                  _FormItem(label: 'Status', value: reminder?.badge ?? 'Priority'),
+                  _FormItem(label: 'Titolo', value: reminder?.title ?? 'Antiparassitario di Moka'),
+                  _FormItem(label: 'Scadenza', value: reminder?.due ?? '28 Mar 2026'),
+                  _FormItem(label: 'Ricorrenza', value: reminder?.schedule ?? 'Ricorrente ogni 30 giorni'),
+                  _FormItem(label: 'Stato', value: reminder?.badge ?? 'Prioritario'),
                 ],
                 onSave: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(builder: (_) => const ReminderEditPage()),
@@ -525,10 +531,10 @@ class _StateChips extends StatelessWidget {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
-        _StateChip(label: 'Empty', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
-        _StateChip(label: 'Loading', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
-        _StateChip(label: 'Error', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
-        _StateChip(label: 'Success', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
+        _StateChip(label: 'Vuoto', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
+        _StateChip(label: 'Caricamento', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
+        _StateChip(label: 'Errore', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
+        _StateChip(label: 'OK', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
       ],
     );
   }
@@ -605,11 +611,11 @@ class _LoadingPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _Card(
-      label: 'Loading',
+      label: 'Caricamento',
       title: title,
       body: body,
       icon: Icons.hourglass_empty_outlined,
-      actionLabel: 'Please wait',
+      actionLabel: 'Attendi',
       onAction: null,
       loading: true,
     );
@@ -904,10 +910,10 @@ class _FormPanel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: FilledButton(onPressed: onSave, child: const Text('Save')),
+                child: FilledButton(onPressed: onSave, child: const Text('Salva')),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Expanded(child: OutlinedButton(onPressed: onCancel, child: const Text('Cancel'))),
+              Expanded(child: OutlinedButton(onPressed: onCancel, child: const Text('Annulla'))),
             ],
           ),
         ],

@@ -59,29 +59,29 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
   @override
   Widget build(BuildContext context) {
     return _FeatureScaffold(
-      title: 'Medical records',
-      subtitle: 'Archivio documenti clinici, referti e note.',
-      actionLabel: 'Upload',
+      title: 'Cartella clinica',
+      subtitle: 'Referti, note e allegati di Moka in un archivio chiaro.',
+      actionLabel: 'Carica',
       onAction: _openUpload,
       state: _state,
       onStateChanged: (value) => setState(() => _state = value),
       child: switch (_state) {
         _ViewState.empty => _EmptyState(
-            title: 'No documents yet',
-            body: 'Upload the first report to start building the archive.',
+            title: 'Nessun documento ancora',
+            body: 'Carica il primo referto per costruire la cartella clinica.',
             icon: Icons.folder_open_outlined,
-            actionLabel: 'Upload first file',
+            actionLabel: 'Carica il primo file',
             onAction: _openUpload,
           ),
         _ViewState.loading => const _LoadingState(
-            title: 'Syncing records',
-            body: 'Fetching documents and metadata from the local preview.',
+            title: 'Sincronizzazione referti',
+            body: 'Sto recuperando documenti e metadati dalla sorgente demo.',
           ),
         _ViewState.error => _EmptyState(
-            title: 'Could not load the archive',
-            body: 'Retry after checking the network or continue in offline preview.',
+            title: 'Impossibile caricare l archivio',
+            body: 'Riprova dopo aver controllato la connessione o continua con il fallback demo.',
             icon: Icons.cloud_off_outlined,
-            actionLabel: 'Retry',
+            actionLabel: 'Riprova',
             onAction: () {},
           ),
         _ViewState.success => FutureBuilder<List<MedicalRecordEntry>>(
@@ -89,17 +89,17 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const _LoadingState(
-                  title: 'Syncing records',
-                  body: 'Fetching documents and metadata from Supabase or preview data.',
+                  title: 'Sincronizzazione referti',
+                  body: 'Sto recuperando documenti e metadati da Supabase o dalla sorgente demo.',
                 );
               }
 
               if (snapshot.hasError) {
                 return _EmptyState(
-                  title: 'Could not load the archive',
-                  body: 'Retry after checking the network or continue in offline preview.',
+                  title: 'Impossibile caricare l archivio',
+                  body: 'Riprova dopo aver controllato la connessione o continua con il fallback demo.',
                   icon: Icons.cloud_off_outlined,
-                  actionLabel: 'Retry',
+                  actionLabel: 'Riprova',
                   onAction: () => unawaited(_reload()),
                 );
               }
@@ -107,10 +107,10 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
               final records = snapshot.data ?? const <MedicalRecordEntry>[];
               if (records.isEmpty) {
                 return _EmptyState(
-                  title: 'No documents yet',
-                  body: 'Upload the first report to start building the archive.',
+                  title: 'Nessun documento ancora',
+                  body: 'Carica il primo referto per costruire la cartella clinica.',
                   icon: Icons.folder_open_outlined,
-                  actionLabel: 'Upload first file',
+                  actionLabel: 'Carica il primo file',
                   onAction: _openUpload,
                 );
               }
@@ -119,9 +119,15 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const _SummaryCard(
-                    title: '12 documents',
-                    body: '2 new files this month, last sync 3 hours ago.',
+                    title: '3 documenti attivi',
+                    body: '1 referto pronto da condividere, 1 esame da rivedere e 1 nota archiviata.',
                     icon: Icons.description_outlined,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  const _SummaryCard(
+                    title: 'Prossima azione',
+                    body: 'Apri il referto vaccinale di Moka e condividilo con Francesco.',
+                    icon: Icons.verified_outlined,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   ...records.asMap().entries.expand(
@@ -162,26 +168,26 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
   final MedicalRecordsRepository _repository = MedicalRecordsRepository();
   _ViewState _state = _ViewState.success;
   final MedicalRecordEntry _draftRecord = const MedicalRecordEntry(
-    id: 'vaccination-certificate',
-    title: 'vaccination_certificate.pdf',
-    subtitle: 'Uploaded successfully and ready for metadata review.',
-    meta: 'Uploaded successfully',
-    badge: 'Verified',
-    detailSource: 'Clinica Vet',
+    id: 'moka-richiamo-vaccinale-draft',
+    title: 'richiamo_vaccinale_moka.pdf',
+    subtitle: 'Caricato con successo e pronto per la revisione dei metadati.',
+    meta: 'Caricato con successo',
+    badge: 'Verificato',
+    detailSource: 'Clinica Vet Roma',
     createdAt: '25 Mar 2026, 09:32',
     timeline: [
-      MedicalRecordTimelineEntry(label: 'Imported', value: '25 Mar 2026'),
-      MedicalRecordTimelineEntry(label: 'Reviewed', value: '25 Mar 2026, 09:45'),
-      MedicalRecordTimelineEntry(label: 'Ready for export', value: 'Available'),
+      MedicalRecordTimelineEntry(label: 'Importato', value: '25 Mar 2026'),
+      MedicalRecordTimelineEntry(label: 'Revisionato', value: '25 Mar 2026, 09:45'),
+      MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'Disponibile'),
     ],
   );
 
   @override
   Widget build(BuildContext context) {
     return _FeatureScaffold(
-      title: 'Upload document',
+      title: 'Carica documento',
       subtitle: 'Carica PDF, JPG o PNG e completa i metadati.',
-      actionLabel: 'Detail',
+      actionLabel: 'Dettaglio',
       onAction: () {
         unawaited(_repository.saveRecord(_draftRecord));
         Navigator.of(context).push(
@@ -195,31 +201,31 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
       child: switch (_state) {
         _ViewState.empty => const _EmptyUploadState(),
         _ViewState.loading => const _LoadingState(
-            title: 'Uploading document',
-            body: 'Processing file and extracting metadata.',
+            title: 'Caricamento documento',
+            body: 'Sto elaborando il file ed estraggo i metadati.',
           ),
         _ViewState.error => _EmptyState(
-            title: 'Upload failed',
-            body: 'Check the file format and try again.',
+            title: 'Caricamento fallito',
+            body: 'Controlla il formato del file e riprova.',
             icon: Icons.error_outline,
-            actionLabel: 'Retry upload',
+            actionLabel: 'Riprova il caricamento',
             onAction: () {},
           ),
         _ViewState.success => const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _SummaryCard(
-                title: 'vaccination_certificate.pdf',
-                body: 'Uploaded successfully and ready for metadata review.',
+                title: 'richiamo_vaccinale_moka.pdf',
+                body: 'Caricato con successo e pronto per la revisione dei metadati.',
                 icon: Icons.check_circle_outline,
               ),
               SizedBox(height: AppSpacing.lg),
               _MetaGrid(
                 items: [
-                  _MetaItem('Type', 'Vaccination'),
-                  _MetaItem('Date', '25 Mar 2026'),
-                  _MetaItem('Source', 'Clinica Vet'),
-                  _MetaItem('Format', 'PDF'),
+                  _MetaItem('Tipo', 'Vaccinazione'),
+                  _MetaItem('Data', '25 Mar 2026'),
+                  _MetaItem('Fonte', 'Clinica Vet Roma'),
+                  _MetaItem('Formato', 'PDF'),
                 ],
               ),
               SizedBox(height: AppSpacing.lg),
@@ -246,47 +252,53 @@ class _MedicalRecordDetailPageState extends State<MedicalRecordDetailPage> {
   @override
   Widget build(BuildContext context) {
     return _FeatureScaffold(
-      title: 'Metadata detail',
-      subtitle: 'Source, format, date and follow-up notes.',
-      actionLabel: 'Back',
+      title: 'Dettaglio metadati',
+      subtitle: 'Fonte, formato, data e prossima nota operativa.',
+      actionLabel: 'Indietro',
       onAction: () => Navigator.of(context).pop(),
       state: _state,
       onStateChanged: (value) => setState(() => _state = value),
       child: switch (_state) {
         _ViewState.empty => const _EmptyState(
-            title: 'No document selected',
-            body: 'Pick a file from the archive to inspect metadata.',
+            title: 'Nessun documento selezionato',
+            body: 'Scegli un file dall archivio per ispezionare i metadati.',
             icon: Icons.pageview_outlined,
-            actionLabel: 'Back to list',
+            actionLabel: 'Torna alla lista',
             onAction: null,
           ),
         _ViewState.loading => const _LoadingState(
-            title: 'Loading details',
-            body: 'Reading preview, source and notes.',
+            title: 'Caricamento dettagli',
+            body: 'Sto leggendo anteprima, fonte e note.',
           ),
         _ViewState.error => _EmptyState(
-            title: 'Preview unavailable',
-            body: 'The metadata is still safe. Try again or re-upload.',
+            title: 'Anteprima non disponibile',
+            body: 'I metadati sono al sicuro. Riprova oppure ricarica il file.',
             icon: Icons.broken_image_outlined,
-            actionLabel: 'Reload',
+            actionLabel: 'Ricarica',
             onAction: () {},
           ),
         _ViewState.success => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _SummaryCard(
-                title: widget.record?.title ?? 'vaccination_certificate.pdf',
+                title: widget.record?.title ?? 'richiamo_vaccinale_moka.pdf',
                 body: widget.record?.detailSource ??
-                    'Verified clinic document linked to the active pet profile.',
+                    'Documento clinico collegato al profilo attivo di Moka.',
                 icon: Icons.verified_outlined,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const _SummaryCard(
+                title: 'Prossima azione',
+                body: 'Condividi il referto con Francesco e conserva la nota nel profilo di Moka.',
+                icon: Icons.send_outlined,
               ),
               const SizedBox(height: AppSpacing.lg),
               _MetaGrid(
                 items: [
-                  _MetaItem('Clinic', widget.record?.detailSource ?? 'Clinica Vet Roma'),
-                  _MetaItem('Created', widget.record?.createdAt ?? '25 Mar 2026, 09:32'),
-                  const _MetaItem('Pages', '2'),
-                  const _MetaItem('Tags', 'Vaccines, yearly check'),
+                  _MetaItem('Clinica', widget.record?.detailSource ?? 'Clinica Vet Roma'),
+                  _MetaItem('Creato', widget.record?.createdAt ?? '25 Mar 2026, 09:32'),
+                  const _MetaItem('Pagine', '2'),
+                  const _MetaItem('Tag', 'Vaccini, controllo annuale'),
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -435,10 +447,10 @@ class _StateChips extends StatelessWidget {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
-        _StateChip(label: 'Empty', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
-        _StateChip(label: 'Loading', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
-        _StateChip(label: 'Error', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
-        _StateChip(label: 'Success', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
+        _StateChip(label: 'Vuoto', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
+        _StateChip(label: 'Caricamento', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
+        _StateChip(label: 'Errore', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
+        _StateChip(label: 'OK', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
       ],
     );
   }
@@ -491,7 +503,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StateCard(
-      accentLabel: 'Preview state',
+      accentLabel: 'Stato anteprima',
       title: title,
       body: body,
       icon: icon,
@@ -596,7 +608,7 @@ class _LoadingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _AccentPill(label: 'Loading'),
+          const _AccentPill(label: 'Caricamento'),
           const SizedBox(height: AppSpacing.lg),
           Text(title, style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.sm),
@@ -846,9 +858,9 @@ class _Checklist extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _LineItem(text: 'File format supported'),
-        _LineItem(text: 'Metadata extracted'),
-        _LineItem(text: 'Linked to active pet'),
+        _LineItem(text: 'Formato file supportato'),
+        _LineItem(text: 'Metadati estratti'),
+        _LineItem(text: 'Collegato al pet attivo'),
       ],
     );
   }
@@ -883,9 +895,9 @@ class _TimelineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = timeline ??
         const [
-          MedicalRecordTimelineEntry(label: 'Imported', value: '25 Mar 2026'),
-          MedicalRecordTimelineEntry(label: 'Reviewed', value: '25 Mar 2026, 09:45'),
-          MedicalRecordTimelineEntry(label: 'Ready for export', value: 'Available'),
+          MedicalRecordTimelineEntry(label: 'Importato', value: '25 Mar 2026'),
+          MedicalRecordTimelineEntry(label: 'Revisionato', value: '25 Mar 2026, 09:45'),
+          MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'Disponibile'),
         ];
 
     return Container(
@@ -899,7 +911,7 @@ class _TimelineCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Document timeline', style: AppTextStyles.title),
+          const Text('Cronologia documento', style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.lg),
           ...rows.map(
             (row) => _TimelineRow(label: row.label, value: row.value),
@@ -948,10 +960,10 @@ class _EmptyUploadState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _EmptyState(
-      title: 'Drop a file or browse your device',
-      body: 'We will collect type, date and source information after the upload.',
+      title: 'Trascina un file o esplora il dispositivo',
+      body: 'Raccoglieremo tipo, data e fonte subito dopo il caricamento.',
       icon: Icons.cloud_upload_outlined,
-      actionLabel: 'Browse files',
+      actionLabel: 'Esplora file',
       onAction: () {},
     );
   }

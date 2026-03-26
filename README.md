@@ -1,11 +1,11 @@
 # Vet App
 
-Flutter-first pet-tech product with a Python backend bootstrap. The repository is set up to show a convincing mobile demo first, while keeping the core ready for APIs, Supabase, and multiple LLM providers.
+Web-first pet-tech product with a Flutter client and a Python backend bootstrap. The repository is set up to show a convincing browser demo first, while keeping the core ready for APIs, Supabase, and multiple LLM providers, with mobile-ready configuration for later releases.
 
 ## Goals
-- validate onboarding, auth, home, pet profile, chat, records, and reminders in a single mobile flow
+- validate onboarding, auth, home, pet profile, chat, records, and reminders in a single web flow
 - keep domain and application logic independent from delivery frameworks
-- make the Flutter client the primary demo surface without coupling the core to it
+- make the Flutter client the primary web demo surface without coupling the core to it
 
 ## Repository shape
 - `apps/mobile_app`: Flutter client and demo surface
@@ -20,12 +20,12 @@ Flutter-first pet-tech product with a Python backend bootstrap. The repository i
 1. Install `uv` or use `python -m pip install -e .[dev]` as fallback.
 2. Copy `.env.example` to `.env`.
 3. Choose one backend pair:
-   - `AUTH_BACKEND=bootstrap` and `PERSISTENCE_BACKEND=in_memory` for local demo mode
+   - `AUTH_BACKEND=bootstrap` and `PERSISTENCE_BACKEND=in_memory` for browser demo mode
    - `AUTH_BACKEND=supabase` and `PERSISTENCE_BACKEND=supabase` for real Supabase mode
-4. Keep `LLM_PROVIDER=echo` for local demo runs. Switch to `LLM_PROVIDER=groq` only when you want to exercise the hosted LLM path and have set `LLM_API_KEY`.
+4. Keep `LLM_PROVIDER=echo` for browser demo runs. Switch to `LLM_PROVIDER=groq` only when you want to exercise the hosted LLM path and have set `LLM_API_KEY`.
 5. Install dependencies with `make setup`.
 6. Start the API with `make run-api`.
-7. Start the Flutter client with `cd apps/mobile_app && flutter pub get && flutter run`.
+7. Start the Flutter web client with `cd apps/mobile_app && flutter pub get && flutter run -d chrome`.
 
 ## Main commands
 - `make format`
@@ -33,15 +33,23 @@ Flutter-first pet-tech product with a Python backend bootstrap. The repository i
 - `make typecheck`
 - `make test`
 - `make run-api`
-- `make run-mobile`
+- `make run-web`
+- `make run-web-server`
+- `make build-web`
+
+For terminals without administrator rights, prefer `make run-web-server` and open the printed URL manually in your browser. This avoids Flutter-managed Chrome profiles and keeps the demo flow inside the current user session.
 
 ## Vercel deploy
-The repository is ready to deploy the FastAPI app on Vercel.
+The repository supports two Vercel projects:
+
+- `apps/mobile_app` for the founder demo preview as a Flutter web app
+- repository root for the FastAPI bootstrap backend
 
 1. Import the repository into Vercel.
-2. Keep the project root at the repository root.
-3. Configure the required environment variables in the Vercel dashboard.
-4. Deploy: Vercel will use the root `app.py` entrypoint and route requests to the FastAPI app.
+2. For the web demo preview, set the project root to `apps/mobile_app`.
+3. For the backend bootstrap, keep the project root at the repository root.
+4. Configure the required environment variables only for the backend project.
+5. Deploy.
 
 For demo deployments, use:
 - `AUTH_BACKEND=bootstrap`
@@ -76,14 +84,14 @@ When Supabase mode is enabled, the app now fails fast at startup if the required
 See `docs/runbooks/vercel_deploy.md` for the deployment checklist.
 
 ## Architecture notes
-- Flutter is the primary demo client.
+- Flutter web is the primary demo client.
 - FastAPI routes stay thin and delegate to application services.
 - Domain models do not depend on Flutter, FastAPI, or external providers.
 - In-memory adapters keep the bootstrap runnable while Supabase/Postgres adapters are prepared as extension points.
 - LLM integration is still a demo stub in this first bootstrap push.
 - Supabase auth flow is now wired for runtime email/password login and bearer-token user resolution.
 - Supabase persistence tables are protected by RLS owner-based policies.
-- Local runtime should use `AUTH_BACKEND=bootstrap`, `PERSISTENCE_BACKEND=in_memory`, and `LLM_PROVIDER=echo` until the Supabase and Groq paths are intentionally enabled.
+- Browser preview should use `AUTH_BACKEND=bootstrap`, `PERSISTENCE_BACKEND=in_memory`, and `LLM_PROVIDER=echo` until the Supabase and Groq paths are intentionally enabled.
 
 ## Product source material
 Product and strategy documents now live under `docs/`:
@@ -92,6 +100,4 @@ Product and strategy documents now live under `docs/`:
 - `docs/architecture/overview.md`
 - `docs/architecture/repo_bootstrap_instructions.md`
 - `docs/decisions/*`
-- `docs/runbooks/flutter_mobile_setup.md`
-- `docs/runbooks/local_development.md`
-- `docs/runbooks/supabase_setup.md`
+- `docs/runbooks/`

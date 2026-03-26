@@ -27,7 +27,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _showLogoutPreview() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Logout preview: qui collegheremo il flusso reale.')),
+      const SnackBar(content: Text('Logout pronto per essere collegato al flusso account reale.')),
     );
   }
 
@@ -63,23 +63,23 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: AppSpacing.lg),
                 switch (_state) {
                   _ViewState.empty => _StateCard(
-                      label: 'Profile empty',
-                      title: 'No profile details configured yet.',
-                      body: 'Start with name, contact info and app preferences.',
+                      label: 'Profilo',
+                      title: 'Nessun dettaglio disponibile.',
+                      body: 'Aggiungi nome, contatti e preferenze per completare l esperienza owner.',
                       icon: Icons.badge_outlined,
-                      actionLabel: 'Fill profile',
+                      actionLabel: 'Compila profilo',
                       onAction: () {},
                     ),
                   _ViewState.loading => const _LoadingCard(
-                      title: 'Loading profile',
-                      body: 'Reading owner details and preferences.',
+                      title: 'Caricamento profilo',
+                      body: 'Sto preparando dati owner, contatti e preferenze.',
                     ),
                   _ViewState.error => _StateCard(
-                      label: 'Profile error',
-                      title: 'Could not load profile data.',
-                      body: 'Try again or keep working with local defaults.',
+                      label: 'Errore profilo',
+                      title: 'Non riesco a caricare i dati del profilo.',
+                      body: 'Riprova oppure continua con i dati demo.',
                       icon: Icons.account_circle_outlined,
-                      actionLabel: 'Retry',
+                      actionLabel: 'Riprova',
                       onAction: () => setState(() => _state = _ViewState.success),
                     ),
                   _ViewState.success => Column(
@@ -87,32 +87,32 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         const _SummaryCard(
                           title: 'Roberto Vasta',
-                          body: 'Owner profile connected with 2 pets and 1 active workspace.',
+                          body: 'Profilo owner collegato a 2 pet e pronto per la web app responsive.',
                           icon: Icons.verified_user_outlined,
                         ),
                         const SizedBox(height: AppSpacing.lg),
                         const _InfoCard(
-                          title: 'Contact details',
+                          title: 'Contatti',
                           rows: [
                             _InfoRow(label: 'Email', value: 'roberto@example.com'),
                             _InfoRow(label: 'Phone', value: '+39 000 000 000'),
-                            _InfoRow(label: 'City', value: 'Rome'),
+                            _InfoRow(label: 'Citta', value: 'Roma'),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         _ToggleCard(
-                          title: 'Dark mode',
-                          body: 'Preview the app in a darker palette.',
+                          title: 'Tema serale',
+                          body: 'Anteprima di una palette piu soft per l uso serale.',
                           value: _darkMode,
                           onChanged: (value) => setState(() => _darkMode = value),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         const _InfoCard(
-                          title: 'Account actions',
+                          title: 'Stato account',
                           rows: [
-                            _InfoRow(label: 'Session', value: 'Active'),
-                            _InfoRow(label: 'Privacy', value: 'Review'),
-                            _InfoRow(label: 'Debug', value: 'Enabled'),
+                            _InfoRow(label: 'Sessione', value: 'Attiva'),
+                            _InfoRow(label: 'Privacy', value: 'Aggiornata'),
+                            _InfoRow(label: 'Supporto', value: 'Disponibile'),
                           ],
                         ),
                         const SizedBox(height: AppSpacing.lg),
@@ -171,9 +171,9 @@ class _Header extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         const _BrandPill(),
         const SizedBox(height: AppSpacing.lg),
-        const Text('Profile', style: AppTextStyles.heading),
+        const Text('Profilo', style: AppTextStyles.heading),
         const SizedBox(height: AppSpacing.sm),
-        const Text('Owner data, preferences and account details.', style: AppTextStyles.body),
+        const Text('Dati owner, preferenze e dettagli account in un unico posto per la web app responsive.', style: AppTextStyles.body),
       ],
     );
   }
@@ -220,10 +220,10 @@ class _StateChips extends StatelessWidget {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
-        _Chip(label: 'Empty', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
-        _Chip(label: 'Loading', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
-        _Chip(label: 'Error', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
-        _Chip(label: 'Success', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
+        _Chip(label: 'Vuoto', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
+        _Chip(label: 'Caricamento', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
+        _Chip(label: 'Errore', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
+        _Chip(label: 'Pronto', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
       ],
     );
   }
@@ -329,7 +329,7 @@ class _LoadingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _AccentPill(label: 'Loading'),
+          const _AccentPill(label: 'Caricamento'),
           const SizedBox(height: AppSpacing.lg),
           Text(title, style: AppTextStyles.title),
           const SizedBox(height: AppSpacing.sm),
@@ -542,12 +542,12 @@ class _DebugCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Debug area',
+            'Prossimi step',
             style: TextStyle(color: AppColors.onPrimary, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           SizedBox(height: AppSpacing.sm),
           Text(
-            'Version info, local flags and future diagnostics go here.',
+            'Qui possiamo far evolvere consensi, preferenze e collegamento account senza cambiare il flusso web.',
             style: TextStyle(color: AppColors.onPrimary, fontSize: 14, height: 1.45),
           ),
         ],

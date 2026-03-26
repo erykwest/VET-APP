@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../domain/pet_models.dart';
 import '../widgets/pet_form_field.dart';
@@ -10,7 +10,7 @@ class PetCreatePage extends StatelessWidget {
   const PetCreatePage({
     super.key,
     this.state = PetsScreenStatus.success,
-    this.errorMessage = 'We could not create a new pet profile right now.',
+    this.errorMessage = 'Al momento non riesco a creare un nuovo profilo pet.',
   });
 
   final PetsScreenStatus state;
@@ -19,29 +19,29 @@ class PetCreatePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PetsScaffold(
-      title: 'Create a pet profile.',
+      title: 'Crea un profilo pet.',
       subtitle:
-          'Keep the first version light: name, species, breed, and the clinical basics.',
+          'Manteniamo la prima versione leggera: nome, specie, razza e basi cliniche, pronta per web e mobile.',
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).maybePop(),
           style: TextButton.styleFrom(foregroundColor: Colors.white),
-          child: const Text('Cancel'),
+          child: const Text('Annulla'),
         ),
       ],
       body: switch (state) {
         PetsScreenStatus.loading =>
-          const PetsLoadingView(label: 'Preparing creation form...'),
+          const PetsLoadingView(label: 'Preparo il form di creazione...'),
         PetsScreenStatus.error => PetsErrorView(
-            title: 'Creation form failed',
+            title: 'Form di creazione non disponibile',
             subtitle: errorMessage,
-            actionLabel: 'Close',
+            actionLabel: 'Chiudi',
             onRetry: () => Navigator.of(context).maybePop(),
           ),
         PetsScreenStatus.empty => const _PetCreateForm(
-            modeLabel: 'Empty draft',
+            modeLabel: 'Bozza vuota',
             helperText:
-                'Start from scratch and save when the profile is ready.',
+                'Parti da zero e salva quando il profilo e pronto.',
           ),
         PetsScreenStatus.success => const _PetCreateForm(),
       },
@@ -51,8 +51,8 @@ class PetCreatePage extends StatelessWidget {
 
 class _PetCreateForm extends StatelessWidget {
   const _PetCreateForm({
-    this.modeLabel = 'New profile',
-    this.helperText = 'Fill in the minimum fields to get started.',
+    this.modeLabel = 'Nuovo profilo',
+    this.helperText = 'Compila i campi minimi per iniziare.',
   });
 
   final String modeLabel;
@@ -68,39 +68,40 @@ class _PetCreateForm extends StatelessWidget {
             title: modeLabel,
             subtitle: helperText,
             children: const [
-              PetFormField(label: 'Name', hintText: 'Luna'),
+              PetFormField(label: 'Nome', hintText: 'Moka'),
               SizedBox(height: 16),
-              PetFormField(label: 'Species', hintText: 'Dog'),
+              PetFormField(label: 'Specie', hintText: 'Cane'),
               SizedBox(height: 16),
-              PetFormField(label: 'Breed', hintText: 'Border Collie'),
+              PetFormField(label: 'Razza', hintText: 'Border Collie'),
               SizedBox(height: 16),
-              PetFormField(label: 'Birth date', hintText: 'Apr 2021'),
+              PetFormField(label: 'Data di nascita', hintText: 'Apr 2021'),
               SizedBox(height: 16),
-              PetFormField(label: 'Sex', hintText: 'Female'),
+              PetFormField(label: 'Sesso', hintText: 'Femmina'),
               SizedBox(height: 16),
-              PetFormField(label: 'Weight', hintText: '18.4 kg'),
+              PetFormField(label: 'Peso', hintText: '18,4 kg'),
               SizedBox(height: 16),
               PetFormField(
-                label: 'Medical notes',
+                label: 'Note cliniche',
                 hintText:
-                    'Add short notes about diet, medications, or behavior.',
+                    'Aggiungi note brevi su dieta, farmaci o comportamento.',
                 maxLines: 4,
               ),
             ],
           ),
           const SizedBox(height: 16),
           PetSection(
-            title: 'Save draft',
-            subtitle: 'This MVP keeps the action local and backend-free.',
+            title: 'Salva bozza',
+            subtitle: "Questa MVP mantiene l azione semplice in attesa della release completa.",
             children: [
               PetActionButton(
-                label: 'Save pet profile',
+                label: 'Salva profilo pet',
                 icon: Icons.save_rounded,
                 primary: true,
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Pet profile saved locally for now.')),
+                      content: Text('Profilo pet salvato per la demo.'),
+                    ),
                   );
                 },
               ),
@@ -111,3 +112,4 @@ class _PetCreateForm extends StatelessWidget {
     );
   }
 }
+

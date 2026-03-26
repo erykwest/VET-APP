@@ -48,7 +48,11 @@ class ChatErrorState extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text(title, style: AppTextStyles.title),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.title,
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 subtitle,

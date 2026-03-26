@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -27,7 +28,7 @@ class VetApp extends StatelessWidget {
         }
 
         return Banner(
-          message: 'DEMO',
+          message: kIsWeb ? 'WEB PREVIEW' : 'PREVIEW',
           location: BannerLocation.topEnd,
           child: body,
         );

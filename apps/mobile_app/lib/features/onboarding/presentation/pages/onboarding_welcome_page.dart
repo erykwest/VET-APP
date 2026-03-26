@@ -24,21 +24,21 @@ class OnboardingWelcomePage extends StatelessWidget {
             ],
           ),
         ),
-        child: const SafeArea(
-          child: const Padding(
+        child: SafeArea(
+          child: Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.xxl,
               AppSpacing.lg,
               AppSpacing.xxl,
               AppSpacing.lg,
             ),
-            child: const Column(
+            child: Column(
               children: [
                 _TopBar(),
                 SizedBox(height: AppSpacing.xxl),
-                const Expanded(
-                  child: const SingleChildScrollView(
-                    child: const Column(
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _HeroCard(),
@@ -127,7 +127,7 @@ class _HeroCard extends StatelessWidget {
           _Badge(),
           SizedBox(height: AppSpacing.xl),
           Text(
-            'La salute del tuo pet, con un po\' più di calma.',
+            'La salute del tuo pet, con un po di calma.',
             style: AppTextStyles.display,
           ),
           SizedBox(height: AppSpacing.lg),
@@ -481,7 +481,7 @@ class _BottomPanel extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pushReplacement(OnboardingRoutes.authHub());
               },
-              child: const Text('Ho già un account'),
+              child: const Text('Ho gia un account'),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),

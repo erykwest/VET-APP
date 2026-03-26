@@ -2,7 +2,7 @@
 
 ## Guiding shape
 The repository starts as a modular monolith with a domain-oriented core and two delivery surfaces:
-- `apps/streamlit_app` for fast MVP validation
+- `apps/mobile_app` for the primary Flutter web demo surface and the mobile-ready release path
 - `apps/api` for HTTP exposure and future mobile/backend use
 
 ## Layering
@@ -13,12 +13,12 @@ The repository starts as a modular monolith with a domain-oriented core and two 
 5. `packages/shared` centralizes config and cross-cutting primitives.
 
 ## Request flow
-`Streamlit/FastAPI -> application service -> domain models -> infrastructure ports/adapters`
+`Flutter/FastAPI -> application service -> domain models -> infrastructure ports/adapters`
 
-This keeps Streamlit replaceable. A future Flutter client can call the API or an SDK without rewriting the core.
+This keeps the UI replaceable. A future client can call the API or an SDK without rewriting the core, whether the frontend is served in the browser or on mobile.
 
 ## Why modular monolith first
 - Fast iteration for MVP validation
 - Clear boundaries without microservice overhead
-- Easier testing and local development
+- Easier testing and preview iteration
 - Straight path to extract APIs and specialized modules later

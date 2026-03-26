@@ -18,11 +18,15 @@ Future<void> bootstrap() async {
   var supabaseEnabled = false;
 
   if (runtimeConfig.hasSupabaseCredentials) {
-    await Supabase.initialize(
-      url: runtimeConfig.supabaseUrl,
-      anonKey: runtimeConfig.supabaseAnonKey,
-    );
-    supabaseEnabled = true;
+    try {
+      await Supabase.initialize(
+        url: runtimeConfig.supabaseUrl,
+        anonKey: runtimeConfig.supabaseAnonKey,
+      );
+      supabaseEnabled = true;
+    } catch (_) {
+      supabaseEnabled = false;
+    }
   }
 
   runApp(

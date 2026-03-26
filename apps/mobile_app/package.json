@@ -1,0 +1,8 @@
+{
+  "name": "vet-app-web-preview",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "bash scripts/vercel_build_flutter_web.sh"
+  }
+}
