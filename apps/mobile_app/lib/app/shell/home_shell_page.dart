@@ -201,7 +201,7 @@ class _ShellBrand extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.accentSoft.withOpacity(0.18),
+            color: AppColors.accentSoft.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(
