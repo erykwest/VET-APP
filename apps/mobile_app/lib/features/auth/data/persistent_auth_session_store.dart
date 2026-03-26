@@ -7,14 +7,25 @@ import 'auth_session_store.dart';
 
 class PersistentAuthSessionStore implements AuthSessionStore {
   PersistentAuthSessionStore({
-    SharedPreferencesAsync? preferences,
-  }) : _preferences = preferences ?? SharedPreferencesAsync();
+    SharedPreferences? preferences,
+  }) : _preferences = preferences;
 
   static const _storageKey = 'vet_app.auth_context';
 
-  final SharedPreferencesAsync _preferences;
+  SharedPreferences? _preferences;
 
   AuthContext _context = const AuthContext();
+
+  Future<SharedPreferences> _preferencesInstance() async {
+    final preferences = _preferences;
+    if (preferences != null) {
+      return preferences;
+    }
+
+    final created = await SharedPreferences.getInstance();
+    _preferences = created;
+    return created;
+  }
 
   @override
   Stream<AuthContext> watch() => const Stream<AuthContext>.empty();
@@ -24,7 +35,8 @@ class PersistentAuthSessionStore implements AuthSessionStore {
 
   @override
   Future<AuthContext> restore() async {
-    final raw = await _preferences.getString(_storageKey);
+    final preferences = await _preferencesInstance();
+    final raw = preferences.getString(_storageKey);
     if (raw == null || raw.isEmpty) {
       _context = const AuthContext();
       return _context;
@@ -59,9 +71,10 @@ class PersistentAuthSessionStore implements AuthSessionStore {
   @override
   Future<void> write(AuthContext context) async {
     _context = context;
+    final preferences = await _preferencesInstance();
 
     if (context.user == null || context.session == null) {
-      await _preferences.remove(_storageKey);
+      await preferences.remove(_storageKey);
       return;
     }
 
@@ -70,12 +83,13 @@ class PersistentAuthSessionStore implements AuthSessionStore {
       'session': context.session!.toMap(),
       'onboarding_completed': context.onboardingCompleted,
     };
-    await _preferences.setString(_storageKey, jsonEncode(payload));
+    await preferences.setString(_storageKey, jsonEncode(payload));
   }
 
   @override
   Future<void> clear() async {
     _context = const AuthContext();
-    await _preferences.remove(_storageKey);
+    final preferences = await _preferencesInstance();
+    await preferences.remove(_storageKey);
   }
 }

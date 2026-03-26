@@ -29,7 +29,18 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   };
 
   final Map<String, FakeUserRecord> _users;
-  final SharedPreferencesAsync _preferences = SharedPreferencesAsync();
+  SharedPreferences? _preferences;
+
+  Future<SharedPreferences> _preferencesInstance() async {
+    final preferences = _preferences;
+    if (preferences != null) {
+      return preferences;
+    }
+
+    final created = await SharedPreferences.getInstance();
+    _preferences = created;
+    return created;
+  }
 
   @override
   Future<Result<AppSession>> signInWithPassword(
@@ -103,7 +114,8 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   Future<void> _restorePersistedUsers() async {
-    final raw = await _preferences.getString(_usersStorageKey);
+    final preferences = await _preferencesInstance();
+    final raw = preferences.getString(_usersStorageKey);
     if (raw == null || raw.isEmpty) {
       return;
     }
@@ -127,8 +139,9 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   Future<void> _persistUsers() async {
+    final preferences = await _preferencesInstance();
     final payload = _users.values.map((user) => user.toMap()).toList(growable: false);
-    await _preferences.setString(_usersStorageKey, jsonEncode(payload));
+    await preferences.setString(_usersStorageKey, jsonEncode(payload));
   }
 
   AppSession _sessionFor(AppUser user) {
