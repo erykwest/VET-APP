@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
+import '../../data/chat_ask_vet_share_store.dart';
 import '../../data/chat_demo_store.dart';
 import '../../data/chat_seed_data.dart';
 import '../../domain/chat_models.dart';
@@ -30,7 +33,8 @@ class ChatConversationDetailPage extends StatefulWidget {
       _ChatConversationDetailPageState();
 }
 
-class _ChatConversationDetailPageState extends State<ChatConversationDetailPage> {
+class _ChatConversationDetailPageState
+    extends State<ChatConversationDetailPage> {
   final ChatDemoStore _store = ChatDemoStore.instance;
   final ScrollController _scrollController = ScrollController();
 
@@ -137,8 +141,8 @@ class _ChatConversationDetailPageState extends State<ChatConversationDetailPage>
                           subtitle:
                               'Qualcosa e andato storto nel recupero del thread.',
                           actionLabel: 'Torna alle chat',
-                          onAction:
-                              widget.onRetry ?? () => Navigator.of(context).maybePop(),
+                          onAction: widget.onRetry ??
+                              () => Navigator.of(context).maybePop(),
                         ),
                       ChatScreenState.success => _SuccessConversationView(
                           key: const ValueKey('success'),
@@ -146,6 +150,8 @@ class _ChatConversationDetailPageState extends State<ChatConversationDetailPage>
                           isSending: _isSending,
                           onSendMessage: _sendMessage,
                           scrollController: _scrollController,
+                          onAskVet: (message) =>
+                              _openAskVetShareOptions(conversation, message),
                         ),
                     },
                   ),
@@ -272,6 +278,211 @@ class _ChatConversationDetailPageState extends State<ChatConversationDetailPage>
       Navigator.of(context).maybePop();
     }
   }
+
+  Future<void> _openAskVetShareOptions(
+    ChatConversationDetail conversation,
+    ChatMessage message,
+  ) async {
+    final question = ChatAskVetShareStore.instance.buildQuestionText(
+      conversation: conversation,
+      message: message,
+    );
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ask the vet',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.text,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Trasformo la risposta in una domanda pronta da inoltrare per ${conversation.petName}.',
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: AppColors.secondaryText,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  question,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: AppColors.text,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await _shareAskVetToWhatsApp(conversation.id, question);
+                      if (sheetContext.mounted) {
+                        Navigator.of(sheetContext).pop();
+                      }
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline_rounded),
+                    label: const Text('WhatsApp'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await _shareAskVetByEmail(
+                        conversation.id,
+                        conversation.petName,
+                        question,
+                      );
+                      if (sheetContext.mounted) {
+                        Navigator.of(sheetContext).pop();
+                      }
+                    },
+                    icon: const Icon(Icons.mail_outline_rounded),
+                    label: const Text('Email'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      await _copyAskVet(conversation.id, question);
+                      if (sheetContext.mounted) {
+                        Navigator.of(sheetContext).pop();
+                      }
+                    },
+                    icon: const Icon(Icons.copy_all_rounded),
+                    label: const Text('Copia'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Metriche hook: ask_vet_share_clicked e ask_vet_share_copied.',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.secondaryText,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _shareAskVetToWhatsApp(
+      String conversationId, String text) async {
+    try {
+      await ChatAskVetShareStore.instance.recordShareClicked(conversationId);
+      final launched = await launchUrl(
+        Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}'),
+      );
+      if (!mounted) {
+        return;
+      }
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: text));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('WhatsApp non disponibile. Domanda copiata.'),
+          ),
+        );
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('WhatsApp aperto con la domanda pronta per il veterinario.'),
+        ),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Condivisione non riuscita. Domanda copiata.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _shareAskVetByEmail(
+    String conversationId,
+    String petName,
+    String text,
+  ) async {
+    try {
+      await ChatAskVetShareStore.instance.recordShareClicked(conversationId);
+      final launched = await launchUrl(
+        Uri.parse(
+          'mailto:?subject=${Uri.encodeComponent('Domanda vet su $petName')}&body=${Uri.encodeComponent(text)}',
+        ),
+      );
+      if (!mounted) {
+        return;
+      }
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: text));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email non disponibile. Domanda copiata.'),
+          ),
+        );
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Email aperta con la domanda pronta per il veterinario.'),
+        ),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invio email non riuscito. Domanda copiata.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _copyAskVet(String conversationId, String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    await ChatAskVetShareStore.instance.recordShareCopied(conversationId);
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Domanda per il veterinario copiata.'),
+      ),
+    );
+  }
 }
 
 class _Header extends StatelessWidget {
@@ -375,20 +586,22 @@ class _SuccessConversationView extends StatelessWidget {
     required this.isSending,
     required this.onSendMessage,
     required this.scrollController,
+    required this.onAskVet,
   });
 
   final ChatConversationDetail conversation;
   final bool isSending;
   final ValueChanged<String> onSendMessage;
   final ScrollController scrollController;
+  final ValueChanged<ChatMessage> onAskVet;
 
   @override
   Widget build(BuildContext context) {
     return Builder(
       builder: (context) {
         final totalItems = conversation.messages.length + (isSending ? 1 : 0);
-        final state = context
-            .findAncestorStateOfType<_ChatConversationDetailPageState>();
+        final state =
+            context.findAncestorStateOfType<_ChatConversationDetailPageState>();
         state?._scheduleScrollIfNeeded(totalItems);
 
         return Column(
@@ -410,12 +623,18 @@ class _SuccessConversationView extends StatelessWidget {
                 itemBuilder: (context, index) {
                   if (index < conversation.messages.length) {
                     final message = conversation.messages[index];
-                    return ChatMessageBubble(message: message);
+                    return ChatMessageBubble(
+                      message: message,
+                      onAskVet: message.author == ChatMessageAuthor.assistant
+                          ? () => onAskVet(message)
+                          : null,
+                    );
                   }
 
                   return const _TypingBubble();
                 },
-                separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AppSpacing.sm),
                 itemCount: totalItems,
               ),
             ),

@@ -161,6 +161,12 @@ class PetDemoStore {
     'Sconosciuto',
   ];
 
+  static const List<String> galleryProviderOptions = [
+    'Google Foto',
+    'Apple Foto',
+    'Amazon Photos',
+  ];
+
   late List<PetProfile> _pets;
 
   List<PetProfile> list({String? species}) {
@@ -207,6 +213,8 @@ class PetDemoStore {
     required double weightKg,
     String medicalNote = '',
     String? avatarKey,
+    String? profileImageDataUrl,
+    String? galleryProvider,
   }) {
     final option = optionForSpecies(species);
     final resolvedAvatarKey = resolveAvatarKey(
@@ -227,6 +235,8 @@ class PetDemoStore {
       nextVisitLabel: 'Da pianificare',
       avatarEmoji: resolvedAvatarKey,
       accentColor: option.accentColor,
+      profileImageDataUrl: profileImageDataUrl,
+      galleryProvider: galleryProvider,
     );
 
     return upsert(pet);

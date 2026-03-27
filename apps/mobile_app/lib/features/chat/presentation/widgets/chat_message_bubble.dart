@@ -10,9 +10,11 @@ class ChatMessageBubble extends StatelessWidget {
   const ChatMessageBubble({
     super.key,
     required this.message,
+    this.onAskVet,
   });
 
   final ChatMessage message;
+  final VoidCallback? onAskVet;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +63,41 @@ class ChatMessageBubble extends StatelessWidget {
                             : Icons.done_rounded,
                         size: 14,
                         color: AppColors.onPrimary.withValues(alpha: 0.8),
+                      ),
+                    ],
+                    if (!isUser && onAskVet != null) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      GestureDetector(
+                        onTap: onAskVet,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentSoft,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.medical_services_outlined,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Ask the vet',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ],

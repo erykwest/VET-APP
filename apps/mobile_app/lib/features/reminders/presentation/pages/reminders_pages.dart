@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../design_system/tokens/app_colors.dart';
 import '../../../../../design_system/tokens/app_radii.dart';
 import '../../../../../design_system/tokens/app_spacing.dart';
 import '../../../../../design_system/tokens/app_text_styles.dart';
+import '../../data/reminder_share_store.dart';
 import '../../data/reminders_repository.dart';
 
 enum _ViewState { empty, loading, error, success }
@@ -38,9 +41,11 @@ class _RemindersListPageState extends State<RemindersListPage> {
 
   void _openCreate() {
     unawaited(
-      Navigator.of(context).push(
+      Navigator.of(context)
+          .push(
         MaterialPageRoute<void>(builder: (_) => const ReminderCreatePage()),
-      ).then((_) {
+      )
+          .then((_) {
         if (mounted) {
           _reload();
         }
@@ -69,7 +74,8 @@ class _RemindersListPageState extends State<RemindersListPage> {
         _ViewState.empty => _StatePanel(
             label: 'Nessun promemoria',
             title: 'La lista dei promemoria e vuota.',
-            body: 'Crea il primo promemoria per vaccino o trattamento e resta in carreggiata.',
+            body:
+                'Crea il primo promemoria per vaccino o trattamento e resta in carreggiata.',
             icon: Icons.event_note_outlined,
             actionLabel: 'Crea promemoria',
             onAction: _openCreate,
@@ -81,7 +87,8 @@ class _RemindersListPageState extends State<RemindersListPage> {
         _ViewState.error => _StatePanel(
             label: 'Errore sync',
             title: 'Sincronizzazione promemoria fallita.',
-            body: 'La sorgente preview e ancora disponibile. Riprova quando la rete torna su.',
+            body:
+                'La sorgente preview e ancora disponibile. Riprova quando la rete torna su.',
             icon: Icons.wifi_off_outlined,
             actionLabel: 'Riprova',
             onAction: () {},
@@ -92,7 +99,8 @@ class _RemindersListPageState extends State<RemindersListPage> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const _LoadingPanel(
                   title: 'Caricamento promemoria',
-                  body: 'Sto leggendo date, ricorrenze e note del proprietario.',
+                  body:
+                      'Sto leggendo date, ricorrenze e note del proprietario.',
                 );
               }
 
@@ -100,7 +108,8 @@ class _RemindersListPageState extends State<RemindersListPage> {
                 return _StatePanel(
                   label: 'Errore sync',
                   title: 'Sincronizzazione promemoria fallita.',
-                  body: 'La sorgente preview e ancora disponibile. Riprova quando la rete torna su.',
+                  body:
+                      'La sorgente preview e ancora disponibile. Riprova quando la rete torna su.',
                   icon: Icons.wifi_off_outlined,
                   actionLabel: 'Riprova',
                   onAction: () => unawaited(_reload()),
@@ -112,7 +121,8 @@ class _RemindersListPageState extends State<RemindersListPage> {
                 return _StatePanel(
                   label: 'Nessun promemoria',
                   title: 'La lista dei promemoria e vuota.',
-                  body: 'Crea il primo promemoria per vaccino o trattamento e resta in carreggiata.',
+                  body:
+                      'Crea il primo promemoria per vaccino o trattamento e resta in carreggiata.',
                   icon: Icons.event_note_outlined,
                   actionLabel: 'Crea promemoria',
                   onAction: _openCreate,
@@ -124,13 +134,15 @@ class _RemindersListPageState extends State<RemindersListPage> {
                 children: [
                   const _SummaryCard(
                     title: '3 promemoria attivi',
-                    body: 'Il prossimo scade tra 3 giorni e il controllo peso e gia fissato per domani.',
+                    body:
+                        'Il prossimo scade tra 3 giorni e il controllo peso e gia fissato per domani.',
                     icon: Icons.schedule_outlined,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   const _SummaryCard(
                     title: 'Prossima azione',
-                    body: 'Apri il promemoria antiparassitario e avvisa Francesco con un tap.',
+                    body:
+                        'Apri il promemoria antiparassitario e avvisa Francesco con un tap.',
                     icon: Icons.notifications_active_outlined,
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -186,7 +198,8 @@ class _ReminderCreatePageState extends State<ReminderCreatePage> {
               subtitle: 'Ogni 12 mesi',
               due: '25 Apr 2026',
               badge: 'Bozza',
-              note: 'Porta il libretto sanitario e conferma la disponibilita con Francesco.',
+              note:
+                  'Porta il libretto sanitario e conferma la disponibilita con Francesco.',
               schedule: 'Ricorrente ogni 12 mesi',
             ),
           ),
@@ -205,7 +218,8 @@ class _ReminderCreatePageState extends State<ReminderCreatePage> {
           ),
         _ViewState.loading => const _LoadingPanel(
             title: 'Preparazione form',
-            body: 'Sto caricando le opzioni di ricorrenza e i valori predefiniti della preview.',
+            body:
+                'Sto caricando le opzioni di ricorrenza e i valori predefiniti della preview.',
           ),
         _ViewState.error => _StatePanel(
             label: 'Errore validazione',
@@ -270,14 +284,16 @@ class _ReminderEditPageState extends State<ReminderEditPage> {
         _ViewState.empty => _StatePanel(
             label: 'Modalita modifica',
             title: 'Nessun elemento selezionato.',
-            body: 'Scegli un promemoria dalla lista per aggiornarne data o nota.',
+            body:
+                'Scegli un promemoria dalla lista per aggiornarne data o nota.',
             icon: Icons.tune_outlined,
             actionLabel: 'Indietro',
             onAction: () => Navigator.of(context).pop(),
           ),
         _ViewState.loading => const _LoadingPanel(
             title: 'Caricamento promemoria',
-            body: 'Sto leggendo regole di ricorrenza, note locali di preview e avvisi.',
+            body:
+                'Sto leggendo regole di ricorrenza, note locali di preview e avvisi.',
           ),
         _ViewState.error => _StatePanel(
             label: 'Salvataggio fallito',
@@ -289,7 +305,8 @@ class _ReminderEditPageState extends State<ReminderEditPage> {
           ),
         _ViewState.success => _FormPanel(
             title: 'Modifica promemoria',
-            body: 'Tutti i campi sono gia compilati e pronti per il salvataggio.',
+            body:
+                'Tutti i campi sono gia compilati e pronti per il salvataggio.',
             items: const [
               _FormItem(label: 'Titolo', value: 'Antiparassitario di Moka'),
               _FormItem(label: 'Scadenza', value: '28 Mar 2026'),
@@ -329,10 +346,30 @@ class ReminderDetailPage extends StatefulWidget {
 
 class _ReminderDetailPageState extends State<ReminderDetailPage> {
   _ViewState _state = _ViewState.success;
+  ReminderShareMetrics _shareMetrics = const ReminderShareMetrics();
+  bool _isSharing = false;
+
+  ReminderEntry get _resolvedReminder =>
+      widget.reminder ??
+      const ReminderEntry(
+        id: 'moka-antiparassitario',
+        title: 'Antiparassitario di Moka',
+        subtitle: 'Ogni 30 giorni',
+        due: '28 Mar 2026',
+        badge: 'Prioritario',
+        note: 'Promemoria ricorrente collegato al profilo attivo di Moka.',
+        schedule: 'Ricorrente ogni 30 giorni',
+      );
+
+  @override
+  void initState() {
+    super.initState();
+    _loadShareMetrics();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final reminder = widget.reminder;
+    final reminder = _resolvedReminder;
 
     return _Shell(
       title: 'Dettaglio promemoria',
@@ -359,7 +396,8 @@ class _ReminderDetailPageState extends State<ReminderDetailPage> {
         _ViewState.error => _StatePanel(
             label: 'Errore anteprima',
             title: 'Anteprima del promemoria non disponibile.',
-            body: 'Riprova oppure torna alla lista per aprire un altro elemento.',
+            body:
+                'Riprova oppure torna alla lista per aprire un altro elemento.',
             icon: Icons.broken_image_outlined,
             actionLabel: 'Riprova',
             onAction: () {},
@@ -368,28 +406,280 @@ class _ReminderDetailPageState extends State<ReminderDetailPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _SummaryCard(
-                title: reminder?.title ?? 'Antiparassitario di Moka',
-                body: reminder?.note ?? 'Promemoria ricorrente collegato al profilo attivo di Moka.',
+                title: reminder.title,
+                body: reminder.note,
                 icon: Icons.verified_outlined,
               ),
               const SizedBox(height: AppSpacing.lg),
               _FormPanel(
                 title: 'Riepilogo promemoria',
-                body: 'La vista dettaglio mantiene tutti i valori chiave in un solo posto.',
+                body:
+                    'La vista dettaglio mantiene tutti i valori chiave in un solo posto.',
                 items: [
-                  _FormItem(label: 'Titolo', value: reminder?.title ?? 'Antiparassitario di Moka'),
-                  _FormItem(label: 'Scadenza', value: reminder?.due ?? '28 Mar 2026'),
-                  _FormItem(label: 'Ricorrenza', value: reminder?.schedule ?? 'Ricorrente ogni 30 giorni'),
-                  _FormItem(label: 'Stato', value: reminder?.badge ?? 'Prioritario'),
+                  _FormItem(label: 'Titolo', value: reminder.title),
+                  _FormItem(label: 'Scadenza', value: reminder.due),
+                  _FormItem(label: 'Ricorrenza', value: reminder.schedule),
+                  _FormItem(label: 'Stato', value: reminder.badge),
                 ],
                 onSave: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => const ReminderEditPage()),
+                  MaterialPageRoute<void>(
+                      builder: (_) => const ReminderEditPage()),
                 ),
                 onCancel: () => Navigator.of(context).pop(),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _ReminderShareCard(
+                reminder: reminder,
+                previewText: ReminderShareStore.instance
+                    .buildReminderShareText(reminder),
+                metrics: _shareMetrics,
+                isSharing: _isSharing,
+                onShare: () => _shareReminder(reminder),
+                onCopy: () => _copyReminder(reminder),
               ),
             ],
           ),
       },
+    );
+  }
+
+  Future<void> _loadShareMetrics() async {
+    final metrics = await ReminderShareStore.instance.metricsForReminder(
+      _resolvedReminder.id,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _shareMetrics = metrics;
+    });
+  }
+
+  Future<void> _shareReminder(ReminderEntry reminder) async {
+    if (_isSharing) {
+      return;
+    }
+
+    setState(() {
+      _isSharing = true;
+    });
+
+    final previewText = ReminderShareStore.instance.buildReminderShareText(
+      reminder,
+    );
+
+    try {
+      final metrics = await ReminderShareStore.instance.recordShareClicked(
+        reminder.id,
+      );
+      final launched = await launchUrl(
+        Uri.parse('https://wa.me/?text=${Uri.encodeComponent(previewText)}'),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: previewText));
+        setState(() {
+          _shareMetrics = metrics;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'WhatsApp non disponibile. Reminder copiato come fallback.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      setState(() {
+        _shareMetrics = metrics;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Reminder pronto in WhatsApp per partner o pet sitter.'),
+        ),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: previewText));
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invio non riuscito. Reminder copiato negli appunti.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSharing = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _copyReminder(ReminderEntry reminder) async {
+    if (_isSharing) {
+      return;
+    }
+
+    setState(() {
+      _isSharing = true;
+    });
+
+    try {
+      final previewText = ReminderShareStore.instance.buildReminderShareText(
+        reminder,
+      );
+      await Clipboard.setData(ClipboardData(text: previewText));
+      final metrics = await ReminderShareStore.instance.recordShareCopied(
+        reminder.id,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _shareMetrics = metrics;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reminder copiato e pronto da inoltrare.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSharing = false;
+        });
+      }
+    }
+  }
+}
+
+class _ReminderShareCard extends StatelessWidget {
+  const _ReminderShareCard({
+    required this.reminder,
+    required this.previewText,
+    required this.metrics,
+    required this.isSharing,
+    required this.onShare,
+    required this.onCopy,
+  });
+
+  final ReminderEntry reminder;
+  final String previewText;
+  final ReminderShareMetrics metrics;
+  final bool isSharing;
+  final VoidCallback onShare;
+  final VoidCallback onCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(AppRadii.xl),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Promemoria condivisibile',
+            style: AppTextStyles.title,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Trasforma ${reminder.title} in un messaggio pronto da inoltrare.',
+            style: AppTextStyles.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: isSharing ? null : onShare,
+                icon: isSharing
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.share_outlined),
+                label: const Text('Condividi reminder'),
+              ),
+              OutlinedButton.icon(
+                onPressed: isSharing ? null : onCopy,
+                icon: const Icon(Icons.copy_all_rounded),
+                label: const Text('Copia'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _MetricChip(label: metrics.shareClicksLabel),
+              _MetricChip(label: metrics.shareCopiesLabel),
+              _MetricChip(label: 'Ultima: ${metrics.lastSharedLabel}'),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7FAF4),
+              borderRadius: BorderRadius.circular(AppRadii.large),
+            ),
+            child: Text(
+              previewText,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.text),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Metriche hook: reminder_share_clicked e reminder_share_copied.',
+            style: AppTextStyles.caption.copyWith(color: AppColors.mutedText),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricChip extends StatelessWidget {
+  const _MetricChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF4E8),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: AppTextStyles.caption.copyWith(
+          color: AppColors.text,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
@@ -439,7 +729,11 @@ class _Shell extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Header(title: title, subtitle: subtitle, actionLabel: actionLabel, onAction: onAction),
+                _Header(
+                    title: title,
+                    subtitle: subtitle,
+                    actionLabel: actionLabel,
+                    onAction: onAction),
                 const SizedBox(height: AppSpacing.lg),
                 _StateChips(value: state, onChanged: onStateChanged),
                 const SizedBox(height: AppSpacing.lg),
@@ -504,11 +798,15 @@ class _BrandPill extends StatelessWidget {
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.notifications_active_outlined, size: 14, color: AppColors.accent),
+          Icon(Icons.notifications_active_outlined,
+              size: 14, color: AppColors.accent),
           SizedBox(width: AppSpacing.sm),
           Text(
             'VET APP',
-            style: TextStyle(color: AppColors.onPrimary, fontSize: 12, fontWeight: FontWeight.w800),
+            style: TextStyle(
+                color: AppColors.onPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -531,10 +829,22 @@ class _StateChips extends StatelessWidget {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
-        _StateChip(label: 'Vuoto', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
-        _StateChip(label: 'Caricamento', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
-        _StateChip(label: 'Errore', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
-        _StateChip(label: 'OK', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
+        _StateChip(
+            label: 'Vuoto',
+            selected: value == _ViewState.empty,
+            onTap: () => onChanged(_ViewState.empty)),
+        _StateChip(
+            label: 'Caricamento',
+            selected: value == _ViewState.loading,
+            onTap: () => onChanged(_ViewState.loading)),
+        _StateChip(
+            label: 'Errore',
+            selected: value == _ViewState.error,
+            onTap: () => onChanged(_ViewState.error)),
+        _StateChip(
+            label: 'OK',
+            selected: value == _ViewState.success,
+            onTap: () => onChanged(_ViewState.success)),
       ],
     );
   }
@@ -564,7 +874,8 @@ class _StateChip extends StatelessWidget {
       selectedColor: AppColors.primary,
       backgroundColor: AppColors.surface,
       side: const BorderSide(color: AppColors.border),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.pill)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.pill)),
     );
   }
 }
@@ -823,14 +1134,16 @@ class _ReminderTile extends StatelessWidget {
                   color: AppColors.accentSoft,
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Icon(Icons.notifications_active_outlined, color: AppColors.primary),
+                child: const Icon(Icons.notifications_active_outlined,
+                    color: AppColors.primary),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: AppTextStyles.title.copyWith(fontSize: 17)),
+                    Text(title,
+                        style: AppTextStyles.title.copyWith(fontSize: 17)),
                     const SizedBox(height: AppSpacing.xs),
                     Text(subtitle, style: AppTextStyles.bodySmall),
                     const SizedBox(height: AppSpacing.sm),
@@ -915,10 +1228,13 @@ class _FormPanel extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: FilledButton(onPressed: onSave, child: const Text('Salva')),
+                child:
+                    FilledButton(onPressed: onSave, child: const Text('Salva')),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Expanded(child: OutlinedButton(onPressed: onCancel, child: const Text('Annulla'))),
+              Expanded(
+                  child: OutlinedButton(
+                      onPressed: onCancel, child: const Text('Annulla'))),
             ],
           ),
         ],
@@ -961,7 +1277,8 @@ class _InputLike extends StatelessWidget {
         children: [
           Text(label, style: AppTextStyles.caption),
           const SizedBox(height: AppSpacing.xs),
-          Text(value, style: AppTextStyles.bodySmall.copyWith(color: AppColors.text)),
+          Text(value,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.text)),
         ],
       ),
     );

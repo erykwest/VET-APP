@@ -215,7 +215,7 @@ class _PetsListContent extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF5C726D),
                   ),
-              ),
+                ),
               if (visiblePets.length > 1) ...[
                 const SizedBox(height: 14),
                 const Text(
@@ -228,14 +228,14 @@ class _PetsListContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 ...visiblePets.skip(1).map(
-                  (pet) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _PetListCard(
-                      pet: pet,
-                      onTap: () => onOpenPet(pet),
+                      (pet) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _PetListCard(
+                          pet: pet,
+                          onTap: () => onOpenPet(pet),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
               ],
               const SizedBox(height: 8),
               PetActionButton(
@@ -291,6 +291,7 @@ class _FeaturedPetCard extends StatelessWidget {
                     label: pet.avatarEmoji,
                     backgroundColor: pet.accentColor,
                     size: 72,
+                    imageDataUrl: pet.profileImageDataUrl,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -319,7 +320,8 @@ class _FeaturedPetCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: Color(0xFF7C8F89)),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: Color(0xFF7C8F89)),
                 ],
               ),
               const SizedBox(height: 16),
@@ -327,9 +329,15 @@ class _FeaturedPetCard extends StatelessWidget {
                 spacing: 10,
                 runSpacing: 10,
                 children: [
-                  _InfoChip(label: pet.healthBadge, backgroundColor: const Color(0xFFE1F0EA)),
-                  _InfoChip(label: pet.weightLabel, backgroundColor: const Color(0xFFF6EADF)),
-                  _InfoChip(label: pet.birthDateLabel, backgroundColor: const Color(0xFFF5F0D8)),
+                  _InfoChip(
+                      label: pet.healthBadge,
+                      backgroundColor: const Color(0xFFE1F0EA)),
+                  _InfoChip(
+                      label: pet.weightLabel,
+                      backgroundColor: const Color(0xFFF6EADF)),
+                  _InfoChip(
+                      label: pet.birthDateLabel,
+                      backgroundColor: const Color(0xFFF5F0D8)),
                 ],
               ),
               const SizedBox(height: 16),
@@ -345,7 +353,8 @@ class _FeaturedPetCard extends StatelessWidget {
               const SizedBox(height: 14),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -353,7 +362,8 @@ class _FeaturedPetCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.event_available_outlined, size: 18, color: Color(0xFF2D6B60)),
+                    const Icon(Icons.event_available_outlined,
+                        size: 18, color: Color(0xFF2D6B60)),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -405,6 +415,7 @@ class _PetListCard extends StatelessWidget {
                 label: pet.avatarEmoji,
                 backgroundColor: pet.accentColor,
                 size: 64,
+                imageDataUrl: pet.profileImageDataUrl,
               ),
               const SizedBox(width: 14),
               Expanded(

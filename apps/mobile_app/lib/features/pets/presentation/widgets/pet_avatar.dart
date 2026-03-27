@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/tokens/app_colors.dart';
@@ -11,11 +14,13 @@ class PetAvatar extends StatelessWidget {
     required this.backgroundColor,
     super.key,
     this.size = 72,
+    this.imageDataUrl,
   });
 
   final String label;
   final Color backgroundColor;
   final double size;
+  final String? imageDataUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +30,7 @@ class PetAvatar extends StatelessWidget {
         : PetDemoStore.avatarChoices.first;
     final accentColor = isPreset ? preset.accentColor : backgroundColor;
     final gradient = _avatarGradient(backgroundColor, accentColor, isPreset);
+    final imageBytes = _imageBytesFromDataUrl(imageDataUrl);
 
     return Container(
       width: size,
@@ -35,6 +41,12 @@ class PetAvatar extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: gradient,
         ),
+        image: imageBytes == null
+            ? null
+            : DecorationImage(
+                image: MemoryImage(imageBytes),
+                fit: BoxFit.cover,
+              ),
         borderRadius: BorderRadius.circular(size * 0.28),
         border: Border.all(color: Colors.white.withValues(alpha: 0.55)),
         boxShadow: const [
@@ -130,6 +142,7 @@ class PetAvatarPicker extends StatelessWidget {
     this.subtitle =
         'Nessun upload reale: seleziona un ritratto locale e lo ritroverai nella lista.',
     this.options = PetDemoStore.avatarChoices,
+    this.compact = false,
   });
 
   final String selectedKey;
@@ -137,6 +150,7 @@ class PetAvatarPicker extends StatelessWidget {
   final String title;
   final String subtitle;
   final List<PetAvatarChoice> options;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -147,17 +161,22 @@ class PetAvatarPicker extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(subtitle, style: AppTextStyles.bodySmall),
         const SizedBox(height: AppSpacing.md),
-        Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
-          children: [
-            for (final option in options)
-              PetAvatarChoiceTile(
+        SizedBox(
+          height: compact ? 158 : 230,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: options.length,
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.md),
+            itemBuilder: (context, index) {
+              final option = options[index];
+              return PetAvatarChoiceTile(
                 option: option,
                 selected: option.key == selectedKey,
+                compact: compact,
                 onTap: () => onSelected(option.key),
-              ),
-          ],
+              );
+            },
+          ),
         ),
       ],
     );
@@ -170,11 +189,13 @@ class PetAvatarChoiceTile extends StatelessWidget {
     required this.selected,
     required this.onTap,
     super.key,
+    this.compact = false,
   });
 
   final PetAvatarChoice option;
   final bool selected;
   final VoidCallback onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -186,8 +207,8 @@ class PetAvatarChoiceTile extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          width: 162,
-          padding: const EdgeInsets.all(12),
+          width: compact ? 118 : 162,
+          padding: EdgeInsets.all(compact ? 10 : 12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
@@ -211,23 +232,25 @@ class PetAvatarChoiceTile extends StatelessWidget {
               PetAvatar(
                 label: option.key,
                 backgroundColor: option.backgroundColor,
-                size: 96,
+                size: compact ? 72 : 96,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: compact ? 8 : 12),
               Text(
                 option.label,
                 style: AppTextStyles.bodySmall.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.text,
+                  fontSize: compact ? 14 : null,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 option.subtitle,
-                maxLines: 2,
+                maxLines: compact ? 3 : 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.caption.copyWith(
                   color: AppColors.mutedText,
+                  fontSize: compact ? 10.5 : null,
                 ),
               ),
             ],
@@ -363,7 +386,27 @@ List<Color> _avatarGradient(
   bool preset,
 ) {
   final white = Colors.white;
-  final softBackground = Color.lerp(backgroundColor, white, preset ? 0.1 : 0.24)!;
+  final softBackground =
+      Color.lerp(backgroundColor, white, preset ? 0.1 : 0.24)!;
   final strongAccent = Color.lerp(accentColor, const Color(0xFF163A35), 0.12)!;
   return [softBackground, strongAccent];
+}
+
+Uint8List? _imageBytesFromDataUrl(String? value) {
+  final raw = value?.trim() ?? '';
+  if (raw.isEmpty) {
+    return null;
+  }
+
+  final marker = raw.indexOf('base64,');
+  if (marker == -1) {
+    return null;
+  }
+
+  final encoded = raw.substring(marker + 'base64,'.length);
+  try {
+    return base64Decode(encoded);
+  } catch (_) {
+    return null;
+  }
 }

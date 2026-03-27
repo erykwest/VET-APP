@@ -1,8 +1,13 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../app/router/app_router.dart';
 import '../../data/pet_demo_store.dart';
+import '../../data/pet_public_card_store.dart';
 import '../../data/pet_share_snapshot_store.dart';
 import '../../domain/pet_models.dart';
 import '../widgets/pet_avatar.dart';
@@ -39,6 +44,7 @@ class PetDetailPage extends StatefulWidget {
 class _PetDetailPageState extends State<PetDetailPage> {
   PetProfile? _pet;
   PetShareSnapshotMetrics _shareMetrics = const PetShareSnapshotMetrics();
+  PetPublicCardMetrics _publicCardMetrics = const PetPublicCardMetrics();
   bool _isSharing = false;
   _ShareFeedbackState _shareFeedback = _ShareFeedbackState.none;
 
@@ -47,6 +53,7 @@ class _PetDetailPageState extends State<PetDetailPage> {
     super.initState();
     _pet = widget.pet ?? PetDemoStore.instance.list().firstOrNull;
     _loadShareMetrics();
+    _loadPublicCardMetrics();
   }
 
   @override
@@ -70,7 +77,7 @@ class _PetDetailPageState extends State<PetDetailPage> {
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: Colors.white),
                 )
-              : const Icon(Icons.open_in_new_rounded),
+              : const Icon(Icons.chat_bubble_rounded),
           color: Colors.white,
           style: IconButton.styleFrom(backgroundColor: const Color(0xFF163A35)),
           tooltip: 'Condividi su WhatsApp',
@@ -120,10 +127,14 @@ class _PetDetailPageState extends State<PetDetailPage> {
             onCopyUpdate:
                 pet == null || _isSharing ? null : () => _copyPetSnapshot(pet),
             shareMetrics: _shareMetrics,
+            publicCardMetrics: _publicCardMetrics,
             shareFeedback: _shareFeedback,
             sharePreview: pet == null
                 ? ''
                 : PetShareSnapshotStore.instance.buildSnapshotText(pet),
+            onOpenPublicCard: pet == null ? null : () => _openPublicCard(pet),
+            onSharePublicCard:
+                pet == null || _isSharing ? null : () => _sharePublicCard(pet),
           ),
       },
     );
@@ -142,6 +153,22 @@ class _PetDetailPageState extends State<PetDetailPage> {
 
     setState(() {
       _shareMetrics = metrics;
+    });
+  }
+
+  Future<void> _loadPublicCardMetrics() async {
+    final pet = _pet ?? widget.pet ?? PetDemoStore.instance.list().firstOrNull;
+    if (pet == null) {
+      return;
+    }
+
+    final metrics = await PetPublicCardStore.instance.metricsForPet(pet.id);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _publicCardMetrics = metrics;
     });
   }
 
@@ -393,6 +420,44 @@ class _PetDetailPageState extends State<PetDetailPage> {
     }
   }
 
+  Future<void> _openPublicCard(PetProfile pet) async {
+    await Navigator.of(context).pushNamed(
+      AppRouter.petPublicCard,
+      arguments: pet.id,
+    );
+    if (!mounted) {
+      return;
+    }
+    await _loadPublicCardMetrics();
+  }
+
+  Future<void> _sharePublicCard(PetProfile pet) async {
+    final payload = [
+      PetPublicCardStore.instance.buildDemoLink(pet.id),
+      '',
+      PetPublicCardStore.instance.buildCardPreviewText(pet),
+    ].join('\n');
+
+    await Clipboard.setData(ClipboardData(text: payload));
+    final metrics = await PetPublicCardStore.instance.recordShared(pet.id);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _publicCardMetrics = metrics;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Pet card di ${pet.name} copiata con link demo e riepilogo pronto da inoltrare.',
+        ),
+      ),
+    );
+  }
+
   Future<void> _openEdit(BuildContext context, PetProfile pet) async {
     final updated = await Navigator.of(context).push<PetProfile>(
       MaterialPageRoute<PetProfile>(
@@ -424,8 +489,11 @@ class _PetDetailContent extends StatelessWidget {
     required this.onShareToX,
     required this.onCopyUpdate,
     required this.shareMetrics,
+    required this.publicCardMetrics,
     required this.shareFeedback,
     required this.sharePreview,
+    required this.onOpenPublicCard,
+    required this.onSharePublicCard,
   });
 
   final PetProfile pet;
@@ -437,8 +505,11 @@ class _PetDetailContent extends StatelessWidget {
   final VoidCallback? onShareToX;
   final VoidCallback? onCopyUpdate;
   final PetShareSnapshotMetrics shareMetrics;
+  final PetPublicCardMetrics publicCardMetrics;
   final _ShareFeedbackState shareFeedback;
   final String sharePreview;
+  final VoidCallback? onOpenPublicCard;
+  final VoidCallback? onSharePublicCard;
 
   @override
   Widget build(BuildContext context) {
@@ -516,6 +587,7 @@ class _PetDetailContent extends StatelessWidget {
                             label: pet.avatarEmoji,
                             backgroundColor: pet.accentColor,
                             size: 84,
+                            imageDataUrl: pet.profileImageDataUrl,
                           ),
                           const SizedBox(width: 18),
                           Expanded(child: summary),
@@ -528,6 +600,7 @@ class _PetDetailContent extends StatelessWidget {
                             label: pet.avatarEmoji,
                             backgroundColor: pet.accentColor,
                             size: 84,
+                            imageDataUrl: pet.profileImageDataUrl,
                           ),
                           const SizedBox(height: 16),
                           summary,
@@ -573,6 +646,92 @@ class _PetDetailContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          if (pet.galleryProvider != null) ...[
+            PetSection(
+              title: 'Galleria del pet',
+              subtitle:
+                  'Ultime 8 preview da ${pet.galleryProvider}. Demo mode: connessione visuale pronta per il prossimo step.',
+              trailing: _DetailBadge(label: pet.galleryProvider!),
+              children: [
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: List.generate(
+                    8,
+                    (index) => _PetGalleryPreviewTile(
+                      pet: pet,
+                      index: index,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+          PetSection(
+            title: 'Pet card pubblica',
+            subtitle:
+                'Una mini scheda read-only da aprire o inoltrare a partner e pet sitter.',
+            trailing: _DetailBadge(label: publicCardMetrics.shareLabel),
+            children: [
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  PetActionButton(
+                    label: 'Apri card pubblica',
+                    icon: Icons.open_in_new_rounded,
+                    onPressed: onOpenPublicCard,
+                  ),
+                  PetActionButton(
+                    label: 'Condividi card',
+                    icon: Icons.share_outlined,
+                    onPressed: onSharePublicCard,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _DetailBadge(label: publicCardMetrics.openLabel),
+                  _DetailBadge(label: publicCardMetrics.shareLabel),
+                  _DetailBadge(
+                    label: 'Ultima: ${publicCardMetrics.lastSharedLabel}',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FBF8),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE4DDD2)),
+                ),
+                child: Text(
+                  '${PetPublicCardStore.instance.buildDemoLink(pet.id)}\n\n${PetPublicCardStore.instance.buildCardPreviewText(pet)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: Color(0xFF173A35),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Metriche hook: pet_card_opened e pet_card_shared.',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF5C726D),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           PetSection(
             title: 'Azioni',
             subtitle: 'Modifica o torna indietro senza perdere il contesto.',
@@ -601,46 +760,31 @@ class _PetDetailContent extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  SizedBox(
-                    width: 280,
-                    child: PetActionButton(
-                      label: 'Condividi su WhatsApp',
-                      icon: Icons.open_in_new_rounded,
-                      primary: true,
-                      onPressed: onShareToWhatsApp,
-                    ),
+                  _ShareIconButton(
+                    tooltip: 'WhatsApp',
+                    icon: Icons.chat_bubble_rounded,
+                    onPressed: onShareToWhatsApp,
+                    primary: true,
                   ),
-                  SizedBox(
-                    width: 260,
-                    child: PetActionButton(
-                      label: 'Condividi su Telegram',
-                      icon: Icons.send_rounded,
-                      onPressed: onShareToTelegram,
-                    ),
+                  _ShareIconButton(
+                    tooltip: 'Telegram',
+                    icon: Icons.send_rounded,
+                    onPressed: onShareToTelegram,
                   ),
-                  SizedBox(
-                    width: 260,
-                    child: PetActionButton(
-                      label: 'Apri Instagram Direct',
-                      icon: Icons.camera_alt_outlined,
-                      onPressed: onShareToInstagram,
-                    ),
+                  _ShareIconButton(
+                    tooltip: 'Instagram Direct',
+                    icon: Icons.camera_alt_outlined,
+                    onPressed: onShareToInstagram,
                   ),
-                  SizedBox(
-                    width: 220,
-                    child: PetActionButton(
-                      label: 'Condividi su X',
-                      icon: Icons.alternate_email_rounded,
-                      onPressed: onShareToX,
-                    ),
+                  _ShareIconButton(
+                    tooltip: 'X',
+                    icon: Icons.alternate_email_rounded,
+                    onPressed: onShareToX,
                   ),
-                  SizedBox(
-                    width: 220,
-                    child: PetActionButton(
-                      label: 'Copia update',
-                      icon: Icons.copy_all_rounded,
-                      onPressed: onCopyUpdate,
-                    ),
+                  _ShareIconButton(
+                    tooltip: 'Copia update',
+                    icon: Icons.copy_all_rounded,
+                    onPressed: onCopyUpdate,
                   ),
                 ],
               ),
@@ -721,6 +865,134 @@ class _DetailBadge extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ShareIconButton extends StatelessWidget {
+  const _ShareIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+    this.primary = false,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor =
+        primary ? const Color(0xFF2E6F6D) : const Color(0xFFF2E9DE);
+    final foregroundColor = primary ? Colors.white : const Color(0xFF6C4A36);
+
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(20),
+          child: Ink(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: onPressed == null
+                  ? backgroundColor.withValues(alpha: 0.45)
+                  : backgroundColor,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(icon, color: foregroundColor, size: 24),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PetGalleryPreviewTile extends StatelessWidget {
+  const _PetGalleryPreviewTile({
+    required this.pet,
+    required this.index,
+  });
+
+  final PetProfile pet;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageBytes = pet.profileImageDataUrl == null
+        ? null
+        : _imageBytesFromDataUrl(pet.profileImageDataUrl!);
+    final tones = <List<Color>>[
+      [const Color(0xFFE7F2EE), const Color(0xFF2F6B6D)],
+      [const Color(0xFFF6EADF), const Color(0xFF9F6A3D)],
+      [const Color(0xFFE0EEF4), const Color(0xFF2E6F8A)],
+      [const Color(0xFFF6E3DD), const Color(0xFFC96C55)],
+    ];
+    final palette = tones[index % tones.length];
+    final label = '${pet.name} ${index + 1}';
+
+    return Container(
+      width: 112,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: palette,
+        ),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            height: 76,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16),
+              image: index == 0 && imageBytes != null
+                  ? DecorationImage(
+                      image: MemoryImage(imageBytes),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: index == 0 && imageBytes != null
+                ? null
+                : const Icon(Icons.photo_library_outlined, color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Uint8List? _imageBytesFromDataUrl(String value) {
+  final marker = value.indexOf('base64,');
+  if (marker == -1) {
+    return null;
+  }
+
+  final encoded = value.substring(marker + 'base64,'.length);
+  try {
+    return base64Decode(encoded);
+  } catch (_) {
+    return null;
   }
 }
 

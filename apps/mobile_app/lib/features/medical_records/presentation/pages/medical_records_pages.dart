@@ -1,12 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../design_system/tokens/app_colors.dart';
 import '../../../../../design_system/tokens/app_radii.dart';
 import '../../../../../design_system/tokens/app_spacing.dart';
 import '../../../../../design_system/tokens/app_text_styles.dart';
 import '../../data/medical_records_repository.dart';
+import '../../../pets/data/post_visit_recap_store.dart';
 
 enum _ViewState { empty, loading, error, success }
 
@@ -58,9 +61,12 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
 
   void _openUpload() {
     unawaited(
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const MedicalRecordsUploadPage()),
-      ).then((_) {
+      Navigator.of(context)
+          .push(
+        MaterialPageRoute<void>(
+            builder: (_) => const MedicalRecordsUploadPage()),
+      )
+          .then((_) {
         if (mounted) {
           _reload();
         }
@@ -101,11 +107,13 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
           ),
         _ViewState.loading => const _LoadingState(
             title: 'Sincronizzazione referti',
-            body: 'Sto recuperando documenti e metadati dalla sorgente preview locale.',
+            body:
+                'Sto recuperando documenti e metadati dalla sorgente preview locale.',
           ),
         _ViewState.error => _EmptyState(
             title: 'Impossibile caricare l archivio',
-            body: 'Riprova dopo aver controllato la connessione o continua con il fallback preview.',
+            body:
+                'Riprova dopo aver controllato la connessione o continua con il fallback preview.',
             icon: Icons.cloud_off_outlined,
             actionLabel: 'Riprova',
             onAction: () {},
@@ -116,14 +124,16 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const _LoadingState(
                   title: 'Sincronizzazione referti',
-                  body: 'Sto recuperando documenti e metadati da Supabase o dalla sorgente preview locale.',
+                  body:
+                      'Sto recuperando documenti e metadati da Supabase o dalla sorgente preview locale.',
                 );
               }
 
               if (snapshot.hasError) {
                 return _EmptyState(
                   title: 'Impossibile caricare l archivio',
-                  body: 'Riprova dopo aver controllato la connessione o continua con il fallback preview.',
+                  body:
+                      'Riprova dopo aver controllato la connessione o continua con il fallback preview.',
                   icon: Icons.cloud_off_outlined,
                   actionLabel: 'Riprova',
                   onAction: () => unawaited(_reload()),
@@ -137,9 +147,8 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
                   .toSet()
                   .toList()
                 ..sort();
-              final selectedPetName = petNames.contains(_selectedPetName)
-                  ? _selectedPetName
-                  : null;
+              final selectedPetName =
+                  petNames.contains(_selectedPetName) ? _selectedPetName : null;
               final filteredRecords = selectedPetName == null
                   ? records
                   : records
@@ -149,7 +158,8 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
               if (records.isEmpty) {
                 return _EmptyState(
                   title: 'Nessun documento ancora',
-                  body: 'Carica il primo referto per costruire la cartella clinica.',
+                  body:
+                      'Carica il primo referto per costruire la cartella clinica.',
                   icon: Icons.folder_open_outlined,
                   actionLabel: 'Carica il primo file',
                   onAction: _openUpload,
@@ -248,8 +258,10 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
     createdAt: '25 Mar 2026, 09:32',
     timeline: [
       MedicalRecordTimelineEntry(label: 'Importato', value: '25 Mar 2026'),
-      MedicalRecordTimelineEntry(label: 'Revisionato', value: '25 Mar 2026, 09:45'),
-      MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'Disponibile'),
+      MedicalRecordTimelineEntry(
+          label: 'Revisionato', value: '25 Mar 2026, 09:45'),
+      MedicalRecordTimelineEntry(
+          label: "Pronto per l'invio", value: 'Disponibile'),
     ],
   );
 
@@ -260,12 +272,7 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
       subtitle: 'Carica PDF, JPG o PNG e completa i metadati.',
       actionLabel: 'Dettaglio',
       onAction: () {
-        unawaited(_repository.saveRecord(_draftRecord));
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => MedicalRecordDetailPage(record: _draftRecord),
-          ),
-        );
+        unawaited(_saveAndShareRecord(context));
       },
       state: _state,
       onStateChanged: (value) => setState(() => _state = value),
@@ -287,7 +294,8 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
             children: [
               _SummaryCard(
                 title: 'richiamo_vaccinale_moka.pdf',
-                body: 'Caricato con successo e pronto per la revisione dei metadati.',
+                body:
+                    'Caricato con successo e pronto per la revisione dei metadati.',
                 icon: Icons.check_circle_outline,
               ),
               SizedBox(height: AppSpacing.lg),
@@ -306,6 +314,217 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
       },
     );
   }
+
+  Future<void> _saveAndShareRecord(BuildContext context) async {
+    await _repository.saveRecord(_draftRecord);
+    if (!context.mounted) {
+      return;
+    }
+
+    await _showPostVisitRecapSheet(context, _draftRecord);
+    if (!context.mounted) {
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MedicalRecordDetailPage(record: _draftRecord),
+      ),
+    );
+  }
+
+  Future<void> _showPostVisitRecapSheet(
+    BuildContext context,
+    MedicalRecordEntry record,
+  ) async {
+    final preview = PostVisitRecapStore.instance.buildMedicalRecordRecapText(
+      record,
+    );
+    final metrics =
+        await PostVisitRecapStore.instance.metricsForEntry(record.id);
+    if (!context.mounted) {
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Invia riepilogo visita',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.text,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Documento caricato. Puoi condividere subito il recap della visita di ${record.petName}.',
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: AppColors.secondaryText,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.accentSoft,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  preview,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: AppColors.text,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _ShareMetricChip(label: metrics.shareClicksLabel),
+                  _ShareMetricChip(label: metrics.shareCopiesLabel),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await _shareRecordRecap(context, record, preview);
+                      if (sheetContext.mounted) {
+                        Navigator.of(sheetContext).pop();
+                      }
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline_rounded),
+                    label: const Text('Invia riepilogo visita'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await _copyRecordRecap(context, record, preview);
+                      if (sheetContext.mounted) {
+                        Navigator.of(sheetContext).pop();
+                      }
+                    },
+                    icon: const Icon(Icons.copy_all_rounded),
+                    label: const Text('Copia'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Metriche hook: post_visit_recap_clicked e post_visit_recap_copied.',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.secondaryText,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _shareRecordRecap(
+    BuildContext context,
+    MedicalRecordEntry record,
+    String preview,
+  ) async {
+    try {
+      await PostVisitRecapStore.instance.recordShareClicked(record.id);
+      final launched = await launchUrl(
+        Uri.parse('https://wa.me/?text=${Uri.encodeComponent(preview)}'),
+      );
+      if (!context.mounted) {
+        return;
+      }
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: preview));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('WhatsApp non disponibile. Riepilogo copiato.'),
+          ),
+        );
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text('Riepilogo visita di ${record.petName} pronto in WhatsApp.'),
+        ),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: preview));
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invio non riuscito. Riepilogo copiato.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _copyRecordRecap(
+    BuildContext context,
+    MedicalRecordEntry record,
+    String preview,
+  ) async {
+    await Clipboard.setData(ClipboardData(text: preview));
+    await PostVisitRecapStore.instance.recordShareCopied(record.id);
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Riepilogo visita di ${record.petName} copiato.'),
+      ),
+    );
+  }
+}
+
+class _ShareMetricChip extends StatelessWidget {
+  const _ShareMetricChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F1ED),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF315E55),
+        ),
+      ),
+    );
+  }
 }
 
 class MedicalRecordDetailPage extends StatefulWidget {
@@ -314,7 +533,8 @@ class MedicalRecordDetailPage extends StatefulWidget {
   final MedicalRecordEntry? record;
 
   @override
-  State<MedicalRecordDetailPage> createState() => _MedicalRecordDetailPageState();
+  State<MedicalRecordDetailPage> createState() =>
+      _MedicalRecordDetailPageState();
 }
 
 class _MedicalRecordDetailPageState extends State<MedicalRecordDetailPage> {
@@ -360,15 +580,18 @@ class _MedicalRecordDetailPageState extends State<MedicalRecordDetailPage> {
               const SizedBox(height: AppSpacing.lg),
               const _SummaryCard(
                 title: 'Prossima azione',
-                body: 'Condividi il referto con Francesco e conserva la nota nel profilo di Moka.',
+                body:
+                    'Condividi il referto con Francesco e conserva la nota nel profilo di Moka.',
                 icon: Icons.send_outlined,
               ),
               const SizedBox(height: AppSpacing.lg),
               _MetaGrid(
                 items: [
                   _MetaItem('Pet', widget.record?.petName ?? 'Moka'),
-                  _MetaItem('Clinica', widget.record?.detailSource ?? 'Clinica Vet Roma'),
-                  _MetaItem('Creato', widget.record?.createdAt ?? '25 Mar 2026, 09:32'),
+                  _MetaItem('Clinica',
+                      widget.record?.detailSource ?? 'Clinica Vet Roma'),
+                  _MetaItem('Creato',
+                      widget.record?.createdAt ?? '25 Mar 2026, 09:32'),
                   const _MetaItem('Pagine', '2'),
                   const _MetaItem('Tag', 'Vaccini, controllo annuale'),
                 ],
@@ -524,11 +747,15 @@ class _BrandPill extends StatelessWidget {
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.medical_services_outlined, size: 14, color: AppColors.accent),
+          Icon(Icons.medical_services_outlined,
+              size: 14, color: AppColors.accent),
           SizedBox(width: AppSpacing.sm),
           Text(
             'VET APP',
-            style: TextStyle(color: AppColors.onPrimary, fontSize: 12, fontWeight: FontWeight.w800),
+            style: TextStyle(
+                color: AppColors.onPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -551,10 +778,22 @@ class _StateChips extends StatelessWidget {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
-        _StateChip(label: 'Vuoto', selected: value == _ViewState.empty, onTap: () => onChanged(_ViewState.empty)),
-        _StateChip(label: 'Caricamento', selected: value == _ViewState.loading, onTap: () => onChanged(_ViewState.loading)),
-        _StateChip(label: 'Errore', selected: value == _ViewState.error, onTap: () => onChanged(_ViewState.error)),
-        _StateChip(label: 'OK', selected: value == _ViewState.success, onTap: () => onChanged(_ViewState.success)),
+        _StateChip(
+            label: 'Vuoto',
+            selected: value == _ViewState.empty,
+            onTap: () => onChanged(_ViewState.empty)),
+        _StateChip(
+            label: 'Caricamento',
+            selected: value == _ViewState.loading,
+            onTap: () => onChanged(_ViewState.loading)),
+        _StateChip(
+            label: 'Errore',
+            selected: value == _ViewState.error,
+            onTap: () => onChanged(_ViewState.error)),
+        _StateChip(
+            label: 'OK',
+            selected: value == _ViewState.success,
+            onTap: () => onChanged(_ViewState.success)),
       ],
     );
   }
@@ -584,7 +823,8 @@ class _StateChip extends StatelessWidget {
       selectedColor: AppColors.primary,
       backgroundColor: AppColors.surface,
       side: const BorderSide(color: AppColors.border),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.pill)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.pill)),
     );
   }
 }
@@ -889,14 +1129,16 @@ class _RecordTile extends StatelessWidget {
                       color: AppColors.accentSoft,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Icon(Icons.description_outlined, color: AppColors.primary),
+                    child: const Icon(Icons.description_outlined,
+                        color: AppColors.primary),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: AppTextStyles.title.copyWith(fontSize: 17)),
+                        Text(title,
+                            style: AppTextStyles.title.copyWith(fontSize: 17)),
                         const SizedBox(height: AppSpacing.xs),
                         Text(subtitle, style: AppTextStyles.bodySmall),
                         const SizedBox(height: AppSpacing.sm),
@@ -1000,7 +1242,9 @@ class _MetaGrid extends StatelessWidget {
                   children: [
                     Text(item.label, style: AppTextStyles.caption),
                     const SizedBox(height: AppSpacing.xs),
-                    Text(item.value, style: AppTextStyles.bodySmall.copyWith(color: AppColors.text)),
+                    Text(item.value,
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.text)),
                   ],
                 ),
               ),
@@ -1047,7 +1291,8 @@ class _LineItem extends StatelessWidget {
         children: [
           const Icon(Icons.check_circle, size: 18, color: Color(0xFF2D6B60)),
           const SizedBox(width: AppSpacing.sm),
-          Text(text, style: AppTextStyles.bodySmall.copyWith(color: AppColors.text)),
+          Text(text,
+              style: AppTextStyles.bodySmall.copyWith(color: AppColors.text)),
         ],
       ),
     );
@@ -1064,8 +1309,10 @@ class _TimelineCard extends StatelessWidget {
     final rows = timeline ??
         const [
           MedicalRecordTimelineEntry(label: 'Importato', value: '25 Mar 2026'),
-          MedicalRecordTimelineEntry(label: 'Revisionato', value: '25 Mar 2026, 09:45'),
-          MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'Disponibile'),
+          MedicalRecordTimelineEntry(
+              label: 'Revisionato', value: '25 Mar 2026, 09:45'),
+          MedicalRecordTimelineEntry(
+              label: "Pronto per l'invio", value: 'Disponibile'),
         ];
 
     return Container(
@@ -1168,7 +1415,9 @@ class _PetFilterBar extends StatelessWidget {
             selected: selectedPetName == null,
             onSelected: (_) => onChanged(null),
             labelStyle: TextStyle(
-              color: selectedPetName == null ? AppColors.onPrimary : AppColors.secondaryText,
+              color: selectedPetName == null
+                  ? AppColors.onPrimary
+                  : AppColors.secondaryText,
               fontWeight: FontWeight.w700,
             ),
             selectedColor: AppColors.primary,
@@ -1184,7 +1433,9 @@ class _PetFilterBar extends StatelessWidget {
               selected: selectedPetName == petName,
               onSelected: (_) => onChanged(petName),
               labelStyle: TextStyle(
-                color: selectedPetName == petName ? AppColors.onPrimary : AppColors.secondaryText,
+                color: selectedPetName == petName
+                    ? AppColors.onPrimary
+                    : AppColors.secondaryText,
                 fontWeight: FontWeight.w700,
               ),
               selectedColor: AppColors.primary,

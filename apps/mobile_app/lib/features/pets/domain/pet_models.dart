@@ -32,6 +32,8 @@ class PetProfile {
     required this.nextVisitLabel,
     required this.avatarEmoji,
     required this.accentColor,
+    this.profileImageDataUrl,
+    this.galleryProvider,
   });
 
   final String id;
@@ -46,6 +48,8 @@ class PetProfile {
   final String nextVisitLabel;
   final String avatarEmoji;
   final Color accentColor;
+  final String? profileImageDataUrl;
+  final String? galleryProvider;
 
   String get title => '$name - $species';
   String get breedLabel =>
@@ -109,6 +113,8 @@ class PetProfile {
     String? nextVisitLabel,
     String? avatarEmoji,
     Color? accentColor,
+    String? profileImageDataUrl,
+    String? galleryProvider,
   }) {
     return PetProfile(
       id: id ?? this.id,
@@ -123,6 +129,8 @@ class PetProfile {
       nextVisitLabel: nextVisitLabel ?? this.nextVisitLabel,
       avatarEmoji: avatarEmoji ?? this.avatarEmoji,
       accentColor: accentColor ?? this.accentColor,
+      profileImageDataUrl: profileImageDataUrl ?? this.profileImageDataUrl,
+      galleryProvider: galleryProvider ?? this.galleryProvider,
     );
   }
 }
