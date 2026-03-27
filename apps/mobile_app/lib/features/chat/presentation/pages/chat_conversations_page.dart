@@ -83,7 +83,7 @@ class ChatConversationsPage extends StatelessWidget {
                             key: ValueKey('loading'),
                             title: 'Carichiamo la chat del pet',
                             subtitle:
-                                'Stiamo recuperando i thread piu utili del tuo profilo demo.',
+                                'Stiamo recuperando i thread piu utili del tuo profilo preview.',
                           ),
                         ChatScreenState.empty => ChatEmptyState(
                             key: const ValueKey('empty'),
@@ -112,8 +112,8 @@ class ChatConversationsPage extends StatelessWidget {
                                 key: const ValueKey('success-empty'),
                                 title: 'Nessuna chat salvata',
                                 subtitle:
-                                    'Avvia un thread demo per vedere il flusso completo dell assistente veterinario.',
-                                actionLabel: 'Nuova chat demo',
+                                'Avvia un thread preview per vedere il flusso completo dell assistente veterinario.',
+                                actionLabel: 'Nuova chat preview',
                                 onAction: () => _startConversation(context),
                               )
                             : _ConversationList(
@@ -181,7 +181,7 @@ class ChatConversationsPage extends StatelessWidget {
         return AlertDialog(
           title: const Text('Eliminare la chat?'),
           content: Text(
-            'Rimuoviamo "${conversation.title}" dal tuo demo store. '
+            'Rimuoviamo "${conversation.title}" dal tuo preview store. '
             'Potrai ripristinarla subito con Annulla.',
           ),
           actions: [
@@ -323,7 +323,7 @@ class _Header extends StatelessWidget {
                 foregroundColor: const Color(0xFF8B5B3E),
               ),
               const _HeaderChip(
-                label: 'Demo pronta',
+                label: 'Preview pronta',
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.onPrimary,
               ),
@@ -335,7 +335,7 @@ class _Header extends StatelessWidget {
             child: TextButton.icon(
               onPressed: onStartConversation,
               icon: const Icon(Icons.add_comment_outlined),
-              label: const Text('Nuova chat demo'),
+              label: const Text('Nuova chat preview'),
             ),
           ),
         ],
@@ -471,7 +471,7 @@ class _NewConversationBanner extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Crea un thread demo con un primo scambio utile, non un placeholder vuoto.',
+                  'Crea un thread di preview con un primo scambio utile, non un placeholder vuoto.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
                     fontSize: 12,

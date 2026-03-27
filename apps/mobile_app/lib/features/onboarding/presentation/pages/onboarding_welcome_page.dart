@@ -132,7 +132,7 @@ class _HeroCard extends StatelessWidget {
           ),
           SizedBox(height: AppSpacing.lg),
           Text(
-            'Promemoria, documenti clinici e chat guidata in un\'unica app pensata per accompagnarti tra visite, dubbi e routine.',
+            'Profilo pet, promemoria chiari e chat guidata in un\'unica app pensata per accompagnarti tra routine, dubbi e prossimi passi.',
             style: AppTextStyles.body,
           ),
           SizedBox(height: AppSpacing.xl),
@@ -146,7 +146,7 @@ class _HeroCard extends StatelessWidget {
                 foregroundColor: AppColors.onPrimary,
               ),
               _PillChip(
-                label: 'Documenti',
+                label: 'Profilo pet',
                 backgroundColor: Color(0xFFF6DCCB),
                 foregroundColor: Color(0xFF7B4A2E),
               ),
@@ -461,7 +461,7 @@ class _BottomPanel extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           const Text(
-            'Ti bastano pochi passaggi per salvare dati, documenti e promemoria importanti.',
+            'Ti bastano pochi passaggi per entrare nel flusso preview: profilo pet, chat contestuale e promemoria importanti.',
             style: AppTextStyles.bodySmall,
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -471,7 +471,7 @@ class _BottomPanel extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).push(OnboardingRoutes.valueProposition());
               },
-              child: const Text('Scopri di piu'),
+              child: const Text('Scopri il percorso'),
             ),
           ),
           const SizedBox(height: AppSpacing.md),

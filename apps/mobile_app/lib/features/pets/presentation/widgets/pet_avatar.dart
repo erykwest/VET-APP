@@ -103,7 +103,7 @@ class PetAvatar extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    isPreset ? 'demo' : 'id',
+                    isPreset ? 'preview' : 'id',
                     style: const TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -126,7 +126,7 @@ class PetAvatarPicker extends StatelessWidget {
     required this.selectedKey,
     required this.onSelected,
     super.key,
-    this.title = 'Scegli un avatar demo',
+    this.title = 'Scegli un avatar preview',
     this.subtitle =
         'Nessun upload reale: seleziona un ritratto locale e lo ritroverai nella lista.',
     this.options = PetDemoStore.avatarChoices,

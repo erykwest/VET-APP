@@ -101,11 +101,11 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
           ),
         _ViewState.loading => const _LoadingState(
             title: 'Sincronizzazione referti',
-            body: 'Sto recuperando documenti e metadati dalla sorgente demo.',
+            body: 'Sto recuperando documenti e metadati dalla sorgente preview locale.',
           ),
         _ViewState.error => _EmptyState(
             title: 'Impossibile caricare l archivio',
-            body: 'Riprova dopo aver controllato la connessione o continua con il fallback demo.',
+            body: 'Riprova dopo aver controllato la connessione o continua con il fallback preview.',
             icon: Icons.cloud_off_outlined,
             actionLabel: 'Riprova',
             onAction: () {},
@@ -116,14 +116,14 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const _LoadingState(
                   title: 'Sincronizzazione referti',
-                  body: 'Sto recuperando documenti e metadati da Supabase o dalla sorgente demo.',
+                  body: 'Sto recuperando documenti e metadati da Supabase o dalla sorgente preview locale.',
                 );
               }
 
               if (snapshot.hasError) {
                 return _EmptyState(
                   title: 'Impossibile caricare l archivio',
-                  body: 'Riprova dopo aver controllato la connessione o continua con il fallback demo.',
+                  body: 'Riprova dopo aver controllato la connessione o continua con il fallback preview.',
                   icon: Icons.cloud_off_outlined,
                   actionLabel: 'Riprova',
                   onAction: () => unawaited(_reload()),

@@ -15,14 +15,14 @@ class ResetPasswordPage extends StatefulWidget {
 }
 
 class _ResetPasswordPageState extends State<ResetPasswordPage> {
-  final _authRepository = const AuthRepositoryFactory().create();
+  final _authRepository = AuthRepositoryFactory().create();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
 
   bool _isLoading = false;
   AuthBannerStatus _status = AuthBannerStatus.info;
   String _title = 'Recupera il tuo accesso.';
-  String _message = 'Simuliamo l invio della mail di reset.';
+  String _message = 'Invio il link di reset tramite Supabase.';
 
   @override
   void dispose() {
@@ -79,7 +79,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       eyebrow: 'Recupero password',
       title: 'Nessun problema, ricominciamo.',
       subtitle:
-          'Inserisci la tua email e simula l invio del link di recupero accesso.',
+          'Inserisci la tua email per ricevere il link di recupero accesso.',
       primaryActionLabel: 'Invia link',
       secondaryActionLabel: 'Torna all accesso',
       onPrimaryAction: _submit,

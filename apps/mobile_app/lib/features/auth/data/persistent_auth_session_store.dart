@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,11 +9,13 @@ import 'auth_session_store.dart';
 class PersistentAuthSessionStore implements AuthSessionStore {
   PersistentAuthSessionStore({
     SharedPreferences? preferences,
-  }) : _preferences = preferences;
+  })  : _preferences = preferences,
+        _controller = StreamController<AuthContext>.broadcast();
 
   static const _storageKey = 'vet_app.auth_context';
 
   SharedPreferences? _preferences;
+  final StreamController<AuthContext> _controller;
 
   AuthContext _context = const AuthContext();
 
@@ -28,7 +31,7 @@ class PersistentAuthSessionStore implements AuthSessionStore {
   }
 
   @override
-  Stream<AuthContext> watch() => const Stream<AuthContext>.empty();
+  Stream<AuthContext> watch() => _controller.stream;
 
   @override
   AuthContext read() => _context;
@@ -65,6 +68,9 @@ class PersistentAuthSessionStore implements AuthSessionStore {
       _context = const AuthContext();
     }
 
+    if (!_controller.isClosed) {
+      _controller.add(_context);
+    }
     return _context;
   }
 
@@ -84,6 +90,9 @@ class PersistentAuthSessionStore implements AuthSessionStore {
       'onboarding_completed': context.onboardingCompleted,
     };
     await preferences.setString(_storageKey, jsonEncode(payload));
+    if (!_controller.isClosed) {
+      _controller.add(_context);
+    }
   }
 
   @override
@@ -91,5 +100,13 @@ class PersistentAuthSessionStore implements AuthSessionStore {
     _context = const AuthContext();
     final preferences = await _preferencesInstance();
     await preferences.remove(_storageKey);
+    if (!_controller.isClosed) {
+      _controller.add(_context);
+    }
+  }
+
+  @override
+  Future<void> dispose() async {
+    await _controller.close();
   }
 }

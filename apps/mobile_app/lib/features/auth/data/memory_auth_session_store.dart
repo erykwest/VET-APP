@@ -21,7 +21,12 @@ class MemoryAuthSessionStore implements AuthSessionStore {
   AuthContext read() => _context;
 
   @override
-  Future<AuthContext> restore() async => _context;
+  Future<AuthContext> restore() async {
+    if (!_controller.isClosed) {
+      _controller.add(_context);
+    }
+    return _context;
+  }
 
   @override
   Future<void> write(AuthContext context) async {
@@ -36,6 +41,7 @@ class MemoryAuthSessionStore implements AuthSessionStore {
     await write(const AuthContext());
   }
 
+  @override
   Future<void> dispose() async {
     await _controller.close();
   }

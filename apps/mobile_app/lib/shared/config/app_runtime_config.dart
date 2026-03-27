@@ -26,6 +26,7 @@ class AppRuntimeConfig {
   bool get hasApiBaseUrl => apiBaseUrl.trim().isNotEmpty;
   bool get hasSupabaseCredentials =>
       supabaseUrl.trim().isNotEmpty && supabaseAnonKey.trim().isNotEmpty;
+  bool get hasSupabaseConfig => hasSupabaseCredentials;
 
   bool get isProduction => environment == AppEnvironment.production;
 }

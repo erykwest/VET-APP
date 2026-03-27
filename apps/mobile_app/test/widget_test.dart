@@ -1,35 +1,29 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vet_app_mobile/app/app.dart';
-import 'package:vet_app_mobile/app/config/app_bootstrap_state.dart';
-import 'package:vet_app_mobile/shared/config/app_runtime_config.dart';
+import 'package:vet_app_mobile/app/preview/preview_dashboard_page.dart';
 
 void main() {
-  testWidgets('Vet app boots into dashboard preview without auth on web preview', (WidgetTester tester) async {
+  testWidgets('preview dashboard renders the core loop first', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
-      const VetApp(
-        bootstrapState: AppBootstrapState(
-          runtimeConfig: AppRuntimeConfig(
-            environment: AppEnvironment.development,
-            appName: 'Vet App',
-            apiBaseUrl: 'http://127.0.0.1:8000',
-            supabaseUrl: '',
-            supabaseAnonKey: '',
-            logLevel: 'INFO',
-            enableTelemetry: false,
-          ),
-          supabaseEnabled: false,
-        ),
+      const MaterialApp(
+        home: PreviewDashboardPage(),
       ),
     );
 
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pumpAndSettle();
 
     expect(find.text('Preview Dashboard'), findsOneWidget);
+    expect(find.text('Mode: local preview data'), findsOneWidget);
+    expect(find.text('Auth: bypassed'), findsOneWidget);
     expect(find.text('Scadenze vicine'), findsOneWidget);
     expect(find.text('Assistente Vet AI'), findsOneWidget);
-    expect(find.textContaining('Verifica sessione'), findsNothing);
-    expect(find.textContaining('Bentornato.'), findsNothing);
+    expect(find.text('Apri profilo'), findsWidgets);
+    expect(find.text('Apri chat'), findsWidgets);
+    expect(find.text('Nuovo reminder'), findsWidgets);
+    expect(find.text('Records'), findsNothing);
+    expect(find.text('Settings'), findsNothing);
   });
 }

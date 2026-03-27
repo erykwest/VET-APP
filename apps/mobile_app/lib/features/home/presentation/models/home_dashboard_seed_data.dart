@@ -109,7 +109,7 @@ class HomeDashboardSeedData {
           subtitle: 'Apri il primo scambio per creare il contesto iniziale.',
           icon: Icons.add_comment_outlined,
           iconColor: const Color(0xFF6F91A3),
-          trailing: const _ReminderTrailingText('Demo'),
+          trailing: const _ReminderTrailingText('Preview'),
         ),
     ];
   }

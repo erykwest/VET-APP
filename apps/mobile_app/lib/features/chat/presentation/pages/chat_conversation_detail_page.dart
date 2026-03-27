@@ -87,7 +87,7 @@ class _ChatConversationDetailPageState extends State<ChatConversationDetailPage>
                     child: ChatEmptyState(
                       title: 'Conversazione eliminata',
                       subtitle:
-                          'Questo thread non fa piu parte del demo store. Torna alle chat o crea una nuova conversazione.',
+                          'Questo thread non fa piu parte del preview store. Torna alle chat o crea una nuova conversazione.',
                       actionLabel: 'Torna alle chat',
                       onAction: () => Navigator.of(context).maybePop(),
                     ),
@@ -218,7 +218,7 @@ class _ChatConversationDetailPageState extends State<ChatConversationDetailPage>
         return AlertDialog(
           title: const Text('Eliminare la chat?'),
           content: Text(
-            'Rimuoviamo "${conversation.title}" dal demo store. '
+            'Rimuoviamo "${conversation.title}" dal preview store. '
             'Potrai ripristinarla subito con Annulla.',
           ),
           actions: [

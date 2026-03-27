@@ -22,6 +22,13 @@ Use the web server target instead of the managed Chrome device:
 4. Open that URL manually in the browser you already use.
 
 This keeps the boot flow inside the current user session and avoids the Chrome-device profile that Flutter creates under `.dart_tool/chrome-device`.
+It is also the safest path for the founder demo because it keeps the presentation focused on the core loop rather than on local toolchain quirks.
+
+If you are validating real Supabase auth in the same browser flow, append the compile-time defines explicitly:
+
+1. `flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=... -d web-server --web-hostname 127.0.0.1 --web-port 8080`
+2. `flutter build web --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...`
+3. The `make run-web-server-supabase` and `make build-web-supabase` targets do the same thing from the repository root when the variables are exported.
 
 ## Recommended SDK policy
 

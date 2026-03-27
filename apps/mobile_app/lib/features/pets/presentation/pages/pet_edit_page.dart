@@ -75,7 +75,7 @@ class _EditFormState extends State<_EditForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         PetAvatarPicker(
-          title: 'Aggiorna avatar demo',
+          title: 'Aggiorna avatar preview',
           subtitle:
               'Puoi cambiare anche il ritratto, senza toccare il profilo reale.',
           selectedKey: _selectedAvatarKey,

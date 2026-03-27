@@ -11,10 +11,10 @@ class AuthPlaceholderPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AuthScreenScaffold(
-      eyebrow: 'Accesso protetto',
-      title: 'Entra nel profilo del tuo pet in pochi secondi.',
+      eyebrow: 'Percorso auth',
+      title: 'Entra nel tuo account VET APP.',
       subtitle:
-          'Login, registrazione e recupero accesso in un unico flusso pensato per la web app responsive e la futura release mobile.',
+          'Login, registrazione e recupero accesso in un unico flusso pensato per la web app reale.',
       primaryActionLabel: 'Vai al login',
       secondaryActionLabel: 'Crea un account',
       onPrimaryAction: () {
@@ -36,18 +36,17 @@ class AuthPlaceholderPage extends StatelessWidget {
         children: [
           const AuthStateBanner(
             status: AuthBannerStatus.info,
-            title: 'Demo pronta da mostrare',
-            message:
-                'L accesso qui e gia navigabile; alcune integrazioni restano in preview mentre prepariamo la release web-first.',
+            title: 'Hub secondario',
+            message: 'Questa schermata resta disponibile come ingresso alternativo, ma il percorso primario ora passa da login.',
           ),
           const SizedBox(height: 16),
           AuthSurfaceCard(
-            title: 'Percorso demo',
+            title: 'Percorso rapido',
             child: Column(
               children: [
                 _AuthQuickTile(
                   title: 'Accesso',
-                  subtitle: 'Accedi e continua nel flusso principale.',
+                  subtitle: 'Vai subito alla schermata di login.',
                   icon: Icons.login_rounded,
                   onTap: () {
                     Navigator.of(context).push(
@@ -60,7 +59,7 @@ class AuthPlaceholderPage extends StatelessWidget {
                 const SizedBox(height: 12),
                 _AuthQuickTile(
                   title: 'Registrazione',
-                  subtitle: 'Prepara il profilo owner per la prova.',
+                  subtitle: 'Crea un nuovo account e continua.',
                   icon: Icons.person_add_alt_1_rounded,
                   onTap: () {
                     Navigator.of(context).push(
@@ -73,7 +72,7 @@ class AuthPlaceholderPage extends StatelessWidget {
                 const SizedBox(height: 12),
                 _AuthQuickTile(
                   title: 'Recupero password',
-                  subtitle: 'Simula il recupero accesso senza attrito.',
+                  subtitle: 'Recupera l accesso con la mail.',
                   icon: Icons.lock_reset_rounded,
                   onTap: () {
                     Navigator.of(context).push(
@@ -89,9 +88,9 @@ class AuthPlaceholderPage extends StatelessWidget {
           const SizedBox(height: 16),
           const AuthStateBanner(
             status: AuthBannerStatus.success,
-            title: 'Flusso web gia leggibile',
+            title: 'Percorso principale',
             message:
-                'Lo scopo di questa schermata e far partire subito il percorso web: auth, home, pet, chat e reminder.',
+                'Login e registrazione sono ora il punto di ingresso principale dell app.',
           ),
         ],
       ),

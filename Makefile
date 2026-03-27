@@ -1,5 +1,6 @@
 PYTHON ?= python
 UV ?= uv
+FLUTTER_DART_DEFINES ?=
 
 setup:
 	$(UV) sync --all-extras
@@ -20,10 +21,19 @@ run-api:
 	$(UV) run uvicorn apps.api.main:app --reload
 
 run-web:
-	cd apps/mobile_app && flutter pub get && flutter run -d chrome
+	cd apps/mobile_app && flutter pub get && flutter run $(FLUTTER_DART_DEFINES) -d chrome
+
+run-web-supabase:
+	cd apps/mobile_app && flutter pub get && flutter run --dart-define=SUPABASE_URL=$(SUPABASE_URL) --dart-define=SUPABASE_ANON_KEY=$(SUPABASE_ANON_KEY) -d chrome
 
 run-web-server:
-	cd apps/mobile_app && flutter pub get && flutter run -d web-server --web-hostname 127.0.0.1 --web-port 8080
+	cd apps/mobile_app && flutter pub get && flutter run $(FLUTTER_DART_DEFINES) -d web-server --web-hostname 127.0.0.1 --web-port 8080
+
+run-web-server-supabase:
+	cd apps/mobile_app && flutter pub get && flutter run --dart-define=SUPABASE_URL=$(SUPABASE_URL) --dart-define=SUPABASE_ANON_KEY=$(SUPABASE_ANON_KEY) -d web-server --web-hostname 127.0.0.1 --web-port 8080
 
 build-web:
-	cd apps/mobile_app && flutter pub get && flutter build web
+	cd apps/mobile_app && flutter pub get && flutter build web $(FLUTTER_DART_DEFINES)
+
+build-web-supabase:
+	cd apps/mobile_app && flutter pub get && flutter build web --dart-define=SUPABASE_URL=$(SUPABASE_URL) --dart-define=SUPABASE_ANON_KEY=$(SUPABASE_ANON_KEY)

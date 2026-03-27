@@ -81,7 +81,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   _ViewState.error => _StateCard(
                       label: 'Errore impostazioni',
                       title: 'Le preferenze non sono disponibili.',
-                      body: 'Riprova oppure continua con la configurazione demo web.',
+                      body: 'Riprova oppure continua con la configurazione preview web.',
                       icon: Icons.sync_problem_outlined,
                       actionLabel: 'Riprova',
                       onAction: () => setState(() => _state = _ViewState.success),

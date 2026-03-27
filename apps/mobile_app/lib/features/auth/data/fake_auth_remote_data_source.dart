@@ -7,6 +7,7 @@ import '../../../shared/auth/auth.dart';
 import '../../../shared/errors/app_auth_error.dart';
 import '../../../shared/types/result.dart';
 import 'auth_remote_data_source.dart';
+import 'auth_sign_up_result.dart';
 
 class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   FakeAuthRemoteDataSource({
@@ -62,7 +63,7 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<Result<AppSession>> signUpWithPassword(
+  Future<Result<AuthSignUpResult>> signUpWithPassword(
     AuthSignUpRequest request,
   ) async {
     await _restorePersistedUsers();
@@ -89,7 +90,14 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
     _users[normalizedEmail] = user;
     await _persistUsers();
 
-    return Result.success(_sessionFor(user.toAppUser()));
+    final appUser = user.toAppUser();
+    return Result.success(
+      AuthSignUpResult(
+        user: appUser,
+        session: _sessionFor(appUser),
+        requiresEmailConfirmation: false,
+      ),
+    );
   }
 
   @override
@@ -140,7 +148,8 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
 
   Future<void> _persistUsers() async {
     final preferences = await _preferencesInstance();
-    final payload = _users.values.map((user) => user.toMap()).toList(growable: false);
+    final payload =
+        _users.values.map((user) => user.toMap()).toList(growable: false);
     await preferences.setString(_usersStorageKey, jsonEncode(payload));
   }
 

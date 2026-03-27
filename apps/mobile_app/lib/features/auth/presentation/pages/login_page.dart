@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -17,14 +17,15 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _authRepository = const AuthRepositoryFactory().create();
+  final _authRepository = AuthRepositoryFactory().create();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   AuthBannerStatus _status = AuthBannerStatus.info;
-  String _title = 'Inserisci le credenziali demo.';
-  String _message = 'Il flusso e gia pronto per la prova, con esperienza web responsive e mobile-ready.';
+  String _title = 'Inserisci le credenziali del tuo account.';
+  String _message =
+      'Accedi con email e password per riprendere subito il flusso reale della web app.';
   bool _isLoading = false;
 
   @override
@@ -51,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
       _status = AuthBannerStatus.loading;
       _title = 'Accesso in corso';
       _message =
-          'Sto verificando le credenziali demo e preparando la home del prodotto.';
+          'Sto verificando le credenziali su Supabase e preparando la home del prodotto.';
     });
 
     final result = await _authRepository.signInWithPassword(
@@ -68,8 +69,7 @@ class _LoginPageState extends State<LoginPage> {
           _isLoading = false;
           _status = AuthBannerStatus.success;
           _title = 'Accesso completato';
-          _message =
-              'La sessione e pronta. Ti porto nel flusso principale.';
+          _message = 'La sessione e pronta. Ti porto nel flusso principale.';
         });
         return true;
       },
@@ -100,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
       eyebrow: 'Accesso',
       title: 'Bentornato.',
       subtitle:
-          'Accedi per ritrovare pet attivo, reminder e documenti in una vista gia pronta per web e mobile.',
+          'Accedi per ritrovare il pet attivo, aprire la chat e tenere sotto controllo i prossimi reminder.',
       primaryActionLabel: 'Entra',
       secondaryActionLabel: 'Vai alla registrazione',
       onPrimaryAction: _submit,
@@ -121,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 16),
           AuthSurfaceCard(
-            title: 'Credenziali demo',
+            title: 'Credenziali account',
             child: Form(
               key: _formKey,
               child: Column(
@@ -182,7 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Suggerimento demo: usa demo@vetapp.local / VETAPP oppure registra un nuovo account di prova.',
+                      'Se stai usando la preview locale senza Supabase, puoi ancora entrare con demo@vetapp.local / VETAPP. Con Supabase attivo usa invece un account reale o registrane uno nuovo.',
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.35,
@@ -199,4 +199,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-

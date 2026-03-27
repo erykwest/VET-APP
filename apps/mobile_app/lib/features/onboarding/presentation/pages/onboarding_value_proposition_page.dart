@@ -16,7 +16,7 @@ class OnboardingValuePropositionPage extends StatelessWidget {
       currentStep: 2,
       title: 'Perche usare VET APP',
       subtitle:
-          'Un solo posto per documenti, promemoria e supporto quotidiano del tuo pet.',
+          'Un solo posto per profilo pet, promemoria e supporto quotidiano.',
       primaryActionLabel: 'Continua',
       onPrimaryAction: () {
         Navigator.of(context).push(OnboardingRoutes.privacyDisclaimer());
@@ -51,8 +51,8 @@ class _FeatureBullets extends StatelessWidget {
         ),
         SizedBox(height: AppSpacing.md),
         _BulletRow(
-          title: 'Documenti ordinati',
-          subtitle: 'Referti, PDF e note cliniche raccolti in una timeline unica.',
+          title: 'Profilo pet leggibile',
+          subtitle: 'Dati essenziali del pet sempre disponibili quando apri l app.',
         ),
         SizedBox(height: AppSpacing.md),
         _BulletRow(

@@ -309,7 +309,7 @@ class PetDemoStore {
   static String avatarChoiceLabelForKey(String key) {
     if (!_looksLikePresetKey(key)) {
       final trimmed = key.trim();
-      return trimmed.isEmpty ? 'Avatar demo' : 'Monogramma';
+      return trimmed.isEmpty ? 'Avatar preview' : 'Monogramma';
     }
 
     return avatarChoiceForKey(resolveAvatarKey(key)).label;

@@ -61,7 +61,7 @@ class _PreviewDebugBadge extends StatelessWidget {
               ),
               SizedBox(height: 4),
               Text(
-                'Mode: seed data',
+                'Mode: local preview data',
                 style: TextStyle(
                   color: Color(0xFFD7E7E1),
                   fontSize: 11,

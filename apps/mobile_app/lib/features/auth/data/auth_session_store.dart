@@ -10,4 +10,6 @@ abstract interface class AuthSessionStore {
   Future<void> write(AuthContext context);
 
   Future<void> clear();
+
+  Future<void> dispose();
 }

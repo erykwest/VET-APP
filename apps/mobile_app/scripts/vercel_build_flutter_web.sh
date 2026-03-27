@@ -21,4 +21,15 @@ cd "$APP_DIR"
 
 echo "Running Flutter web build..."
 flutter pub get
-flutter build web --release
+
+FLUTTER_DART_DEFINES=()
+
+if [ -n "${SUPABASE_URL:-}" ]; then
+  FLUTTER_DART_DEFINES+=("--dart-define=SUPABASE_URL=${SUPABASE_URL}")
+fi
+
+if [ -n "${SUPABASE_ANON_KEY:-}" ]; then
+  FLUTTER_DART_DEFINES+=("--dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}")
+fi
+
+flutter build web --release "${FLUTTER_DART_DEFINES[@]}"

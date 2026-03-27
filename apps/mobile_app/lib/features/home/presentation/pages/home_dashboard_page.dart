@@ -308,7 +308,7 @@ class _DashboardTopBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadii.pill),
               ),
               child: const Text(
-                'Core loop demo',
+                'Core loop preview',
                 style: TextStyle(
                   color: AppColors.onPrimary,
                   fontSize: 12,
@@ -393,7 +393,7 @@ class _DashboardActionSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return WarmClinicalSectionCard(
       title: 'Azioni core',
-      subtitle: 'Profilo, chat e reminder restano il centro della demo.',
+      subtitle: 'Profilo, chat e reminder restano il centro della preview.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

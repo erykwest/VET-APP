@@ -81,7 +81,7 @@ class _RemindersListPageState extends State<RemindersListPage> {
         _ViewState.error => _StatePanel(
             label: 'Errore sync',
             title: 'Sincronizzazione promemoria fallita.',
-            body: 'La sorgente demo e ancora disponibile. Riprova quando la rete torna su.',
+            body: 'La sorgente preview e ancora disponibile. Riprova quando la rete torna su.',
             icon: Icons.wifi_off_outlined,
             actionLabel: 'Riprova',
             onAction: () {},
@@ -100,7 +100,7 @@ class _RemindersListPageState extends State<RemindersListPage> {
                 return _StatePanel(
                   label: 'Errore sync',
                   title: 'Sincronizzazione promemoria fallita.',
-                  body: 'La sorgente demo e ancora disponibile. Riprova quando la rete torna su.',
+                  body: 'La sorgente preview e ancora disponibile. Riprova quando la rete torna su.',
                   icon: Icons.wifi_off_outlined,
                   actionLabel: 'Riprova',
                   onAction: () => unawaited(_reload()),
@@ -205,7 +205,7 @@ class _ReminderCreatePageState extends State<ReminderCreatePage> {
           ),
         _ViewState.loading => const _LoadingPanel(
             title: 'Preparazione form',
-            body: 'Sto caricando le opzioni di ricorrenza e i valori predefiniti.',
+            body: 'Sto caricando le opzioni di ricorrenza e i valori predefiniti della preview.',
           ),
         _ViewState.error => _StatePanel(
             label: 'Errore validazione',
@@ -277,7 +277,7 @@ class _ReminderEditPageState extends State<ReminderEditPage> {
           ),
         _ViewState.loading => const _LoadingPanel(
             title: 'Caricamento promemoria',
-            body: 'Sto leggendo regole di ricorrenza, note locali e avvisi.',
+            body: 'Sto leggendo regole di ricorrenza, note locali di preview e avvisi.',
           ),
         _ViewState.error => _StatePanel(
             label: 'Salvataggio fallito',

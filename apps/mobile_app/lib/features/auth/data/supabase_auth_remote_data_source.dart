@@ -4,17 +4,20 @@ import '../../../shared/auth/auth.dart';
 import '../../../shared/config/app_runtime_config.dart';
 import '../../../shared/errors/app_auth_error.dart';
 import '../../../shared/types/result.dart';
+import 'auth_sign_up_result.dart';
 import 'auth_remote_data_source.dart';
 
 class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
   const SupabaseAuthRemoteDataSource({
     required this.config,
+    this.client,
   });
 
   final AppRuntimeConfig config;
+  final GoTrueClient? client;
 
-  bool get isConfigured => config.hasSupabaseCredentials;
-  GoTrueClient get _client => Supabase.instance.client.auth;
+  bool get isConfigured => config.hasSupabaseCredentials && client != null;
+  GoTrueClient get _client => client!;
 
   @override
   Future<Result<AppSession>> signInWithPassword(
@@ -60,11 +63,11 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<Result<AppSession>> signUpWithPassword(
+  Future<Result<AuthSignUpResult>> signUpWithPassword(
     AuthSignUpRequest request,
   ) async {
     if (!isConfigured) {
-      return _missingConfig();
+      return Result.failure(_missingConfigError());
     }
 
     try {
@@ -80,17 +83,20 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
       );
       final session = response.session;
       final user = response.user;
-      if (session == null || user == null || user.email == null) {
-        return Result.failure(
-          const AppAuthError(
-            code: 'sign_up_confirmation_required',
-            message:
-                'Account created. Check your email to confirm the registration.',
-          ),
-        );
-      }
-
-      return Result.success(_mapSession(session, user));
+      final normalizedUser = _mapSignUpUser(
+        request: request,
+        sessionUser: user,
+      );
+      return Result.success(
+        AuthSignUpResult(
+          user: normalizedUser,
+          session: session != null && user != null && user.email != null
+              ? _mapSession(session, user)
+              : null,
+          requiresEmailConfirmation:
+              session == null || user == null || user.email == null,
+        ),
+      );
     } on AuthException catch (error) {
       return Result.failure(
         AppAuthError(
@@ -139,7 +145,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<Result<void>> signOut() async {
     if (!isConfigured) {
-      return Result.success(null);
+      return Result.failure(_missingConfigError());
     }
 
     try {
@@ -163,7 +169,7 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
     }
   }
 
-  Result<AppSession> _missingConfig() => Result.failure(_missingConfigError());
+  Result<T> _missingConfig<T>() => Result.failure(_missingConfigError());
 
   AppAuthError _missingConfigError() {
     return AppAuthError(
@@ -173,6 +179,33 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
         'hasSupabaseCredentials': isConfigured,
         'supabaseUrl': config.supabaseUrl,
       },
+    );
+  }
+
+  AppUser _mapSignUpUser({
+    required AuthSignUpRequest request,
+    required User? sessionUser,
+  }) {
+    if (sessionUser != null && sessionUser.email != null) {
+      return AppUser(
+        id: sessionUser.id,
+        email: sessionUser.email!,
+        displayName: sessionUser.userMetadata?['display_name'] as String?,
+        createdAt:
+            DateTime.tryParse(sessionUser.createdAt) ?? DateTime.now().toUtc(),
+        onboardingCompleted:
+            sessionUser.userMetadata?['onboarding_completed'] as bool? ?? false,
+      );
+    }
+
+    return AppUser(
+      id: 'pending-${request.email.trim().toLowerCase()}',
+      email: request.email.trim().toLowerCase(),
+      displayName: request.displayName?.trim().isEmpty ?? true
+          ? null
+          : request.displayName!.trim(),
+      createdAt: DateTime.now().toUtc(),
+      onboardingCompleted: false,
     );
   }
 

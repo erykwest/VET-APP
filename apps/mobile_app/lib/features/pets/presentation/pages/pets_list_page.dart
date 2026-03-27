@@ -46,7 +46,7 @@ class _PetsListPageState extends State<PetsListPage> {
     return PetsScaffold(
       title: "I tuoi pet, in un colpo d'occhio.",
       subtitle:
-          'Qui trovi i profili disponibili, le prossime scadenze e il pet in evidenza.',
+          'Qui trovi i profili disponibili, le prossime scadenze e il pet in evidenza nella preview locale.',
       actions: [
         IconButton(
           onPressed: () => _openCreate(context),
@@ -153,9 +153,9 @@ class _PetsListContent extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           PetSection(
-            title: 'Panoramica demo',
+            title: 'Panoramica preview',
             subtitle:
-                'Mostriamo subito il pet in evidenza, una scadenza vicina e i numeri chiave della demo.',
+                'Mostriamo subito il pet in evidenza, una scadenza vicina e i numeri chiave della preview locale.',
             children: [
               Wrap(
                 spacing: 12,
@@ -184,8 +184,8 @@ class _PetsListContent extends StatelessWidget {
           PetSection(
             title: 'Profili visibili',
             subtitle: selectedSpecies == 'Tutti'
-                ? 'Tutti i profili disponibili nella demo.'
-                : 'Stai guardando solo i profili ${selectedSpecies.toLowerCase()}.',
+                ? 'Tutti i profili disponibili nella preview locale.'
+                : 'Stai guardando solo i profili ${selectedSpecies.toLowerCase()} della preview locale.',
             trailing: _SectionBadge(label: '${visiblePets.length} visibili'),
             children: [
               PetMetricChip(
@@ -297,7 +297,7 @@ class _FeaturedPetCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _DemoPill(label: 'Pet attivo'),
+                        const _DemoPill(label: 'Preview'),
                         const SizedBox(height: 8),
                         Text(
                           pet.name,

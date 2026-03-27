@@ -3,9 +3,19 @@ import '../../shared/config/app_runtime_config.dart';
 class AppBootstrapState {
   const AppBootstrapState({
     required this.runtimeConfig,
-    required this.supabaseEnabled,
+    required this.supabaseConfigured,
+    required this.supabaseInitialized,
+    this.supabaseInitializationError,
   });
 
   final AppRuntimeConfig runtimeConfig;
-  final bool supabaseEnabled;
+  final bool supabaseConfigured;
+  final bool supabaseInitialized;
+  final String? supabaseInitializationError;
+
+  bool get supabaseReady => supabaseConfigured && supabaseInitialized;
+
+  bool get hasSupabaseConfig => runtimeConfig.hasSupabaseCredentials;
+
+  bool get shouldShowSupabaseError => hasSupabaseConfig && !supabaseInitialized;
 }

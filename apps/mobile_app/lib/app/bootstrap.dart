@@ -15,25 +15,35 @@ Future<void> bootstrap() async {
   }
 
   final runtimeConfig = const AppRuntimeConfigLoader().load();
-  var supabaseEnabled = false;
+  var supabaseConfigured = runtimeConfig.hasSupabaseCredentials;
+  var supabaseInitialized = false;
+  String? supabaseInitializationError;
 
-  if (runtimeConfig.hasSupabaseCredentials) {
+  if (supabaseConfigured) {
     try {
       await Supabase.initialize(
         url: runtimeConfig.supabaseUrl,
         anonKey: runtimeConfig.supabaseAnonKey,
       );
-      supabaseEnabled = true;
-    } catch (_) {
-      supabaseEnabled = false;
+      supabaseInitialized = true;
+    } catch (error) {
+      supabaseInitialized = false;
+      supabaseInitializationError = error.toString();
+      debugPrint('Supabase initialization failed: $error');
     }
+  } else {
+    supabaseInitializationError =
+        'Missing SUPABASE_URL or SUPABASE_ANON_KEY dart defines.';
+    debugPrint('Supabase initialization skipped: missing configuration.');
   }
 
   runApp(
     VetApp(
       bootstrapState: AppBootstrapState(
         runtimeConfig: runtimeConfig,
-        supabaseEnabled: supabaseEnabled,
+        supabaseConfigured: supabaseConfigured,
+        supabaseInitialized: supabaseInitialized,
+        supabaseInitializationError: supabaseInitializationError,
       ),
     ),
   );

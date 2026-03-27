@@ -77,7 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _ViewState.error => _StateCard(
                       label: 'Errore profilo',
                       title: 'Non riesco a caricare i dati del profilo.',
-                      body: 'Riprova oppure continua con i dati demo.',
+                      body: 'Riprova oppure continua con i dati di preview.',
                       icon: Icons.account_circle_outlined,
                       actionLabel: 'Riprova',
                       onAction: () => setState(() => _state = _ViewState.success),

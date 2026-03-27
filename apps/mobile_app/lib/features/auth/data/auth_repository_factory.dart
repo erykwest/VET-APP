@@ -1,11 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../shared/auth/auth.dart';
 import '../../../shared/config/app_runtime_config_loader.dart';
 import 'auth_repository_impl.dart';
 import 'fake_auth_remote_data_source.dart';
-import 'memory_auth_session_store.dart';
 import 'persistent_auth_session_store.dart';
+import 'supabase_auth_session_store.dart';
 import 'supabase_auth_remote_data_source.dart';
 
 class AuthRepositoryFactory {
@@ -23,15 +22,20 @@ class AuthRepositoryFactory {
     }
 
     final config = _configLoader.load();
-    final hasSupabaseClient =
-        config.hasSupabaseCredentials && _hasSupabaseClient();
-    final sessionStore = hasSupabaseClient
-        ? MemoryAuthSessionStore(
-            initialContext: _readSupabaseContext(),
+    final supabaseClient = _readSupabaseClient();
+    final hasSupabaseConfig = config.hasSupabaseCredentials;
+    final sessionStore = hasSupabaseConfig
+        ? SupabaseAuthSessionStore(
+            currentSession: () => supabaseClient?.currentSession,
+            authStateChanges: supabaseClient?.onAuthStateChange ??
+                const Stream<AuthState>.empty(),
           )
         : PersistentAuthSessionStore();
-    final remoteDataSource = hasSupabaseClient
-        ? SupabaseAuthRemoteDataSource(config: config)
+    final remoteDataSource = hasSupabaseConfig
+        ? SupabaseAuthRemoteDataSource(
+            config: config,
+            client: supabaseClient,
+          )
         : FakeAuthRemoteDataSource();
 
     final repository = AuthRepositoryImpl(
@@ -42,49 +46,9 @@ class AuthRepositoryFactory {
     return repository;
   }
 
-  static bool _hasSupabaseClient() {
+  static GoTrueClient? _readSupabaseClient() {
     try {
-      Supabase.instance.client;
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  static AuthContext? _readSupabaseContext() {
-    try {
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session == null || session.user.email == null) {
-        return null;
-      }
-
-      final user = AppUser(
-        id: session.user.id,
-        email: session.user.email!,
-        displayName: session.user.userMetadata?['display_name'] as String?,
-        createdAt: DateTime.tryParse(session.user.createdAt) ??
-            DateTime.now().toUtc(),
-        onboardingCompleted:
-            session.user.userMetadata?['onboarding_completed'] as bool? ?? false,
-      );
-
-      return AuthContext(
-        user: user,
-        session: AppSession(
-          user: user,
-          accessToken: session.accessToken,
-          refreshToken: session.refreshToken ?? '',
-          createdAt: DateTime.tryParse(session.user.createdAt) ??
-              DateTime.now().toUtc(),
-          expiresAt: session.expiresAt == null
-              ? null
-              : DateTime.fromMillisecondsSinceEpoch(
-                  session.expiresAt! * 1000,
-                  isUtc: true,
-                ),
-        ),
-        onboardingCompleted: user.onboardingCompleted,
-      );
+      return Supabase.instance.client.auth;
     } catch (_) {
       return null;
     }

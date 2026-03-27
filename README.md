@@ -1,11 +1,11 @@
 # Vet App
 
-Web-first pet-tech product with a Flutter client and a Python backend bootstrap. The repository is set up to show a convincing browser demo first, while keeping the core ready for APIs, Supabase, and multiple LLM providers, with mobile-ready configuration for later releases.
+Web-first pet-tech product with a Flutter client and a Python backend bootstrap. The repository is set up to show a controlled browser demo first, with a clear path for later Supabase and API expansion.
 
 ## Goals
-- validate onboarding, auth, home, pet profile, chat, records, and reminders in a single web flow
+- validate the core loop in a single web flow: onboarding, auth, pet profile, chat, and reminders
 - keep domain and application logic independent from delivery frameworks
-- make the Flutter client the primary web demo surface without coupling the core to it
+- keep the demo surface easy to show to a founder while avoiding unnecessary runtime dependencies
 
 ## Repository shape
 - `apps/mobile_app`: Flutter client and demo surface
@@ -19,21 +19,18 @@ Web-first pet-tech product with a Flutter client and a Python backend bootstrap.
 ## Quickstart
 1. Install `uv` or use `python -m pip install -e .[dev]` as fallback.
 2. Copy `.env.example` to `.env`.
-3. Choose one backend pair:
-   - `AUTH_BACKEND=bootstrap` and `PERSISTENCE_BACKEND=in_memory` for browser demo mode
-   - `AUTH_BACKEND=supabase` and `PERSISTENCE_BACKEND=supabase` for real Supabase mode
-4. Choose the evidence backend:
-   - `EVIDENCE_BACKEND=in_memory` for preview mode
-   - `EVIDENCE_BACKEND=supabase` for the RPC-backed trusted-sources retriever
-5. Keep `LLM_PROVIDER=echo` for browser demo runs. Switch to `LLM_PROVIDER=groq` only when you want to exercise the hosted LLM path and have set `LLM_API_KEY`.
-6. Install dependencies with `make setup`.
-7. Start the API with `make run-api`.
-8. Start the Flutter web client with `cd apps/mobile_app && flutter pub get && flutter run -d chrome`.
-
-For the trusted-sources rubric in Supabase:
-- run `scripts/setup/supabase_llm_sources_schema.sql`
-- preview the initial registry seed with `python scripts/setup/seed_source_registry.py`
-- write it with `python scripts/setup/seed_source_registry.py --apply`
+3. Choose the runtime mode before starting the app:
+   - founder/demo-safe path:
+     - `AUTH_BACKEND=bootstrap`
+     - `PERSISTENCE_BACKEND=in_memory`
+     - `EVIDENCE_BACKEND=in_memory`
+     - `LLM_PROVIDER=echo`
+   - real Supabase web auth:
+     - export `SUPABASE_URL` and `SUPABASE_ANON_KEY`
+     - pass them as Flutter `--dart-define` values when running or building the web client
+4. Install dependencies with `make setup`.
+5. Start the API with `make run-api`.
+6. Start the Flutter web demo with `make run-web-server` for the safest browser flow, or use `make run-web-server-supabase SUPABASE_URL=... SUPABASE_ANON_KEY=...` when validating real Supabase auth.
 
 ## Main commands
 - `make format`
@@ -43,9 +40,12 @@ For the trusted-sources rubric in Supabase:
 - `make run-api`
 - `make run-web`
 - `make run-web-server`
+- `make run-web-supabase`
+- `make run-web-server-supabase`
 - `make build-web`
+- `make build-web-supabase`
 
-For terminals without administrator rights, prefer `make run-web-server` and open the printed URL manually in your browser. This avoids Flutter-managed Chrome profiles and keeps the demo flow inside the current user session.
+For the demo-safe path, prefer `make run-web-server` and open the printed URL manually in your browser. This keeps the preview inside the current user session and avoids browser/profile issues that do not add value to the presentation. When validating real Supabase auth in web, use the `*-supabase` targets so Flutter receives the required compile-time `--dart-define` values.
 
 ## Vercel deploy
 The repository supports two Vercel projects:
@@ -57,11 +57,13 @@ The repository supports two Vercel projects:
 2. For the web demo preview, set the project root to `apps/mobile_app`.
 3. For the backend bootstrap, keep the project root at the repository root.
 4. Configure the required environment variables only for the backend project.
-5. Deploy.
+5. If the Flutter web project should use Supabase auth, add `SUPABASE_URL` and `SUPABASE_ANON_KEY` to that Vercel project too.
+6. Deploy.
 
 For demo deployments, use:
 - `AUTH_BACKEND=bootstrap`
 - `PERSISTENCE_BACKEND=in_memory`
+- `EVIDENCE_BACKEND=in_memory`
 - `LLM_PROVIDER=echo`
 
 For production-like deployments with Supabase, also configure the Supabase and LLM secrets described below.
@@ -89,11 +91,12 @@ Configuration is centralized in `packages/shared/config/settings.py`. The bootst
 - `ENABLE_TELEMETRY`
 
 When Supabase mode is enabled, the app now fails fast at startup if the required auth or persistence secrets are missing.
+The Flutter web client reads Supabase credentials only from compile-time `--dart-define` values, not from the repository `.env` file.
 
 See `docs/runbooks/vercel_deploy.md` for the deployment checklist.
 
 ## Architecture notes
-- Flutter web is the primary demo client.
+- Flutter web is the primary demo client for the founder preview.
 - FastAPI routes stay thin and delegate to application services.
 - Domain models do not depend on Flutter, FastAPI, or external providers.
 - In-memory adapters keep the bootstrap runnable while Supabase/Postgres adapters are prepared as extension points.
@@ -101,6 +104,7 @@ See `docs/runbooks/vercel_deploy.md` for the deployment checklist.
 - Supabase auth flow is now wired for runtime email/password login and bearer-token user resolution.
 - Supabase persistence tables are protected by RLS owner-based policies.
 - Browser preview should use `AUTH_BACKEND=bootstrap`, `PERSISTENCE_BACKEND=in_memory`, and `LLM_PROVIDER=echo` until the Supabase and Groq paths are intentionally enabled.
+- Real Supabase web runs should pass `SUPABASE_URL` and `SUPABASE_ANON_KEY` as Flutter `--dart-define` values.
 
 ## Product source material
 Product and strategy documents now live under `docs/`:

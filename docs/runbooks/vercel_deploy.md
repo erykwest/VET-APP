@@ -19,7 +19,9 @@ Use this for the founder demo and other visual review flows.
 Notes:
 - No backend environment variables are required for the demo preview.
 - The Flutter app already falls back to demo-safe auth, pet, chat, records, and reminders data when runtime config is empty.
+- The preview should tell the core loop story first: onboarding, auth, pet profile, chat, and reminders.
 - SPA rewrites are handled inside `apps/mobile_app/vercel.json`.
+- For a real Supabase web-auth preview, add `SUPABASE_URL` and `SUPABASE_ANON_KEY` to the `apps/mobile_app` Vercel project. The Flutter build script forwards them as `--dart-define` values when present.
 
 ## API project
 Use this as a second Vercel project only when you want the bootstrap backend online.
@@ -35,8 +37,11 @@ Use this as a second Vercel project only when you want the bootstrap backend onl
 - `APP_NAME=Vet App`
 - `AUTH_BACKEND=bootstrap`
 - `PERSISTENCE_BACKEND=in_memory`
+- `EVIDENCE_BACKEND=in_memory`
 - `LLM_PROVIDER=echo`
 - `ENABLE_TELEMETRY=false`
+
+These keep the backend preview-safe. They do not replace the Flutter compile-time Supabase defines for the mobile_app project.
 
 ## Supabase mode variables
 If you enable Supabase-backed auth or persistence, also configure:
@@ -56,3 +61,4 @@ If you enable the hosted LLM path, also configure:
 - `vercel.json` rewrites all incoming paths to the FastAPI entrypoint so API routes such as `/health` keep working.
 - Local `.env` files are not uploaded to Vercel. Configure secrets in the Vercel project settings.
 - Healthcheck endpoint: `/health`
+- For the founder demo, avoid coupling the preview deployment to backend services that are not required to tell the core-loop story.

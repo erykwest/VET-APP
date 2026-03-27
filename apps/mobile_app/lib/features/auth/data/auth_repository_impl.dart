@@ -5,7 +5,6 @@ import '../../../shared/types/result.dart';
 import '../domain/auth_repository.dart';
 import 'auth_remote_data_source.dart';
 import 'auth_session_store.dart';
-import 'memory_auth_session_store.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
@@ -29,6 +28,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<AuthContext>> restoreSession() async {
     final context = await _sessionStore.restore();
+    _contextController.add(context);
     return Result.success(context);
   }
 
@@ -45,6 +45,7 @@ class AuthRepositoryImpl implements AuthRepository {
           onboardingCompleted: session.user.onboardingCompleted,
         );
         await _sessionStore.write(context);
+        _contextController.add(context);
         return Result.success(context);
       },
       onFailure: (error) async => Result.failure(error),
@@ -57,15 +58,29 @@ class AuthRepositoryImpl implements AuthRepository {
   ) async {
     final result = await _remoteDataSource.signUpWithPassword(request);
     return await result.fold(
-      onSuccess: (session) async {
-        final user = session.user.copyWith(onboardingCompleted: false);
-        final updatedSession = session.copyWith(user: user);
+      onSuccess: (signupResult) async {
+        if (signupResult.requiresEmailConfirmation ||
+            signupResult.session == null) {
+          final context = AuthContext(
+            user: signupResult.user,
+            session: null,
+            onboardingCompleted: false,
+            emailConfirmationRequired: true,
+          );
+          await _sessionStore.clear();
+          _contextController.add(context);
+          return Result.success(context);
+        }
+
+        final user = signupResult.user.copyWith(onboardingCompleted: false);
+        final updatedSession = signupResult.session!.copyWith(user: user);
         final context = AuthContext(
           user: user,
           session: updatedSession,
           onboardingCompleted: false,
         );
         await _sessionStore.write(context);
+        _contextController.add(context);
         return Result.success(context);
       },
       onFailure: (error) async => Result.failure(error),
@@ -84,6 +99,7 @@ class AuthRepositoryImpl implements AuthRepository {
       onSuccess: (_) async {
         const context = AuthContext();
         await _sessionStore.clear();
+        _contextController.add(context);
         return Result.success(context);
       },
       onFailure: (error) async => Result.failure(error),

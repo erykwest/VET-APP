@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -17,7 +17,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _authRepository = const AuthRepositoryFactory().create();
+  final _authRepository = AuthRepositoryFactory().create();
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -27,7 +27,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   AuthBannerStatus _status = AuthBannerStatus.info;
   String _title = 'Crea il tuo account.';
-  String _message = 'Registrazione pronta per testare il flusso web responsive e il futuro mobile.';
+  String _message =
+      'Registrazione pronta per attivare il flusso reale della web app.';
 
   @override
   void dispose() {
@@ -66,15 +67,21 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     if (!mounted) return;
-    final success = result.fold(
-      onSuccess: (_) {
+    final shouldNavigateHome = result.fold(
+      onSuccess: (context) {
         setState(() {
           _isLoading = false;
           _status = AuthBannerStatus.success;
-          _title = 'Account pronto';
-          _message = 'Registrazione completata. Ti porto nella home shell.';
+          if (context.emailConfirmationRequired) {
+            _title = 'Account creato';
+            _message =
+                'Controlla la tua email e conferma la registrazione prima di accedere.';
+          } else {
+            _title = 'Account pronto';
+            _message = 'Registrazione completata. Ti porto nella home shell.';
+          }
         });
-        return true;
+        return !context.emailConfirmationRequired && context.isSignedIn;
       },
       onFailure: (error) {
         setState(() {
@@ -87,7 +94,7 @@ class _RegisterPageState extends State<RegisterPage> {
       },
     );
 
-    if (success) {
+    if (shouldNavigateHome) {
       await Future<void>.delayed(const Duration(milliseconds: 350));
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(
@@ -103,7 +110,7 @@ class _RegisterPageState extends State<RegisterPage> {
       eyebrow: 'Registrazione',
       title: 'Costruiamo il profilo di partenza.',
       subtitle:
-          'Pochi campi, un consenso chiaro e una UI pronta a passare alla prossima fase quando saremo pronti.',
+          'Pochi campi, un consenso chiaro e un ingresso rapido verso profilo pet, chat e reminder.',
       primaryActionLabel: 'Crea account',
       secondaryActionLabel: 'Ho gia un account',
       onPrimaryAction: _submit,
@@ -229,4 +236,3 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 }
-
