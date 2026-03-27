@@ -11,10 +11,12 @@ class PetSection extends StatelessWidget {
     required this.children,
     super.key,
     this.subtitle,
+    this.trailing,
   });
 
   final String title;
   final String? subtitle;
+  final Widget? trailing;
   final List<Widget> children;
 
   @override
@@ -29,11 +31,27 @@ class PetSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTextStyles.title),
-          if (subtitle != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Text(subtitle!, style: AppTextStyles.bodySmall),
-          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.title),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(subtitle!, style: AppTextStyles.bodySmall),
+                    ],
+                  ],
+                ),
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: AppSpacing.md),
+                trailing!,
+              ],
+            ],
+          ),
           const SizedBox(height: AppSpacing.lg),
           ...children,
         ],
@@ -54,29 +72,55 @@ class PetInfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 106,
-            child: Text(
-              label,
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.mutedText,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.text),
-            ),
-          ),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 360;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: isCompact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.mutedText,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      value,
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.text),
+                    ),
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 106,
+                      child: Text(
+                        label,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.mutedText,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        value,
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.text),
+                      ),
+                    ),
+                  ],
+                ),
+        );
+      },
     );
   }
 }
@@ -139,11 +183,6 @@ class PetActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor =
-        primary ? AppColors.primary : const Color(0xFFF2E9DE);
-    final foregroundColor =
-        primary ? AppColors.onPrimary : const Color(0xFF6C4A36);
-
     return SizedBox(
       width: double.infinity,
       child: primary
@@ -151,15 +190,30 @@ class PetActionButton extends StatelessWidget {
               onPressed: onPressed,
               icon: Icon(icon ?? Icons.arrow_forward_rounded),
               label: Text(label),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary,
+                disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.4),
+                disabledForegroundColor:
+                    AppColors.onPrimary.withValues(alpha: 0.7),
+                minimumSize: const Size.fromHeight(52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
             )
           : OutlinedButton.icon(
               onPressed: onPressed,
               icon: Icon(icon ?? Icons.edit_rounded),
               label: Text(label),
               style: OutlinedButton.styleFrom(
-                backgroundColor: backgroundColor,
-                foregroundColor: foregroundColor,
-                side: BorderSide(color: backgroundColor),
+                backgroundColor: const Color(0xFFF2E9DE),
+                foregroundColor: const Color(0xFF6C4A36),
+                side: const BorderSide(color: Color(0xFFF2E9DE)),
+                minimumSize: const Size.fromHeight(52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
               ),
             ),
     );

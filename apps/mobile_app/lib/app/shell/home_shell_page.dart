@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import '../../design_system/tokens/app_colors.dart';
 import '../../features/chat/chat.dart';
 import '../../features/home/presentation/pages/home_dashboard_page.dart';
-import '../../features/medical_records/presentation/pages/medical_records_pages.dart';
 import '../../features/pets/pets.dart';
-import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/reminders/presentation/pages/reminders_pages.dart';
 
 class HomeShellPage extends StatefulWidget {
   const HomeShellPage({super.key, this.initialIndex = 0});
@@ -23,8 +22,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
     _ShellTabNavigator(rootPage: HomeDashboardPage()),
     _ShellTabNavigator(rootPage: PetsListPage()),
     _ShellTabNavigator(rootPage: ChatConversationsPage()),
-    _ShellTabNavigator(rootPage: MedicalRecordsListPage()),
-    _ShellTabNavigator(rootPage: SettingsPage()),
+    _ShellTabNavigator(rootPage: RemindersListPage()),
   ];
 
   @override
@@ -147,14 +145,9 @@ class _HomeShellPageState extends State<HomeShellPage> {
           label: Text('Chat'),
         ),
         NavigationRailDestination(
-          icon: Icon(Icons.description_outlined),
-          selectedIcon: Icon(Icons.description_rounded),
-          label: Text('Records'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.settings_outlined),
-          selectedIcon: Icon(Icons.settings_rounded),
-          label: Text('Settings'),
+          icon: Icon(Icons.notifications_none_outlined),
+          selectedIcon: Icon(Icons.notifications_active_rounded),
+          label: Text('Reminder'),
         ),
       ];
 
@@ -175,14 +168,9 @@ class _HomeShellPageState extends State<HomeShellPage> {
           label: 'Chat',
         ),
         NavigationDestination(
-          icon: Icon(Icons.description_outlined),
-          selectedIcon: Icon(Icons.description_rounded),
-          label: 'Records',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.settings_outlined),
-          selectedIcon: Icon(Icons.settings_rounded),
-          label: 'Settings',
+          icon: Icon(Icons.notifications_none_outlined),
+          selectedIcon: Icon(Icons.notifications_active_rounded),
+          label: 'Reminder',
         ),
       ];
 }
@@ -205,11 +193,13 @@ class _ShellTabNavigatorState extends State<_ShellTabNavigator> {
   Widget build(BuildContext context) {
     return Navigator(
       key: _navigatorKey,
-      onGenerateRoute: (_) {
-        return MaterialPageRoute<void>(
-          builder: (_) => widget.rootPage,
-        );
-      },
+      pages: [
+        MaterialPage<void>(
+          key: ValueKey<String>(widget.rootPage.runtimeType.toString()),
+          child: widget.rootPage,
+        ),
+      ],
+      onDidRemovePage: (page) {},
     );
   }
 }

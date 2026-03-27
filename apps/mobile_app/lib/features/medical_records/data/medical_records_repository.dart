@@ -56,7 +56,7 @@ class MedicalRecordsRepository {
         return record;
       }
     }
-    return records.isEmpty ? null : records.first;
+    return null;
   }
 
   Future<void> saveRecord(MedicalRecordEntry record) async {
@@ -77,8 +77,9 @@ class MedicalRecordsRepository {
         'detail_source': record.detailSource,
         'created_at': record.createdAt,
       });
+      _upsertPreviewRecord(record);
     } catch (_) {
-      return;
+      _upsertPreviewRecord(record);
     }
   }
 
@@ -107,22 +108,39 @@ class MedicalRecordsRepository {
       return rows
           .map(
             (row) => MedicalRecordEntry(
-              id: (row['id'] ?? '').toString(),
-              petName: (row['pet_name'] ?? 'Moka').toString(),
-              title: (row['title'] ?? 'Referto clinico').toString(),
-              subtitle:
-                  (row['subtitle'] ?? 'Documento sincronizzato').toString(),
-              meta: (row['meta'] ?? 'Sincronizzato da Supabase').toString(),
-              badge: (row['badge'] ?? 'Sincronizzato').toString(),
-              detailSource: (row['detail_source'] ?? 'Supabase').toString(),
-              createdAt: (row['created_at'] ?? 'Adesso').toString(),
+              id: _readString(row, 'id', fallback: 'remote-record'),
+              petName: _readString(row, 'pet_name', fallback: 'Moka'),
+              title: _readString(row, 'title', fallback: 'Referto clinico'),
+              subtitle: _readString(
+                row,
+                'subtitle',
+                fallback: 'Documento sincronizzato',
+              ),
+              meta: _readString(
+                row,
+                'meta',
+                fallback: 'Sincronizzato da Supabase',
+              ),
+              badge: _readString(row, 'badge', fallback: 'Sincronizzato'),
+              detailSource: _readString(
+                row,
+                'detail_source',
+                fallback: 'Supabase',
+              ),
+              createdAt: _readString(row, 'created_at', fallback: 'Adesso'),
               timeline: const [
                 MedicalRecordTimelineEntry(
-                    label: 'Importato', value: 'Sincronizzato'),
+                  label: 'Importato',
+                  value: 'Sincronizzato',
+                ),
                 MedicalRecordTimelineEntry(
-                    label: 'Revisionato', value: 'In attesa'),
+                  label: 'Revisionato',
+                  value: 'In attesa',
+                ),
                 MedicalRecordTimelineEntry(
-                    label: "Pronto per l'invio", value: 'Disponibile'),
+                  label: "Pronto per l'invio",
+                  value: 'Disponibile',
+                ),
               ],
             ),
           )
@@ -130,6 +148,16 @@ class MedicalRecordsRepository {
     } catch (_) {
       return const [];
     }
+  }
+
+  static String _readString(
+    Map<String, dynamic> row,
+    String key, {
+    required String fallback,
+  }) {
+    final value = row[key];
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? fallback : text;
   }
 
   SupabaseClient? _resolveClient() {

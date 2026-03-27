@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
@@ -12,6 +13,12 @@ class PetFormField extends StatelessWidget {
     this.initialValue,
     this.maxLines = 1,
     this.keyboardType,
+    this.validator,
+    this.enabled = true,
+    this.onChanged,
+    this.inputFormatters,
+    this.textInputAction,
+    this.obscureText = false,
   });
 
   final String label;
@@ -19,6 +26,12 @@ class PetFormField extends StatelessWidget {
   final String? initialValue;
   final int maxLines;
   final TextInputType? keyboardType;
+  final FormFieldValidator<String>? validator;
+  final bool enabled;
+  final ValueChanged<String>? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextInputAction? textInputAction;
+  final bool obscureText;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +47,12 @@ class PetFormField extends StatelessWidget {
           initialValue: initialValue,
           maxLines: maxLines,
           keyboardType: keyboardType,
+          validator: validator,
+          enabled: enabled,
+          onChanged: onChanged,
+          inputFormatters: inputFormatters,
+          textInputAction: textInputAction,
+          obscureText: obscureText,
           decoration: InputDecoration(
             hintText: hintText,
             filled: true,

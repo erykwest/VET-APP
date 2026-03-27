@@ -114,65 +114,106 @@ class _PetDetailContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           RoundedSurface(
-            backgroundColor: Colors.white,
-            child: Row(
-              children: [
-                PetAvatar(
-                  label: pet.avatarEmoji,
-                  backgroundColor: pet.accentColor,
-                  size: 84,
-                ),
-                const SizedBox(width: 18),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        pet.name,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF173A35),
-                        ),
+            backgroundColor: const Color(0xFFF9FBF8),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 720;
+
+                final badge = Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE1F0EA),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    pet.healthBadge,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF315E55),
+                    ),
+                  ),
+                );
+
+                final summary = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pet.name,
+                      style: const TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF173A35),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        pet.title,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF5C726D),
-                        ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      pet.title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF5C726D),
                       ),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE1F0EA),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          pet.healthBadge,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF315E55),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        badge,
+                        _DetailBadge(
+                          label: PetDemoStore.avatarChoiceLabelForKey(
+                            pet.avatarEmoji,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                        _DetailBadge(label: pet.species),
+                        _DetailBadge(label: pet.breedLabel),
+                        _DetailBadge(label: pet.weightLabel),
+                      ],
+                    ),
+                  ],
+                );
+
+                return isWide
+                    ? Row(
+                        children: [
+                          PetAvatar(
+                            label: pet.avatarEmoji,
+                            backgroundColor: pet.accentColor,
+                            size: 84,
+                          ),
+                          const SizedBox(width: 18),
+                          Expanded(child: summary),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          PetAvatar(
+                            label: pet.avatarEmoji,
+                            backgroundColor: pet.accentColor,
+                            size: 84,
+                          ),
+                          const SizedBox(height: 16),
+                          summary,
+                        ],
+                      );
+              },
             ),
           ),
           const SizedBox(height: 16),
           PetSection(
             title: 'Riepilogo profilo',
+            subtitle: 'I campi chiave da consultare velocemente.',
+            trailing: const _DetailBadge(label: 'Scheda'),
             children: [
               PetInfoRow(label: 'Specie', value: pet.species),
+              PetInfoRow(
+                label: 'Avatar',
+                value: PetDemoStore.avatarChoiceLabelForKey(pet.avatarEmoji),
+              ),
               PetInfoRow(label: 'Razza', value: pet.breedLabel),
               PetInfoRow(label: 'Data di nascita', value: pet.birthDateLabel),
               PetInfoRow(label: 'Sesso', value: pet.sex),
@@ -182,8 +223,8 @@ class _PetDetailContent extends StatelessWidget {
           const SizedBox(height: 16),
           PetSection(
             title: 'Nota clinica',
-            subtitle:
-                'Contesto breve che aiuta vet e owner a mantenere continuita.',
+            subtitle: 'Contesto breve che aiuta vet e owner a mantenere continuita.',
+            trailing: const _DetailBadge(label: 'Insight'),
             children: [
               Text(
                 pet.medicalNote,
@@ -200,6 +241,7 @@ class _PetDetailContent extends StatelessWidget {
           const SizedBox(height: 16),
           PetSection(
             title: 'Azioni',
+            subtitle: 'Modifica o torna indietro senza perdere il contesto.',
             children: [
               PetActionButton(
                 label: 'Modifica profilo',
@@ -216,6 +258,31 @@ class _PetDetailContent extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DetailBadge extends StatelessWidget {
+  const _DetailBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2E9DE),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF6C4A36),
+        ),
       ),
     );
   }

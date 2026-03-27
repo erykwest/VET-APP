@@ -10,10 +10,12 @@ class ChatConversationCard extends StatelessWidget {
     super.key,
     required this.conversation,
     this.onTap,
+    this.onDelete,
   });
 
   final ChatConversationSummary conversation;
   final VoidCallback? onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -55,29 +57,62 @@ class ChatConversationCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              conversation.title,
-                              style: AppTextStyles.body.copyWith(
-                                color: AppColors.text,
-                                fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                conversation.title,
+                                style: AppTextStyles.body.copyWith(
+                                  color: AppColors.text,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          Text(
-                            conversation.updatedAtLabel,
-                            style: AppTextStyles.caption,
-                          ),
-                        ],
-                      ),
+                            Text(
+                              conversation.updatedAtLabel,
+                              style: AppTextStyles.caption,
+                            ),
+                            if (onDelete != null) ...[
+                              const SizedBox(width: AppSpacing.xs),
+                              PopupMenuButton<String>(
+                                tooltip: 'Azioni chat',
+                                icon: const Icon(
+                                  Icons.more_horiz,
+                                  size: 20,
+                                  color: AppColors.secondaryText,
+                                ),
+                                padding: EdgeInsets.zero,
+                                onSelected: (value) {
+                                  if (value == 'delete') {
+                                    onDelete?.call();
+                                  }
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem<String>(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.delete_outline,
+                                          size: 18,
+                                          color: AppColors.danger,
+                                        ),
+                                        SizedBox(width: 12),
+                                        Text('Elimina chat'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
                       const SizedBox(height: 4),
                       Text(
                         conversation.subtitle,

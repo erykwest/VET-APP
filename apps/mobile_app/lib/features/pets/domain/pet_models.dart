@@ -8,6 +8,17 @@ enum PetsScreenStatus {
 }
 
 class PetProfile {
+  static const String mixedBreedLabel = 'Meticcio';
+  static const List<String> mixedBreedSizeOptions = [
+    'Toy',
+    'Piccola',
+    'Medio-piccola',
+    'Media',
+    'Medio-grande',
+    'Grande',
+    'Gigante',
+  ];
+
   const PetProfile({
     required this.id,
     required this.name,
@@ -39,6 +50,51 @@ class PetProfile {
   String get title => '$name - $species';
   String get breedLabel =>
       breed.trim().isEmpty ? 'Razza non specificata' : breed.trim();
+  bool get isMixedBreed => isMixedBreedLabel(breed);
+  String? get mixedBreedSize => mixedBreedSizeFromLabel(breed);
+
+  static bool isMixedBreedLabel(String? breed) {
+    final normalized = breed?.trim().toLowerCase() ?? '';
+    if (normalized.isEmpty) {
+      return false;
+    }
+
+    return normalized == mixedBreedLabel.toLowerCase() ||
+        normalized.startsWith('${mixedBreedLabel.toLowerCase()} ') ||
+        normalized.startsWith('${mixedBreedLabel.toLowerCase()}-') ||
+        normalized.startsWith('${mixedBreedLabel.toLowerCase()}(');
+  }
+
+  static String? mixedBreedSizeFromLabel(String? breed) {
+    final normalized = breed?.trim().toLowerCase() ?? '';
+    if (!isMixedBreedLabel(normalized)) {
+      return null;
+    }
+
+    const aliases = [
+      ('medio-piccola', 'Medio-piccola'),
+      ('medio piccola', 'Medio-piccola'),
+      ('medio-grande', 'Medio-grande'),
+      ('medio grande', 'Medio-grande'),
+      ('toy', 'Toy'),
+      ('piccola', 'Piccola'),
+      ('media', 'Media'),
+      ('grande', 'Grande'),
+      ('gigante', 'Gigante'),
+    ];
+
+    for (final alias in aliases) {
+      if (normalized.contains(alias.$1)) {
+        return alias.$2;
+      }
+    }
+
+    return null;
+  }
+
+  static String mixedBreedLabelForSize(String size) {
+    return '$mixedBreedLabel - $size';
+  }
 
   PetProfile copyWith({
     String? id,
@@ -76,7 +132,7 @@ const samplePets = <PetProfile>[
     id: 'pet-moka',
     name: 'Moka',
     species: 'Cane',
-    breed: 'Meticcio di taglia media',
+    breed: 'Meticcio - Media',
     birthDateLabel: 'Mag 2021',
     sex: 'Femmina',
     weightLabel: '17,8 kg',

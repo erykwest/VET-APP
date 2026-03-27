@@ -29,6 +29,42 @@ class ChatDemoStore extends ChangeNotifier {
     return null;
   }
 
+  ChatConversationDeletion? deleteConversation(String id) {
+    final index = _threads.indexWhere((thread) => thread.id == id);
+    if (index == -1) {
+      return null;
+    }
+
+    final removed = _threads.removeAt(index);
+    _openedConversationIds.remove(id);
+    notifyListeners();
+    return ChatConversationDeletion(
+      conversation: removed,
+      index: index,
+    );
+  }
+
+  void restoreConversation(
+    ChatConversationDetail conversation, {
+    int? index,
+  }) {
+    final existingIndex =
+        _threads.indexWhere((thread) => thread.id == conversation.id);
+    _openedConversationIds.add(conversation.id);
+
+    if (existingIndex != -1) {
+      _threads[existingIndex] = conversation;
+      notifyListeners();
+      return;
+    }
+
+    final insertAt = index == null
+        ? 0
+        : index.clamp(0, _threads.length).toInt();
+    _threads.insert(insertAt, conversation);
+    notifyListeners();
+  }
+
   ChatConversationDetail openConversation(String id) {
     _openedConversationIds.add(id);
     final conversation = conversationById(id);

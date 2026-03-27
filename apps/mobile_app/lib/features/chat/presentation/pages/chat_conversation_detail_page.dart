@@ -35,6 +35,7 @@ class _ChatConversationDetailPageState extends State<ChatConversationDetailPage>
   final ScrollController _scrollController = ScrollController();
 
   bool _isSending = false;
+  bool _isLeavingAfterDelete = false;
   int _lastRenderedMessageCount = 0;
 
   @override
@@ -57,9 +58,43 @@ class _ChatConversationDetailPageState extends State<ChatConversationDetailPage>
         child: AnimatedBuilder(
           animation: _store,
           builder: (context, _) {
-            final conversation = _store.conversationById(widget.conversationId) ??
-                widget.initialConversation ??
-                ChatSeedData.detail;
+            final conversation = _store.conversationById(widget.conversationId);
+
+            if (conversation == null) {
+              if (!_isLeavingAfterDelete) {
+                _scheduleReturnToList();
+              }
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.xxl,
+                      AppSpacing.lg,
+                      AppSpacing.xxl,
+                      AppSpacing.md,
+                    ),
+                    child: _Header(
+                      conversation:
+                          widget.initialConversation ?? ChatSeedData.detail,
+                      onDeleteConversation: () => _deleteConversation(
+                        context,
+                        widget.initialConversation ?? ChatSeedData.detail,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ChatEmptyState(
+                      title: 'Conversazione eliminata',
+                      subtitle:
+                          'Questo thread non fa piu parte del demo store. Torna alle chat o crea una nuova conversazione.',
+                      actionLabel: 'Torna alle chat',
+                      onAction: () => Navigator.of(context).maybePop(),
+                    ),
+                  ),
+                ],
+              );
+            }
 
             return Column(
               children: [
@@ -70,7 +105,11 @@ class _ChatConversationDetailPageState extends State<ChatConversationDetailPage>
                     AppSpacing.xxl,
                     AppSpacing.md,
                   ),
-                  child: _Header(conversation: conversation),
+                  child: _Header(
+                    conversation: conversation,
+                    onDeleteConversation: () =>
+                        _deleteConversation(context, conversation),
+                  ),
                 ),
                 Expanded(
                   child: AnimatedSwitcher(
@@ -158,14 +197,91 @@ class _ChatConversationDetailPageState extends State<ChatConversationDetailPage>
     _lastRenderedMessageCount = messageCount;
     _scrollToBottom();
   }
+
+  void _scheduleReturnToList() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isLeavingAfterDelete) {
+        return;
+      }
+
+      Navigator.of(context).maybePop();
+    });
+  }
+
+  Future<void> _deleteConversation(
+    BuildContext context,
+    ChatConversationDetail conversation,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Eliminare la chat?'),
+          content: Text(
+            'Rimuoviamo "${conversation.title}" dal demo store. '
+            'Potrai ripristinarla subito con Annulla.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Elimina'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _isLeavingAfterDelete = true;
+    });
+
+    final removed = _store.deleteConversation(conversation.id);
+    if (removed == null) {
+      if (mounted) {
+        setState(() {
+          _isLeavingAfterDelete = false;
+        });
+      }
+      return;
+    }
+
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text('${removed.conversation.title} eliminata'),
+        action: SnackBarAction(
+          label: 'Annulla',
+          onPressed: () {
+            ChatDemoStore.instance.restoreConversation(
+              removed.conversation,
+              index: removed.index,
+            );
+          },
+        ),
+      ),
+    );
+
+    if (mounted) {
+      Navigator.of(context).maybePop();
+    }
+  }
 }
 
 class _Header extends StatelessWidget {
   const _Header({
     required this.conversation,
+    required this.onDeleteConversation,
   });
 
   final ChatConversationDetail conversation;
+  final VoidCallback onDeleteConversation;
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +337,31 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.more_horiz, color: AppColors.secondaryText),
+          PopupMenuButton<String>(
+            tooltip: 'Azioni chat',
+            icon: const Icon(Icons.more_horiz, color: AppColors.secondaryText),
+            onSelected: (value) {
+              if (value == 'delete') {
+                onDeleteConversation();
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem<String>(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: AppColors.danger,
+                    ),
+                    SizedBox(width: 12),
+                    Text('Elimina chat'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

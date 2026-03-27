@@ -79,3 +79,13 @@ class ChatConversationDetail {
     );
   }
 }
+
+class ChatConversationDeletion {
+  const ChatConversationDeletion({
+    required this.conversation,
+    required this.index,
+  });
+
+  final ChatConversationDetail conversation;
+  final int index;
+}

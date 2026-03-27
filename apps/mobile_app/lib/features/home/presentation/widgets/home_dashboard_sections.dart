@@ -4,6 +4,7 @@ import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_radii.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
 import '../../../../design_system/tokens/app_text_styles.dart';
+import 'home_dashboard_primitives.dart';
 
 class WarmClinicalDashboardHero extends StatelessWidget {
   const WarmClinicalDashboardHero({
@@ -170,6 +171,210 @@ class WarmClinicalAiPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class WarmClinicalInsightSection extends StatelessWidget {
+  const WarmClinicalInsightSection({
+    super.key,
+    required this.title,
+    required this.items,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final List<WarmClinicalInsightCardData> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return WarmClinicalSectionCard(
+      title: title,
+      subtitle: subtitle,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 1040 && items.length > 1;
+
+          if (!isWide) {
+            return Column(
+              children: [
+                for (var index = 0; index < items.length; index++) ...[
+                  WarmClinicalInsightCard(data: items[index]),
+                  if (index != items.length - 1)
+                    const SizedBox(height: AppSpacing.md),
+                ],
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var index = 0; index < items.length; index++) ...[
+                Expanded(child: WarmClinicalInsightCard(data: items[index])),
+                if (index != items.length - 1)
+                  const SizedBox(width: AppSpacing.md),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class WarmClinicalInsightCard extends StatelessWidget {
+  const WarmClinicalInsightCard({
+    super.key,
+    required this.data,
+  });
+
+  final WarmClinicalInsightCardData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = DashboardPrimitivePalette.colorsFor(data.tone);
+
+    return DashboardSurfaceCard(
+      tone: data.tone,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: palette.background,
+                  borderRadius: BorderRadius.circular(AppRadii.medium),
+                ),
+                child: Icon(
+                  data.icon,
+                  color: palette.foreground,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        DashboardBadge(
+                          label: data.eyebrow,
+                          tone: data.tone,
+                          icon: Icons.auto_awesome_rounded,
+                          compact: true,
+                        ),
+                        if (data.badge != null)
+                          DashboardBadge(
+                            label: data.badge!,
+                            tone: DashboardTone.neutral,
+                            compact: true,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      data.title,
+                      style: AppTextStyles.title.copyWith(
+                        color: AppColors.text,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            data.body,
+            style: AppTextStyles.body,
+          ),
+          if (data.chips.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: data.chips
+                  .map(
+                    (chip) => DashboardBadge(
+                      label: chip,
+                      tone: DashboardTone.neutral,
+                      compact: true,
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ],
+          if (data.actionLabel != null || data.footerNote != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                if (data.footerNote != null)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 220),
+                    child: Text(
+                      data.footerNote!,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.mutedText,
+                      ),
+                    ),
+                  ),
+                if (data.actionLabel != null)
+                  DashboardActionButton(
+                    label: data.actionLabel!,
+                    icon: Icons.arrow_forward_rounded,
+                    tone: data.tone,
+                    filled: false,
+                    compact: true,
+                    onPressed: data.onAction,
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class WarmClinicalInsightCardData {
+  const WarmClinicalInsightCardData({
+    required this.eyebrow,
+    required this.title,
+    required this.body,
+    required this.icon,
+    required this.tone,
+    this.badge,
+    this.chips = const <String>[],
+    this.actionLabel,
+    this.onAction,
+    this.footerNote,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String body;
+  final IconData icon;
+  final DashboardTone tone;
+  final String? badge;
+  final List<String> chips;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final String? footerNote;
 }
 
 class WarmClinicalReminderSection extends StatelessWidget {

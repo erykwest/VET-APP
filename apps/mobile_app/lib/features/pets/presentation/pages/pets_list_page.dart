@@ -46,7 +46,7 @@ class _PetsListPageState extends State<PetsListPage> {
     return PetsScaffold(
       title: "I tuoi pet, in un colpo d'occhio.",
       subtitle:
-          'Qui trovi il pet principale, le prossime scadenze e il secondo profilo pronto da aprire.',
+          'Qui trovi i profili disponibili, le prossime scadenze e il pet in evidenza.',
       actions: [
         IconButton(
           onPressed: () => _openCreate(context),
@@ -152,10 +152,10 @@ class _PetsListContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          const PetSection(
+          PetSection(
             title: 'Panoramica demo',
             subtitle:
-                'Mostriamo subito il pet principale, una scadenza vicina e il profilo di supporto.',
+                'Mostriamo subito il pet in evidenza, una scadenza vicina e i numeri chiave della demo.',
             children: [
               Wrap(
                 spacing: 12,
@@ -163,7 +163,7 @@ class _PetsListContent extends StatelessWidget {
                 children: [
                   PetMetricChip(
                     label: 'Pet registrati',
-                    value: '2',
+                    value: '${PetDemoStore.instance.list().length}',
                     backgroundColor: Color(0xFFE1F0EA),
                   ),
                   PetMetricChip(
@@ -186,6 +186,7 @@ class _PetsListContent extends StatelessWidget {
             subtitle: selectedSpecies == 'Tutti'
                 ? 'Tutti i profili disponibili nella demo.'
                 : 'Stai guardando solo i profili ${selectedSpecies.toLowerCase()}.',
+            trailing: _SectionBadge(label: '${visiblePets.length} visibili'),
             children: [
               PetMetricChip(
                 label: 'Profili filtrati',
@@ -196,9 +197,10 @@ class _PetsListContent extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           PetSection(
-            title: 'Profilo principale',
+            title: 'In primo piano',
             subtitle:
-                'Questo e il volto della demo: una card forte, leggibile e coerente con home, chat e reminder.',
+                'Il pet più in vista della selezione corrente, con i dettagli che contano davvero.',
+            trailing: _SectionBadge(label: '1 card'),
             children: [
               if (visiblePets.isNotEmpty)
                 _FeaturedPetCard(
@@ -213,11 +215,11 @@ class _PetsListContent extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF5C726D),
                   ),
-                ),
+              ),
               if (visiblePets.length > 1) ...[
                 const SizedBox(height: 14),
                 const Text(
-                  'Profilo secondario',
+                  'Altri profili',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -237,7 +239,7 @@ class _PetsListContent extends StatelessWidget {
               ],
               const SizedBox(height: 8),
               PetActionButton(
-                label: 'Aggiungi un altro pet',
+                label: 'Aggiungi pet',
                 icon: Icons.add_rounded,
                 primary: true,
                 onPressed: onAddPet,
@@ -482,6 +484,31 @@ class _InfoChip extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: Color(0xFF173A35),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionBadge extends StatelessWidget {
+  const _SectionBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2E9DE),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF6C4A36),
         ),
       ),
     );

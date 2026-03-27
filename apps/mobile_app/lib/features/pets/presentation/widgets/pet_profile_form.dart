@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../data/pet_demo_store.dart';
-import '../../domain/pet_models.dart';
 import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
 import '../../../../design_system/tokens/app_text_styles.dart';
+import '../../data/pet_demo_store.dart';
+import '../../domain/pet_models.dart';
 import 'pet_sections.dart';
 
 class PetProfileDraft {
@@ -55,6 +55,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
   late final TextEditingController _notesController;
   late String? _species;
   late String? _breed;
+  late String? _mixedBreedSize;
   late String? _sex;
   DateTime? _birthDate;
 
@@ -68,7 +69,8 @@ class _PetProfileFormState extends State<PetProfileForm> {
     );
     _notesController = TextEditingController(text: pet?.medicalNote ?? '');
     _species = pet?.species;
-    _breed = _normalizeBreed(pet?.breed);
+    _breed = _initialBreedSelection(pet?.breed);
+    _mixedBreedSize = _initialMixedBreedSize(pet?.breed);
     _sex = pet?.sex;
     _birthDate = _parseBirthDate(pet?.birthDateLabel);
   }
@@ -84,6 +86,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
   @override
   Widget build(BuildContext context) {
     final breedOptions = _breedOptionsForSelectedSpecies();
+    final showMixedBreedSize = _shouldShowMixedBreedSize;
 
     return SingleChildScrollView(
       child: Form(
@@ -109,7 +112,8 @@ class _PetProfileFormState extends State<PetProfileForm> {
                 const SizedBox(height: AppSpacing.md),
                 DropdownButtonFormField<String>(
                   initialValue: _species,
-                  decoration: _inputDecoration('Specie', 'Seleziona una specie'),
+                  decoration:
+                      _inputDecoration('Specie', 'Seleziona una specie'),
                   items: PetDemoStore.speciesOptions
                       .map(
                         (option) => DropdownMenuItem<String>(
@@ -122,6 +126,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                     setState(() {
                       _species = value;
                       _breed = null;
+                      _mixedBreedSize = null;
                     });
                   },
                   validator: (value) {
@@ -134,12 +139,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
                 const SizedBox(height: AppSpacing.md),
                 DropdownButtonFormField<String>(
                   initialValue: breedOptions.contains(_breed) ? _breed : null,
-                  decoration: _inputDecoration(
-                    'Razza',
-                    _species == null
-                        ? 'Seleziona prima la specie'
-                        : 'Facoltativa',
-                  ),
+                  decoration: _inputDecoration('Razza', _breedHintText()),
                   items: breedOptions
                       .map(
                         (breed) => DropdownMenuItem<String>(
@@ -153,16 +153,61 @@ class _PetProfileFormState extends State<PetProfileForm> {
                       : (value) {
                           setState(() {
                             _breed = value;
+                            if (value != PetProfile.mixedBreedLabel) {
+                              _mixedBreedSize = null;
+                            }
                           });
                         },
                 ),
+                if (_species != null &&
+                    PetDemoStore.isFallbackSpecies(_species!)) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Per specie speciali puoi completare il profilo piu tardi o chiedere una mano in chat.',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.mutedText,
+                    ),
+                  ),
+                ],
+                if (showMixedBreedSize) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  DropdownButtonFormField<String>(
+                    initialValue: _mixedBreedSize,
+                    decoration: _inputDecoration(
+                      'Taglia',
+                      'Obbligatoria per i meticci',
+                    ),
+                    items: PetProfile.mixedBreedSizeOptions
+                        .map(
+                          (size) => DropdownMenuItem<String>(
+                            value: size,
+                            child: Text(size),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: (value) {
+                      setState(() {
+                        _mixedBreedSize = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (_shouldShowMixedBreedSize &&
+                          (value == null || value.trim().isEmpty)) {
+                        return 'Seleziona la taglia del meticcio.';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 InkWell(
                   onTap: _pickBirthDate,
                   borderRadius: BorderRadius.circular(18),
                   child: InputDecorator(
-                    decoration:
-                        _inputDecoration('Data di nascita', 'Seleziona una data'),
+                    decoration: _inputDecoration(
+                      'Data di nascita',
+                      'Seleziona una data',
+                    ),
                     child: Row(
                       children: [
                         Expanded(
@@ -177,7 +222,10 @@ class _PetProfileFormState extends State<PetProfileForm> {
                             ),
                           ),
                         ),
-                        const Icon(Icons.calendar_month_rounded, color: AppColors.primary),
+                        const Icon(
+                          Icons.calendar_month_rounded,
+                          color: AppColors.primary,
+                        ),
                       ],
                     ),
                   ),
@@ -186,7 +234,9 @@ class _PetProfileFormState extends State<PetProfileForm> {
                   const SizedBox(height: 6),
                   Text(
                     'Seleziona la data di nascita.',
-                    style: AppTextStyles.caption.copyWith(color: Colors.red.shade700),
+                    style: AppTextStyles.caption.copyWith(
+                      color: Colors.red.shade700,
+                    ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.md),
@@ -217,9 +267,11 @@ class _PetProfileFormState extends State<PetProfileForm> {
                 TextFormField(
                   controller: _weightController,
                   textInputAction: TextInputAction.next,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,.\s]')),
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,\.]')),
                   ],
                   decoration: _inputDecoration('Peso', 'Es. 18,4'),
                   validator: (value) {
@@ -301,7 +353,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
     }
   }
 
-  void _submit() async {
+  Future<void> _submit() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid || _birthDate == null) {
       setState(() {});
@@ -311,7 +363,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
     final draft = PetProfileDraft(
       name: _nameController.text.trim(),
       species: _species!.trim(),
-      breed: _normalizeBreed(_breed),
+      breed: _resolvedBreedSelection(),
       birthDate: _birthDate!,
       sex: _sex!.trim(),
       weightKg: _parseWeight(_weightController.text)!,
@@ -327,6 +379,60 @@ class _PetProfileFormState extends State<PetProfileForm> {
       return const ['Razza non specificata'];
     }
     return PetDemoStore.breedsForSpecies(species);
+  }
+
+  bool get _shouldShowMixedBreedSize {
+    final species = _species;
+    return species != null &&
+        PetDemoStore.supportsMixedBreed(species) &&
+        _breed == PetProfile.mixedBreedLabel;
+  }
+
+  String _breedHintText() {
+    final species = _species;
+    if (species == null || species.trim().isEmpty) {
+      return 'Seleziona prima la specie';
+    }
+
+    if (PetDemoStore.isFallbackSpecies(species)) {
+      return 'Facoltativa. Per specie speciali puoi chiedere una mano in chat.';
+    }
+
+    return 'Facoltativa';
+  }
+
+  String? _initialBreedSelection(String? breed) {
+    final normalized = breed?.trim() ?? '';
+    if (normalized.isEmpty || normalized == 'Razza non specificata') {
+      return null;
+    }
+
+    if (PetProfile.isMixedBreedLabel(normalized)) {
+      return PetProfile.mixedBreedLabel;
+    }
+
+    return normalized;
+  }
+
+  String? _initialMixedBreedSize(String? breed) {
+    return PetProfile.mixedBreedSizeFromLabel(breed);
+  }
+
+  String? _resolvedBreedSelection() {
+    final breed = _normalizeBreed(_breed);
+    if (breed == null) {
+      return null;
+    }
+
+    if (breed == PetProfile.mixedBreedLabel) {
+      final size = _mixedBreedSize;
+      if (size == null || size.trim().isEmpty) {
+        return breed;
+      }
+      return PetProfile.mixedBreedLabelForSize(size);
+    }
+
+    return breed;
   }
 
   String? _normalizeBreed(String? breed) {

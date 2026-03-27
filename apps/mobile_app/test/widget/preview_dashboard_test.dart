@@ -1,37 +1,30 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:vet_app_mobile/app/app.dart';
-import 'package:vet_app_mobile/app/config/app_bootstrap_state.dart';
-import 'package:vet_app_mobile/shared/config/app_runtime_config.dart';
+import 'package:vet_app_mobile/app/preview/preview_dashboard_page.dart';
 
 void main() {
-  testWidgets('preview dashboard route renders seed dashboard markers', (
+  testWidgets('preview dashboard route renders core loop markers', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const VetApp(
-        bootstrapState: AppBootstrapState(
-          runtimeConfig: AppRuntimeConfig(
-            environment: AppEnvironment.development,
-            appName: 'Vet App',
-            apiBaseUrl: '',
-            supabaseUrl: '',
-            supabaseAnonKey: '',
-            logLevel: 'INFO',
-            enableTelemetry: false,
-          ),
-          supabaseEnabled: false,
-        ),
+      const MaterialApp(
+        home: PreviewDashboardPage(),
       ),
     );
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Preview Dashboard'), findsOneWidget);
     expect(find.text('Route: /preview-dashboard'), findsOneWidget);
+    expect(find.text('Core loop demo'), findsOneWidget);
     expect(find.text('Scadenze vicine'), findsOneWidget);
-    expect(find.text('Cartella clinica'), findsOneWidget);
+    expect(find.text('Assistente Vet AI'), findsOneWidget);
+    expect(find.text('Apri profilo'), findsWidgets);
+    expect(find.text('Apri chat'), findsWidgets);
+    expect(find.text('Nuovo reminder'), findsWidgets);
+    expect(find.text('Cartella clinica'), findsNothing);
     expect(find.textContaining('Verifica sessione'), findsNothing);
   });
 }

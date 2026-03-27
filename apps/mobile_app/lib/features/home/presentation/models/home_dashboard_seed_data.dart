@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../chat/data/chat_seed_data.dart';
 import '../../../chat/domain/chat_models.dart';
-import '../../../medical_records/data/medical_records_repository.dart';
 import '../../../pets/domain/pet_models.dart';
+import 'home_dashboard_insight_models.dart';
 import '../widgets/home_dashboard_sections.dart';
 
 class HomeDashboardSeedData {
@@ -12,10 +12,9 @@ class HomeDashboardSeedData {
     required this.heroDetails,
     required this.heroDescription,
     required this.reminders,
-    required this.documents,
-    required this.activity,
     required this.aiPrompt,
     required this.aiSuggestions,
+    required this.insightSections,
     required this.alertCount,
   });
 
@@ -23,10 +22,9 @@ class HomeDashboardSeedData {
   final String heroDetails;
   final String heroDescription;
   final List<WarmClinicalReminderItem> reminders;
-  final List<WarmClinicalDocumentItem> documents;
-  final List<WarmClinicalActivityItem> activity;
   final String aiPrompt;
   final List<WarmClinicalAiSuggestion> aiSuggestions;
+  final List<HomeDashboardInsightSection> insightSections;
   final int alertCount;
 
   factory HomeDashboardSeedData.fromSeeds() {
@@ -34,7 +32,7 @@ class HomeDashboardSeedData {
     final conversations = ChatSeedData.conversations
         .where((conversation) => conversation.activePetName == activePet.name)
         .toList(growable: false);
-    final records = MedicalRecordsRepository.previewRecords;
+    final reminders = _buildReminders(activePet, conversations);
     final primaryConversation = conversations.isNotEmpty
         ? conversations.first
         : const ChatConversationSummary(
@@ -51,46 +49,41 @@ class HomeDashboardSeedData {
     return HomeDashboardSeedData(
       activePet: activePet,
       heroDetails:
-          '${activePet.species} • ${activePet.breed} • ${activePet.weightLabel}',
+          '${activePet.species} - ${activePet.breed} - ${activePet.weightLabel}',
       heroDescription:
           '${activePet.medicalNote} Prossima visita: ${activePet.nextVisitLabel}.',
-      reminders: _buildReminders(activePet, records, conversations),
-      documents: _buildDocuments(records),
-      activity: _buildActivity(records, conversations),
+      reminders: reminders,
       aiPrompt: primaryConversation.previewMessage,
       aiSuggestions: _buildSuggestions(conversations),
-      alertCount: _countAlerts(activePet, records, conversations),
+      insightSections: HomeDashboardInsightComposer.buildForPet(
+        activePet,
+        conversations: conversations,
+      ),
+      alertCount: _countAlerts(conversations, reminders.length),
     );
   }
 
   static int _countAlerts(
-    PetProfile pet,
-    List<MedicalRecordEntry> records,
     List<ChatConversationSummary> conversations,
+    int reminderCount,
   ) {
     final unread = conversations.fold<int>(
       0,
       (sum, conversation) => sum + conversation.unreadCount,
     );
-    return [unread, records.where((record) => record.badge != 'Archivio').length, 1]
-        .reduce((a, b) => a + b);
+    return unread + reminderCount;
   }
 
   static List<WarmClinicalReminderItem> _buildReminders(
     PetProfile pet,
-    List<MedicalRecordEntry> records,
     List<ChatConversationSummary> conversations,
   ) {
-    final reminderTitle = pet.nextVisitLabel;
-    final record = records.isNotEmpty ? records.first : null;
-    final conversation = conversations.length > 1
-        ? conversations[1]
-        : (conversations.isNotEmpty ? conversations.first : null);
+    final conversation = conversations.isNotEmpty ? conversations.first : null;
 
     return [
       WarmClinicalReminderItem(
         title: 'Prossima visita',
-        subtitle: reminderTitle,
+        subtitle: pet.nextVisitLabel,
         icon: Icons.event_note_rounded,
         iconColor: const Color(0xFFE5856F),
         trailing: const _ReminderTrailingText('Pet'),
@@ -98,71 +91,27 @@ class HomeDashboardSeedData {
       if (conversation != null)
         WarmClinicalReminderItem(
           title: 'Chat da leggere',
-          subtitle: '${conversation.title} • ${conversation.updatedAtLabel}',
+          subtitle: '${conversation.title} - ${conversation.updatedAtLabel}',
           icon: Icons.chat_bubble_outline_rounded,
           iconColor: const Color(0xFF5F9F86),
           trailing: _ReminderTrailingText('${conversation.unreadCount} msg'),
         ),
-      if (record != null)
+      WarmClinicalReminderItem(
+        title: 'Reminder attivo',
+        subtitle: 'Richiamo vaccinale di ${pet.name}',
+        icon: Icons.notifications_active_outlined,
+        iconColor: const Color(0xFF6F91A3),
+        trailing: const _ReminderTrailingText('Core'),
+      ),
+      if (conversations.isEmpty)
         WarmClinicalReminderItem(
-          title: 'Documento clinico',
-          subtitle: '${record.badge} • ${record.createdAt}',
-          icon: Icons.description_outlined,
+          title: 'Nuova chat',
+          subtitle: 'Apri il primo scambio per creare il contesto iniziale.',
+          icon: Icons.add_comment_outlined,
           iconColor: const Color(0xFF6F91A3),
-          trailing: const _ReminderTrailingText('File'),
+          trailing: const _ReminderTrailingText('Demo'),
         ),
     ];
-  }
-
-  static List<WarmClinicalDocumentItem> _buildDocuments(
-    List<MedicalRecordEntry> records,
-  ) {
-    return records
-        .take(3)
-        .map(
-          (record) => WarmClinicalDocumentItem(
-            title: record.title,
-            subtitle: '${record.subtitle} • ${record.badge}',
-            icon: _documentIconForBadge(record.badge),
-            trailing: _ReminderTrailingText(record.detailSource),
-          ),
-        )
-        .toList(growable: false);
-  }
-
-  static List<WarmClinicalActivityItem> _buildActivity(
-    List<MedicalRecordEntry> records,
-    List<ChatConversationSummary> conversations,
-  ) {
-    final items = <WarmClinicalActivityItem>[];
-
-    for (final record in records.take(2)) {
-      items.add(
-        WarmClinicalActivityItem(
-          date: _compactDate(record.createdAt),
-          title: record.title,
-          subtitle: record.meta,
-          accentColor: record.badge == 'Da rivedere'
-              ? const Color(0xFFE5856F)
-              : const Color(0xFF2E686A),
-        ),
-      );
-    }
-
-    for (final conversation in conversations.take(2)) {
-      items.add(
-        WarmClinicalActivityItem(
-          date: conversation.updatedAtLabel,
-          title: conversation.title,
-          subtitle: conversation.previewMessage,
-          accentColor: conversation.unreadCount > 0
-              ? const Color(0xFF5F9F86)
-              : const Color(0xFF6F91A3),
-        ),
-      );
-    }
-
-    return items.take(3).toList(growable: false);
   }
 
   static List<WarmClinicalAiSuggestion> _buildSuggestions(
@@ -190,17 +139,6 @@ class HomeDashboardSeedData {
     ];
   }
 
-  static IconData _documentIconForBadge(String badge) {
-    switch (badge) {
-      case 'Da rivedere':
-        return Icons.monitor_heart_outlined;
-      case 'Archivio':
-        return Icons.folder_open_outlined;
-      default:
-        return Icons.description_outlined;
-    }
-  }
-
   static IconData _suggestionIconForConversation(
     ChatConversationSummary conversation,
   ) {
@@ -211,11 +149,6 @@ class HomeDashboardSeedData {
       return Icons.summarize_outlined;
     }
     return Icons.chat_bubble_outline_rounded;
-  }
-
-  static String _compactDate(String value) {
-    final parts = value.split(',');
-    return parts.first.trim();
   }
 }
 

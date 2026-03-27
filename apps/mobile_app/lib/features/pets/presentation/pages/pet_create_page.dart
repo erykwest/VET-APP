@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/pet_demo_store.dart';
 import '../../domain/pet_models.dart';
+import '../widgets/pet_avatar.dart';
 import '../widgets/pet_profile_form.dart';
 import '../widgets/pets_scaffold.dart';
 import '../widgets/pets_state_views.dart';
@@ -48,7 +49,7 @@ class PetCreatePage extends StatelessWidget {
   }
 }
 
-class _CreateForm extends StatelessWidget {
+class _CreateForm extends StatefulWidget {
   const _CreateForm({
     this.helperText = 'Compila i campi richiesti per iniziare.',
   });
@@ -56,23 +57,48 @@ class _CreateForm extends StatelessWidget {
   final String helperText;
 
   @override
+  State<_CreateForm> createState() => _CreateFormState();
+}
+
+class _CreateFormState extends State<_CreateForm> {
+  late String _selectedAvatarKey = PetDemoStore.avatarChoices.first.key;
+
+  @override
   Widget build(BuildContext context) {
-    return PetProfileForm(
-      title: 'Nuovo profilo',
-      helperText: helperText,
-      submitLabel: 'Salva profilo pet',
-      onSubmit: (draft) async {
-        final pet = PetDemoStore.instance.create(
-          name: draft.name,
-          species: draft.species,
-          breed: draft.breed,
-          birthDate: draft.birthDate,
-          sex: draft.sex,
-          weightKg: draft.weightKg,
-          medicalNote: draft.medicalNote,
-        );
-        Navigator.of(context).pop(pet);
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        PetAvatarPicker(
+          selectedKey: _selectedAvatarKey,
+          onSelected: (value) {
+            setState(() {
+              _selectedAvatarKey = value;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: PetProfileForm(
+            title: 'Nuovo profilo',
+            helperText: widget.helperText,
+            submitLabel: 'Salva profilo pet',
+            onSubmit: (draft) async {
+              final pet = PetDemoStore.instance.create(
+                name: draft.name,
+                species: draft.species,
+                breed: draft.breed,
+                birthDate: draft.birthDate,
+                sex: draft.sex,
+                weightKg: draft.weightKg,
+                medicalNote: draft.medicalNote,
+                avatarKey: _selectedAvatarKey,
+              );
+              if (!context.mounted) return;
+              Navigator.of(context).pop(pet);
+            },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -107,15 +107,31 @@ class ChatConversationsPage extends StatelessWidget {
                             onAction:
                                 onRetry ?? () => Navigator.of(context).maybePop(),
                           ),
-                        ChatScreenState.success => _ConversationList(
-                            key: const ValueKey('success'),
-                            conversations: visibleConversations,
-                            onConversationTap: onConversationTap ??
-                                (conversation) =>
-                                    _openConversation(context, conversation),
-                            onCreateConversation: () =>
-                                _startConversation(context),
-                          ),
+                        ChatScreenState.success => visibleConversations.isEmpty
+                            ? ChatEmptyState(
+                                key: const ValueKey('success-empty'),
+                                title: 'Nessuna chat salvata',
+                                subtitle:
+                                    'Avvia un thread demo per vedere il flusso completo dell assistente veterinario.',
+                                actionLabel: 'Nuova chat demo',
+                                onAction: () => _startConversation(context),
+                              )
+                            : _ConversationList(
+                                key: const ValueKey('success'),
+                                conversations: visibleConversations,
+                                onConversationTap: onConversationTap ??
+                                    (conversation) => _openConversation(
+                                          context,
+                                          conversation,
+                                        ),
+                                onDeleteConversation: (conversation) =>
+                                    _confirmDeleteConversation(
+                                  context,
+                                  conversation,
+                                ),
+                                onCreateConversation: () =>
+                                    _startConversation(context),
+                              ),
                       },
                     ),
                   ),
@@ -150,6 +166,57 @@ class ChatConversationsPage extends StatelessWidget {
         builder: (_) => ChatConversationDetailPage(
           conversationId: conversation.id,
           initialConversation: conversation,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteConversation(
+    BuildContext context,
+    ChatConversationSummary conversation,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Eliminare la chat?'),
+          content: Text(
+            'Rimuoviamo "${conversation.title}" dal tuo demo store. '
+            'Potrai ripristinarla subito con Annulla.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Elimina'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    final removed = ChatDemoStore.instance.deleteConversation(conversation.id);
+    if (removed == null) {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text('${removed.conversation.title} eliminata'),
+        action: SnackBarAction(
+          label: 'Annulla',
+          onPressed: () => ChatDemoStore.instance.restoreConversation(
+            removed.conversation,
+            index: removed.index,
+          ),
         ),
       ),
     );
@@ -316,11 +383,13 @@ class _ConversationList extends StatelessWidget {
     super.key,
     required this.conversations,
     required this.onConversationTap,
+    required this.onDeleteConversation,
     required this.onCreateConversation,
   });
 
   final List<ChatConversationSummary> conversations;
   final ValueChanged<ChatConversationSummary>? onConversationTap;
+  final ValueChanged<ChatConversationSummary>? onDeleteConversation;
   final VoidCallback onCreateConversation;
 
   @override
@@ -344,6 +413,9 @@ class _ConversationList extends StatelessWidget {
                 onTap: onConversationTap == null
                     ? null
                     : () => onConversationTap!.call(conversation),
+                onDelete: onDeleteConversation == null
+                    ? null
+                    : () => onDeleteConversation!.call(conversation),
               ),
               if (entry.key != conversations.length - 1)
                 const SizedBox(height: AppSpacing.md),

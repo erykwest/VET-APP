@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/pet_demo_store.dart';
 import '../../domain/pet_models.dart';
+import '../widgets/pet_avatar.dart';
 import '../widgets/pet_profile_form.dart';
 import '../widgets/pets_scaffold.dart';
 import '../widgets/pets_state_views.dart';
@@ -51,7 +52,7 @@ class PetEditPage extends StatelessWidget {
   }
 }
 
-class _EditForm extends StatelessWidget {
+class _EditForm extends StatefulWidget {
   const _EditForm({
     required this.pet,
     this.helperText = 'Aggiorna i campi da cambiare e lascia invariato il resto.',
@@ -61,25 +62,54 @@ class _EditForm extends StatelessWidget {
   final String helperText;
 
   @override
+  State<_EditForm> createState() => _EditFormState();
+}
+
+class _EditFormState extends State<_EditForm> {
+  late String _selectedAvatarKey =
+      PetDemoStore.resolveAvatarKey(widget.pet.avatarEmoji);
+
+  @override
   Widget build(BuildContext context) {
-    return PetProfileForm(
-      title: 'Bozza profilo',
-      helperText: helperText,
-      initialPet: pet,
-      submitLabel: 'Salva modifiche',
-      onSubmit: (draft) async {
-        final updated = pet.copyWith(
-          name: draft.name,
-          species: draft.species,
-          breed: draft.breed ?? '',
-          birthDateLabel: _formatDate(draft.birthDate),
-          sex: draft.sex,
-          weightLabel: _formatWeight(draft.weightKg),
-          medicalNote: draft.medicalNote,
-        );
-        PetDemoStore.instance.upsert(updated);
-        Navigator.of(context).pop(updated);
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        PetAvatarPicker(
+          title: 'Aggiorna avatar demo',
+          subtitle:
+              'Puoi cambiare anche il ritratto, senza toccare il profilo reale.',
+          selectedKey: _selectedAvatarKey,
+          onSelected: (value) {
+            setState(() {
+              _selectedAvatarKey = value;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: PetProfileForm(
+            title: 'Bozza profilo',
+            helperText: widget.helperText,
+            initialPet: widget.pet,
+            submitLabel: 'Salva modifiche',
+            onSubmit: (draft) async {
+              final updated = widget.pet.copyWith(
+                name: draft.name,
+                species: draft.species,
+                breed: draft.breed ?? '',
+                birthDateLabel: _formatDate(draft.birthDate),
+                sex: draft.sex,
+                weightLabel: _formatWeight(draft.weightKg),
+                medicalNote: draft.medicalNote,
+                avatarEmoji: _selectedAvatarKey,
+              );
+              PetDemoStore.instance.upsert(updated);
+              if (!context.mounted) return;
+              Navigator.of(context).pop(updated);
+            },
+          ),
+        ),
+      ],
     );
   }
 

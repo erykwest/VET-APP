@@ -4,12 +4,11 @@ import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_radii.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
 import '../../../../design_system/tokens/app_text_styles.dart';
+import '../widgets/home_dashboard_primitives.dart';
 import '../../../chat/presentation/pages/chat_conversations_page.dart';
-import '../../../medical_records/presentation/pages/medical_records_pages.dart';
 import '../../../pets/domain/pet_models.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../reminders/presentation/pages/reminders_pages.dart';
-import '../../../settings/presentation/pages/settings_page.dart';
 import '../models/home_dashboard_seed_data.dart';
 import '../widgets/home_dashboard_sections.dart';
 
@@ -23,9 +22,10 @@ class HomeDashboardPage extends StatelessWidget {
 
     final actions = <WarmClinicalActionButton>[
       WarmClinicalActionButton(
-        label: 'Carica documento',
-        icon: Icons.upload_file_rounded,
-        onPressed: () => _openRecords(context),
+        label: 'Apri profilo',
+        icon: Icons.pets_rounded,
+        accentColor: AppColors.secondary,
+        onPressed: () => _openProfile(context),
       ),
       WarmClinicalActionButton(
         label: 'Apri chat',
@@ -37,12 +37,6 @@ class HomeDashboardPage extends StatelessWidget {
         icon: Icons.notifications_active_outlined,
         accentColor: AppColors.accent,
         onPressed: () => _openReminders(context),
-      ),
-      WarmClinicalActionButton(
-        label: 'Profilo pet',
-        icon: Icons.pets_rounded,
-        accentColor: AppColors.secondary,
-        onPressed: () => _openProfile(context),
       ),
     ];
 
@@ -94,123 +88,98 @@ class HomeDashboardPage extends StatelessWidget {
                         _DashboardTopBar(
                           pet: activePet,
                           alertCount: seed.alertCount,
-                      onOpenProfile: () => _openProfile(context),
-                      onOpenSettings: () => _openSettings(context),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth >= 1100;
-                        final hero = WarmClinicalDashboardHero(
-                          petName: activePet.name,
-                          petDetails: seed.heroDetails,
-                          healthLabel: activePet.healthBadge,
-                          healthDescription: seed.heroDescription,
-                          petPortrait: _PetPortrait(pet: activePet),
-                          primaryActionLabel: 'Apri profilo',
-                          secondaryActionLabel: 'Contatta assistente',
-                          onPrimaryAction: () => _openProfile(context),
-                          onSecondaryAction: () => _openChat(context),
-                        );
-                        final remindersSection = WarmClinicalReminderSection(
-                          title: 'Scadenze vicine',
-                          items: seed.reminders,
-                          footerLabel: 'Vedi tutti',
-                          onFooterTap: () => _openReminders(context),
-                        );
+                          onOpenProfile: () => _openProfile(context),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isWide = constraints.maxWidth >= 1100;
+                            final hero = WarmClinicalDashboardHero(
+                              petName: activePet.name,
+                              petDetails: seed.heroDetails,
+                              healthLabel: activePet.healthBadge,
+                              healthDescription: seed.heroDescription,
+                              petPortrait: _PetPortrait(pet: activePet),
+                              primaryActionLabel: 'Apri profilo',
+                              secondaryActionLabel: 'Apri chat',
+                              onPrimaryAction: () => _openProfile(context),
+                              onSecondaryAction: () => _openChat(context),
+                            );
+                            final remindersSection =
+                                WarmClinicalReminderSection(
+                              title: 'Scadenze vicine',
+                              items: seed.reminders,
+                              footerLabel: 'Vedi reminder',
+                              onFooterTap: () => _openReminders(context),
+                            );
 
-                        if (isWide) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(flex: 7, child: hero),
-                              const SizedBox(width: AppSpacing.xl),
-                              Expanded(flex: 5, child: remindersSection),
-                            ],
-                          );
-                        }
+                            if (isWide) {
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(flex: 7, child: hero),
+                                  const SizedBox(width: AppSpacing.xl),
+                                  Expanded(flex: 5, child: remindersSection),
+                                ],
+                              );
+                            }
 
-                        return Column(
-                          children: [
-                            hero,
-                            const SizedBox(height: AppSpacing.xl),
-                            remindersSection,
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    _QuickMetricsRow(pet: activePet),
-                    const SizedBox(height: AppSpacing.xl),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth >= 1100;
-                        final aiPanel = WarmClinicalAiPanel(
-                          title: 'Assistente Vet AI',
-                          prompt: seed.aiPrompt,
-                          suggestions: seed.aiSuggestions,
-                          primaryActionLabel: 'Apri chat',
-                          onPrimaryAction: () => _openChat(context),
-                        );
-                        final documentsSection = WarmClinicalDocumentSection(
-                          title: 'Cartella clinica',
-                          items: seed.documents,
-                          footerLabel: 'Gestisci file',
-                          onFooterTap: () => _openRecords(context),
-                        );
+                            return Column(
+                              children: [
+                                hero,
+                                const SizedBox(height: AppSpacing.xl),
+                                remindersSection,
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                        _QuickMetricsRow(pet: activePet),
+                        const SizedBox(height: AppSpacing.xl),
+                        WarmClinicalInsightSection(
+                          title: 'Insight rapidi',
+                          subtitle:
+                              'Suggerimenti utili, razza e meteo in una sola vista.',
+                          items: _buildInsightCards(
+                            context: context,
+                            seed: seed,
+                            activePet: activePet,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isWide = constraints.maxWidth >= 1100;
+                            final aiPanel = WarmClinicalAiPanel(
+                              title: 'Assistente Vet AI',
+                              prompt: seed.aiPrompt,
+                              suggestions: seed.aiSuggestions,
+                              primaryActionLabel: 'Apri chat',
+                              onPrimaryAction: () => _openChat(context),
+                            );
+                            final actionsSection =
+                                _DashboardActionSection(actions: actions);
 
-                        if (isWide) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(flex: 7, child: aiPanel),
-                              const SizedBox(width: AppSpacing.xl),
-                              Expanded(flex: 5, child: documentsSection),
-                            ],
-                          );
-                        }
+                            if (isWide) {
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(flex: 7, child: aiPanel),
+                                  const SizedBox(width: AppSpacing.xl),
+                                  Expanded(flex: 5, child: actionsSection),
+                                ],
+                              );
+                            }
 
-                        return Column(
-                          children: [
-                            aiPanel,
-                            const SizedBox(height: AppSpacing.xl),
-                            documentsSection,
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isWide = constraints.maxWidth >= 1100;
-                        final activitySection = WarmClinicalActivitySection(
-                          title: 'Attivita recente',
-                          items: seed.activity,
-                          footerLabel: 'Apri storico',
-                          onFooterTap: () => _openProfile(context),
-                        );
-                        final actionsSection = _DashboardActionSection(actions: actions);
-
-                        if (isWide) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(flex: 7, child: activitySection),
-                              const SizedBox(width: AppSpacing.xl),
-                              Expanded(flex: 5, child: actionsSection),
-                            ],
-                          );
-                        }
-
-                        return Column(
-                          children: [
-                            activitySection,
-                            const SizedBox(height: AppSpacing.xl),
-                            actionsSection,
-                          ],
-                        );
-                      },
-                    ),
+                            return Column(
+                              children: [
+                                aiPanel,
+                                const SizedBox(height: AppSpacing.xl),
+                                actionsSection,
+                              ],
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -229,21 +198,9 @@ class HomeDashboardPage extends StatelessWidget {
     );
   }
 
-  static void _openSettings(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
-    );
-  }
-
   static void _openChat(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const ChatConversationsPage()),
-    );
-  }
-
-  static void _openRecords(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const MedicalRecordsListPage()),
     );
   }
 
@@ -252,6 +209,71 @@ class HomeDashboardPage extends StatelessWidget {
       MaterialPageRoute<void>(builder: (_) => const RemindersListPage()),
     );
   }
+
+  static List<WarmClinicalInsightCardData> _buildInsightCards({
+    required BuildContext context,
+    required HomeDashboardSeedData seed,
+    required PetProfile activePet,
+  }) {
+    final firstSuggestion = seed.aiSuggestions.isNotEmpty
+        ? seed.aiSuggestions.first.label
+        : 'Apri chat';
+    final secondSuggestion = seed.aiSuggestions.length > 1
+        ? seed.aiSuggestions[1].label
+        : 'Reminder';
+
+    return [
+      WarmClinicalInsightCardData(
+        eyebrow: 'Chiedi nella chat',
+        title: 'Suggerimento utile',
+        body:
+            'Se oggi devi cambiare routine, apri la chat: il contesto di ${activePet.name} e gia pronto e puoi annotare appetito, acqua e scadenze senza perdere il filo.',
+        icon: Icons.lightbulb_outline_rounded,
+        tone: DashboardTone.primary,
+        badge: 'Live',
+        chips: [firstSuggestion, secondSuggestion],
+        actionLabel: 'Apri chat',
+        onAction: () => _openChat(context),
+        footerNote: _shortInsight(seed.aiPrompt),
+      ),
+      WarmClinicalInsightCardData(
+        eyebrow: 'Razza e fase di vita',
+        title: activePet.breedLabel,
+        body:
+            'Con ${activePet.breedLabel.toLowerCase()}, la regola pratica e semplice: routine stabile, peso sotto controllo e visite brevi ma regolari.',
+        icon: Icons.pets_rounded,
+        tone: DashboardTone.success,
+        badge: activePet.species,
+        chips: [activePet.birthDateLabel, activePet.sex],
+        actionLabel: 'Vai al profilo',
+        onAction: () => _openProfile(context),
+        footerNote: activePet.medicalNote,
+      ),
+      WarmClinicalInsightCardData(
+        eyebrow: 'Meteo di oggi',
+        title: 'Fa caldo',
+        body:
+            'Porta acqua per te e per ${activePet.name}. Una pausa all ombra e qualche sosta fresca oggi valgono piu di una corsa inutile.',
+        icon: Icons.wb_sunny_outlined,
+        tone: DashboardTone.warning,
+        badge: 'Affiliate',
+        chips: const ['Borraccia', 'Ombra', 'Acqua fresca'],
+        actionLabel: 'Apri promemoria',
+        onAction: () => _openReminders(context),
+        footerNote: 'Marmentino con Amazon',
+      ),
+    ];
+  }
+
+  static String _shortInsight(String text) {
+    const maxLength = 96;
+    final trimmed = text.trim();
+    if (trimmed.length <= maxLength) {
+      return trimmed;
+    }
+
+    return '${trimmed.substring(0, maxLength - 1).trimRight()}...';
+  }
 }
 
 class _DashboardTopBar extends StatelessWidget {
@@ -259,13 +281,11 @@ class _DashboardTopBar extends StatelessWidget {
     required this.pet,
     required this.alertCount,
     required this.onOpenProfile,
-    required this.onOpenSettings,
   });
 
   final PetProfile pet;
   final int alertCount;
   final VoidCallback onOpenProfile;
-  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -288,7 +308,7 @@ class _DashboardTopBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadii.pill),
               ),
               child: const Text(
-                'Warm Clinical Dashboard',
+                'Core loop demo',
                 style: TextStyle(
                   color: AppColors.onPrimary,
                   fontSize: 12,
@@ -301,7 +321,7 @@ class _DashboardTopBar extends StatelessWidget {
             const Text('Benvenuto, Roberto', style: AppTextStyles.display),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Una vista chiara su salute, documenti e prossime scadenze di ${pet.name}.',
+              'Una vista chiara su profilo, chat e reminder di ${pet.name}.',
               style: AppTextStyles.body,
             ),
           ],
@@ -316,12 +336,7 @@ class _DashboardTopBar extends StatelessWidget {
             ),
             _SoftPill(
               icon: Icons.notifications_none_rounded,
-              label: '$alertCount alert',
-            ),
-            IconButton.filledTonal(
-              onPressed: onOpenSettings,
-              icon: const Icon(Icons.settings_outlined),
-              tooltip: 'Impostazioni',
+              label: '$alertCount priorita',
             ),
             FilledButton.tonalIcon(
               onPressed: onOpenProfile,
@@ -377,13 +392,13 @@ class _DashboardActionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WarmClinicalSectionCard(
-      title: 'Azioni rapide',
-      subtitle: 'Le azioni piu usate arrivano direttamente dalla dashboard.',
+      title: 'Azioni core',
+      subtitle: 'Profilo, chat e reminder restano il centro della demo.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Questa vista usa i seed reali di pets, chat e cartella clinica. Il layout resta demo-friendly ma i contenuti non sono piu hardcoded.',
+            'La home mette in primo piano il flusso che vogliamo mostrare a Francesco: un pet attivo, una chat pronta e una scadenza da tenere d\'occhio.',
             style: AppTextStyles.body,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -435,7 +450,7 @@ class _PetPortrait extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 240),
+      constraints: const BoxConstraints.tightFor(height: 240),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,

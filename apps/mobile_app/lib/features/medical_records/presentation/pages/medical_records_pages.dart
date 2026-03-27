@@ -30,11 +30,30 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
     _recordsFuture = _repository.loadRecords();
   }
 
-  Future<void> _reload() async {
+  Future<void> _reload({bool showLoading = false}) async {
     setState(() {
+      if (showLoading) {
+        _state = _ViewState.loading;
+      }
       _recordsFuture = _repository.loadRecords();
     });
-    await _recordsFuture;
+
+    try {
+      await _recordsFuture;
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _state = _ViewState.success;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _state = _ViewState.error;
+      });
+    }
   }
 
   void _openUpload() {
@@ -113,7 +132,8 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
 
               final records = snapshot.data ?? const <MedicalRecordEntry>[];
               final petNames = records
-                  .map((record) => record.petName)
+                  .map((record) => record.petName.trim())
+                  .where((name) => name.isNotEmpty)
                   .toSet()
                   .toList()
                 ..sort();
