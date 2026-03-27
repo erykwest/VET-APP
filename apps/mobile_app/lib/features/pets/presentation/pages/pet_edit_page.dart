@@ -29,6 +29,7 @@ class PetEditPage extends StatelessWidget {
       title: 'Modifica ${pet.name}.',
       subtitle:
           'Aggiorna i dettagli del profilo senza perdere il tono dell app, con campi validati e selezioni guidate.',
+      scrollHeaderWithBody: true,
       onBack: () => Navigator.of(context).maybePop(),
       actions: [
         TextButton(
@@ -91,30 +92,29 @@ class _EditFormState extends State<_EditForm> {
           },
         ),
         const SizedBox(height: 16),
-        Expanded(
-          child: PetProfileForm(
-            title: 'Bozza profilo',
-            helperText: widget.helperText,
-            initialPet: widget.pet,
-            submitLabel: 'Salva modifiche',
-            onSubmit: (draft) async {
-              final updated = widget.pet.copyWith(
-                name: draft.name,
-                species: draft.species,
-                breed: draft.breed ?? '',
-                birthDateLabel: _formatDate(draft.birthDate),
-                sex: draft.sex,
-                weightLabel: _formatWeight(draft.weightKg),
-                medicalNote: draft.medicalNote,
-                avatarEmoji: _selectedAvatarKey,
-              );
-              PetDemoStore.instance.upsert(updated);
-              if (!context.mounted) return;
-              await _showPostVisitRecapSheet(updated);
-              if (!context.mounted) return;
-              Navigator.of(context).pop(updated);
-            },
-          ),
+        PetProfileForm(
+          title: 'Bozza profilo',
+          helperText: widget.helperText,
+          initialPet: widget.pet,
+          submitLabel: 'Salva modifiche',
+          scrollable: false,
+          onSubmit: (draft) async {
+            final updated = widget.pet.copyWith(
+              name: draft.name,
+              species: draft.species,
+              breed: draft.breed ?? '',
+              birthDateLabel: _formatDate(draft.birthDate),
+              sex: draft.sex,
+              weightLabel: _formatWeight(draft.weightKg),
+              medicalNote: draft.medicalNote,
+              avatarEmoji: _selectedAvatarKey,
+            );
+            PetDemoStore.instance.upsert(updated);
+            if (!context.mounted) return;
+            await _showPostVisitRecapSheet(updated);
+            if (!context.mounted) return;
+            Navigator.of(context).pop(updated);
+          },
         ),
       ],
     );

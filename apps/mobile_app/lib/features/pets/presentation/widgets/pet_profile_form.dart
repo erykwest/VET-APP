@@ -36,6 +36,7 @@ class PetProfileForm extends StatefulWidget {
     super.key,
     this.initialPet,
     this.helperText = 'Compila i campi richiesti per continuare.',
+    this.scrollable = true,
   });
 
   final PetProfile? initialPet;
@@ -43,6 +44,7 @@ class PetProfileForm extends StatefulWidget {
   final String helperText;
   final String submitLabel;
   final Future<void> Function(PetProfileDraft draft) onSubmit;
+  final bool scrollable;
 
   @override
   State<PetProfileForm> createState() => _PetProfileFormState();
@@ -88,233 +90,238 @@ class _PetProfileFormState extends State<PetProfileForm> {
     final breedOptions = _breedOptionsForSelectedSpecies();
     final showMixedBreedSize = _shouldShowMixedBreedSize;
 
-    return SingleChildScrollView(
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            PetSection(
-              title: widget.title,
-              subtitle: widget.helperText,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  textInputAction: TextInputAction.next,
-                  decoration: _inputDecoration('Nome', 'Moka'),
-                  validator: (value) {
-                    if ((value ?? '').trim().isEmpty) {
-                      return 'Inserisci il nome del pet.';
-                    }
-                    return null;
-                  },
+    final form = Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PetSection(
+            title: widget.title,
+            subtitle: widget.helperText,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                textInputAction: TextInputAction.next,
+                decoration: _inputDecoration('Nome', 'Moka'),
+                validator: (value) {
+                  if ((value ?? '').trim().isEmpty) {
+                    return 'Inserisci il nome del pet.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+              DropdownButtonFormField<String>(
+                initialValue: _species,
+                decoration: _inputDecoration('Specie', 'Seleziona una specie'),
+                items: PetDemoStore.speciesOptions
+                    .map(
+                      (option) => DropdownMenuItem<String>(
+                        value: option.label,
+                        child: Text(option.label),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  setState(() {
+                    _species = value;
+                    _breed = null;
+                    _mixedBreedSize = null;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Seleziona una specie.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+              DropdownButtonFormField<String>(
+                initialValue: breedOptions.contains(_breed) ? _breed : null,
+                decoration: _inputDecoration('Razza', _breedHintText()),
+                items: breedOptions
+                    .map(
+                      (breed) => DropdownMenuItem<String>(
+                        value: breed == 'Razza non specificata' ? '' : breed,
+                        child: Text(breed),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: _species == null
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _breed = value;
+                          if (value != PetProfile.mixedBreedLabel) {
+                            _mixedBreedSize = null;
+                          }
+                        });
+                      },
+              ),
+              if (_species != null &&
+                  PetDemoStore.isFallbackSpecies(_species!)) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Per specie speciali puoi completare il profilo piu tardi o chiedere una mano in chat.',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.mutedText,
+                  ),
                 ),
+              ],
+              if (showMixedBreedSize) ...[
                 const SizedBox(height: AppSpacing.md),
                 DropdownButtonFormField<String>(
-                  initialValue: _species,
-                  decoration:
-                      _inputDecoration('Specie', 'Seleziona una specie'),
-                  items: PetDemoStore.speciesOptions
-                      .map(
-                        (option) => DropdownMenuItem<String>(
-                          value: option.label,
-                          child: Text(option.label),
-                        ),
-                      )
-                      .toList(growable: false),
-                  onChanged: (value) {
-                    setState(() {
-                      _species = value;
-                      _breed = null;
-                      _mixedBreedSize = null;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Seleziona una specie.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppSpacing.md),
-                DropdownButtonFormField<String>(
-                  initialValue: breedOptions.contains(_breed) ? _breed : null,
-                  decoration: _inputDecoration('Razza', _breedHintText()),
-                  items: breedOptions
-                      .map(
-                        (breed) => DropdownMenuItem<String>(
-                          value: breed == 'Razza non specificata' ? '' : breed,
-                          child: Text(breed),
-                        ),
-                      )
-                      .toList(growable: false),
-                  onChanged: _species == null
-                      ? null
-                      : (value) {
-                          setState(() {
-                            _breed = value;
-                            if (value != PetProfile.mixedBreedLabel) {
-                              _mixedBreedSize = null;
-                            }
-                          });
-                        },
-                ),
-                if (_species != null &&
-                    PetDemoStore.isFallbackSpecies(_species!)) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Per specie speciali puoi completare il profilo piu tardi o chiedere una mano in chat.',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.mutedText,
-                    ),
-                  ),
-                ],
-                if (showMixedBreedSize) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  DropdownButtonFormField<String>(
-                    initialValue: _mixedBreedSize,
-                    decoration: _inputDecoration(
-                      'Taglia',
-                      'Obbligatoria per i meticci',
-                    ),
-                    items: PetProfile.mixedBreedSizeOptions
-                        .map(
-                          (size) => DropdownMenuItem<String>(
-                            value: size,
-                            child: Text(size),
-                          ),
-                        )
-                        .toList(growable: false),
-                    onChanged: (value) {
-                      setState(() {
-                        _mixedBreedSize = value;
-                      });
-                    },
-                    validator: (value) {
-                      if (_shouldShowMixedBreedSize &&
-                          (value == null || value.trim().isEmpty)) {
-                        return 'Seleziona la taglia del meticcio.';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.md),
-                InkWell(
-                  onTap: _pickBirthDate,
-                  borderRadius: BorderRadius.circular(18),
-                  child: InputDecorator(
-                    decoration: _inputDecoration(
-                      'Data di nascita',
-                      'Seleziona una data',
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _birthDate == null
-                                ? 'Seleziona una data'
-                                : _formatDate(_birthDate!),
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: _birthDate == null
-                                  ? AppColors.mutedText
-                                  : AppColors.text,
-                            ),
-                          ),
-                        ),
-                        const Icon(
-                          Icons.calendar_month_rounded,
-                          color: AppColors.primary,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (_birthDate == null) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'Seleziona la data di nascita.',
-                    style: AppTextStyles.caption.copyWith(
-                      color: Colors.red.shade700,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.md),
-                DropdownButtonFormField<String>(
-                  initialValue: _sex,
-                  decoration: _inputDecoration('Sesso', 'Seleziona'),
-                  items: PetDemoStore.sexOptions
-                      .map(
-                        (sex) => DropdownMenuItem<String>(
-                          value: sex,
-                          child: Text(sex),
-                        ),
-                      )
-                      .toList(growable: false),
-                  onChanged: (value) {
-                    setState(() {
-                      _sex = value;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Seleziona il sesso.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextFormField(
-                  controller: _weightController,
-                  textInputAction: TextInputAction.next,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9,\.]')),
-                  ],
-                  decoration: _inputDecoration('Peso', 'Es. 18,4'),
-                  validator: (value) {
-                    final parsed = _parseWeight(value);
-                    if (parsed == null) {
-                      return 'Inserisci un peso valido.';
-                    }
-                    if (parsed <= 0) {
-                      return 'Il peso deve essere maggiore di zero.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextFormField(
-                  controller: _notesController,
-                  maxLines: 4,
+                  initialValue: _mixedBreedSize,
                   decoration: _inputDecoration(
-                    'Note cliniche',
-                    'Aggiungi note brevi su dieta, farmaci o comportamento.',
+                    'Taglia',
+                    'Obbligatoria per i meticci',
+                  ),
+                  items: PetProfile.mixedBreedSizeOptions
+                      .map(
+                        (size) => DropdownMenuItem<String>(
+                          value: size,
+                          child: Text(size),
+                        ),
+                      )
+                      .toList(growable: false),
+                  onChanged: (value) {
+                    setState(() {
+                      _mixedBreedSize = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (_shouldShowMixedBreedSize &&
+                        (value == null || value.trim().isEmpty)) {
+                      return 'Seleziona la taglia del meticcio.';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+              const SizedBox(height: AppSpacing.md),
+              InkWell(
+                onTap: _pickBirthDate,
+                borderRadius: BorderRadius.circular(18),
+                child: InputDecorator(
+                  decoration: _inputDecoration(
+                    'Data di nascita',
+                    'Seleziona una data',
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _birthDate == null
+                              ? 'Seleziona una data'
+                              : _formatDate(_birthDate!),
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: _birthDate == null
+                                ? AppColors.mutedText
+                                : AppColors.text,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.calendar_month_rounded,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_birthDate == null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Seleziona la data di nascita.',
+                  style: AppTextStyles.caption.copyWith(
+                    color: Colors.red.shade700,
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            PetSection(
-              title: 'Salva profilo',
-              subtitle: 'I campi contrassegnati sono obbligatori.',
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _submit,
-                    icon: const Icon(Icons.save_rounded),
-                    label: Text(widget.submitLabel),
-                  ),
+              const SizedBox(height: AppSpacing.md),
+              DropdownButtonFormField<String>(
+                initialValue: _sex,
+                decoration: _inputDecoration('Sesso', 'Seleziona'),
+                items: PetDemoStore.sexOptions
+                    .map(
+                      (sex) => DropdownMenuItem<String>(
+                        value: sex,
+                        child: Text(sex),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (value) {
+                  setState(() {
+                    _sex = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Seleziona il sesso.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextFormField(
+                controller: _weightController,
+                textInputAction: TextInputAction.next,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
                 ),
-              ],
-            ),
-          ],
-        ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9,\.]')),
+                ],
+                decoration: _inputDecoration('Peso', 'Es. 18,4'),
+                validator: (value) {
+                  final parsed = _parseWeight(value);
+                  if (parsed == null) {
+                    return 'Inserisci un peso valido.';
+                  }
+                  if (parsed <= 0) {
+                    return 'Il peso deve essere maggiore di zero.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextFormField(
+                controller: _notesController,
+                maxLines: 4,
+                decoration: _inputDecoration(
+                  'Note cliniche',
+                  'Aggiungi note brevi su dieta, farmaci o comportamento.',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          PetSection(
+            title: 'Salva profilo',
+            subtitle: 'I campi contrassegnati sono obbligatori.',
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _submit,
+                  icon: const Icon(Icons.save_rounded),
+                  label: Text(widget.submitLabel),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
+
+    if (widget.scrollable) {
+      return SingleChildScrollView(
+        child: form,
+      );
+    }
+
+    return form;
   }
 
   InputDecoration _inputDecoration(String label, String hint) {

@@ -47,6 +47,7 @@ class _PetsListPageState extends State<PetsListPage> {
       title: "I tuoi pet, in un colpo d'occhio.",
       subtitle:
           'Qui trovi i profili disponibili, le prossime scadenze e il pet in evidenza nella preview locale.',
+      scrollHeaderWithBody: true,
       actions: [
         IconButton(
           onPressed: () => _openCreate(context),
@@ -123,10 +124,9 @@ class _PetsListContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final visiblePets = pets;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
           PetSection(
             title: 'Filtro rapido',
             subtitle: 'Scegli la specie che vuoi vedere per prima.',
@@ -249,7 +249,6 @@ class _PetsListContent extends StatelessWidget {
             ],
           ),
         ],
-      ),
     );
   }
 }

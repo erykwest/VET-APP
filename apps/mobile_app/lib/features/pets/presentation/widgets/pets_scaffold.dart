@@ -13,6 +13,7 @@ class PetsScaffold extends StatelessWidget {
     this.subtitle,
     this.actions,
     this.onBack,
+    this.scrollHeaderWithBody = false,
   });
 
   final String title;
@@ -20,6 +21,7 @@ class PetsScaffold extends StatelessWidget {
   final List<Widget>? actions;
   final VoidCallback? onBack;
   final Widget body;
+  final bool scrollHeaderWithBody;
 
   @override
   Widget build(BuildContext context) {
@@ -90,14 +92,34 @@ class PetsScaffold extends StatelessWidget {
                     if (actions != null) ...actions!,
                   ],
                 ),
-                const SizedBox(height: AppSpacing.xxl),
-                Text(title, style: AppTextStyles.display),
-                if (subtitle != null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  Text(subtitle!, style: AppTextStyles.body),
+                if (scrollHeaderWithBody)
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: AppSpacing.xxl),
+                          Text(title, style: AppTextStyles.display),
+                          if (subtitle != null) ...[
+                            const SizedBox(height: AppSpacing.md),
+                            Text(subtitle!, style: AppTextStyles.body),
+                          ],
+                          const SizedBox(height: AppSpacing.xxl),
+                          body,
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
+                  const SizedBox(height: AppSpacing.xxl),
+                  Text(title, style: AppTextStyles.display),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    Text(subtitle!, style: AppTextStyles.body),
+                  ],
+                  const SizedBox(height: AppSpacing.xxl),
+                  Expanded(child: body),
                 ],
-                const SizedBox(height: AppSpacing.xxl),
-                Expanded(child: body),
               ],
             ),
           ),

@@ -27,6 +27,7 @@ class PetCreatePage extends StatelessWidget {
       title: 'Crea un profilo pet.',
       subtitle:
           'Nome, specie, razza opzionale, data di nascita e peso validato per evitare inserimenti errati.',
+      scrollHeaderWithBody: true,
       onBack: () => Navigator.of(context).maybePop(),
       actions: [
         TextButton(
@@ -72,69 +73,68 @@ class _CreateFormState extends State<_CreateForm> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          PetAvatarPicker(
-            selectedKey: _selectedAvatarKey,
-            compact: true,
-            title: 'Tema visuale',
-            subtitle:
-                'Le card tema sono piu compatte e scorrono in orizzontale, cosi i campi del profilo restano subito visibili.',
-            onSelected: (value) {
-              setState(() {
-                _selectedAvatarKey = value;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          _ProfilePhotoSection(
-            selectedAvatarKey: _selectedAvatarKey,
-            profileImageDataUrl: _profileImageDataUrl,
-            isPickingPhoto: _isPickingPhoto,
-            onPickPhoto: _pickProfilePhoto,
-            onClearPhoto: _profileImageDataUrl == null
-                ? null
-                : () {
-                    setState(() {
-                      _profileImageDataUrl = null;
-                    });
-                  },
-          ),
-          const SizedBox(height: 16),
-          _GalleryProviderSection(
-            selectedProvider: _galleryProvider,
-            onSelected: (value) {
-              setState(() {
-                _galleryProvider = value;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          PetProfileForm(
-            title: 'Nuovo profilo',
-            helperText: widget.helperText,
-            submitLabel: 'Salva profilo pet',
-            onSubmit: (draft) async {
-              final pet = PetDemoStore.instance.create(
-                name: draft.name,
-                species: draft.species,
-                breed: draft.breed,
-                birthDate: draft.birthDate,
-                sex: draft.sex,
-                weightKg: draft.weightKg,
-                medicalNote: draft.medicalNote,
-                avatarKey: _selectedAvatarKey,
-                profileImageDataUrl: _profileImageDataUrl,
-                galleryProvider: _galleryProvider,
-              );
-              if (!context.mounted) return;
-              Navigator.of(context).pop(pet);
-            },
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        PetAvatarPicker(
+          selectedKey: _selectedAvatarKey,
+          compact: true,
+          title: 'Tema visuale',
+          subtitle:
+              'Le card tema sono piu compatte e scorrono in orizzontale, cosi i campi del profilo restano subito visibili.',
+          onSelected: (value) {
+            setState(() {
+              _selectedAvatarKey = value;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        _ProfilePhotoSection(
+          selectedAvatarKey: _selectedAvatarKey,
+          profileImageDataUrl: _profileImageDataUrl,
+          isPickingPhoto: _isPickingPhoto,
+          onPickPhoto: _pickProfilePhoto,
+          onClearPhoto: _profileImageDataUrl == null
+              ? null
+              : () {
+                  setState(() {
+                    _profileImageDataUrl = null;
+                  });
+                },
+        ),
+        const SizedBox(height: 16),
+        _GalleryProviderSection(
+          selectedProvider: _galleryProvider,
+          onSelected: (value) {
+            setState(() {
+              _galleryProvider = value;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        PetProfileForm(
+          title: 'Nuovo profilo',
+          helperText: widget.helperText,
+          submitLabel: 'Salva profilo pet',
+          scrollable: false,
+          onSubmit: (draft) async {
+            final pet = PetDemoStore.instance.create(
+              name: draft.name,
+              species: draft.species,
+              breed: draft.breed,
+              birthDate: draft.birthDate,
+              sex: draft.sex,
+              weightKg: draft.weightKg,
+              medicalNote: draft.medicalNote,
+              avatarKey: _selectedAvatarKey,
+              profileImageDataUrl: _profileImageDataUrl,
+              galleryProvider: _galleryProvider,
+            );
+            if (!context.mounted) return;
+            Navigator.of(context).pop(pet);
+          },
+        ),
+      ],
     );
   }
 
