@@ -15,5 +15,7 @@ Curated product documents for the MVP now live here instead of the repository ro
 
 ## Additional source
 - `10_prd_mvp_modulare.md`
+- `11_release_successive_geolocalizzazione_e_tracking.md`
+- `12_release_successive_community_social_e_care_network.md`
 
 This keeps the root focused on codebase bootstrap and operational files.

@@ -1,7 +1,7 @@
-# 05 — Supabase Integration
+# 05 - Supabase Integration
 
 ## Obiettivo
-Integrare Supabase in modo pulito, evitando dipendenze sparse nell'interfaccia.
+Integrare Supabase in modo pulito, evitando dipendenze sparse nell'interfaccia, senza renderlo un prerequisito obbligatorio della preview demo.
 
 ## Aree di integrazione
 1. Auth
@@ -9,6 +9,21 @@ Integrare Supabase in modo pulito, evitando dipendenze sparse nell'interfaccia.
 3. Storage
 4. Edge Functions / API proxy future
 5. Realtime opzionale
+
+## Modalita operative attuali
+
+### 1. Preview demo-safe
+- nessuna dipendenza obbligatoria da Supabase
+- auth demo e seed locali
+- utile per founder demo, UX review e smoke flow browser
+
+### 2. Web auth reale con Supabase
+- `SUPABASE_URL` e `SUPABASE_ANON_KEY` passati come Flutter `--dart-define`
+- utile per validare login e sessione reali nella web app
+
+### 3. Backend bootstrap Python
+- il repo mantiene anche un backend FastAPI e una configurazione server-side separata dal frontend
+- Supabase resta un adapter/runtime reale, non l'unico modo in cui il progetto puo essere avviato
 
 ## Regola architetturale
 Il codice UI non parla direttamente con Supabase.
@@ -58,18 +73,6 @@ Contenuti:
 - content
 - created_at
 
-### medical_records
-Contenuti:
-- id
-- user_id
-- pet_id
-- file_path
-- file_name
-- mime_type
-- category
-- notes
-- uploaded_at
-
 ### reminders
 Contenuti:
 - id
@@ -97,9 +100,13 @@ Contenuti:
 - SUPABASE_URL
 - SUPABASE_ANON_KEY
 
+Nota importante:
+- nel client Flutter web queste variabili arrivano tramite `--dart-define`
+- il file `.env` del repository non viene letto direttamente dal frontend Flutter
+
 ## Flusso consigliato per il frontend
 ```text
-Page -> Controller/Notifier -> UseCase -> Repository -> SupabaseDatasource
+Page -> Controller/Notifier -> UseCase -> Repository -> Datasource -> Runtime
 ```
 
 ## Cosa NON fare

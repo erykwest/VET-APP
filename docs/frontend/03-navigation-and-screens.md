@@ -1,22 +1,25 @@
-# 03 — Navigation and Screens
+# 03 - Navigation and Screens
 
 ## Architettura di navigazione
 Approccio consigliato:
 - router dichiarativo
-- shell principale con bottom navigation
+- shell principale con navigation rail / bottom navigation
 - route guard per sessione autenticata
+- route preview dedicata per founder demo
 
 ## Flusso iniziale
 ```text
 Splash
- ├── Onboarding
- │    └── Auth
- └── HomeShell
-      ├── Home
-      ├── Pets
-      ├── Chat
-      ├── Records
-      └── Settings
+  |- Onboarding
+  |    \- Auth
+  \- HomeShell
+       |- Home
+       |- Pets
+       |- Chat
+       \- Reminder
+
+Web preview founder:
+PreviewDashboard -> HomeShell
 ```
 
 ## Schermate minime
@@ -26,6 +29,9 @@ Scopo:
 - verifica sessione
 - preload config
 - redirect iniziale
+
+Nota:
+- in web preview senza Supabase attivo, il bootstrap puo instradare direttamente verso la preview dashboard
 
 ### Onboarding
 Schermate:
@@ -44,8 +50,9 @@ Schermate:
 Blocchi:
 - saluto utente
 - pet attivo
-- scorciatoie a chat / documenti / reminder
+- scorciatoie a profilo / chat / reminder
 - card stato generale
+- insight rapidi utili al racconto demo
 
 ### Pets
 Schermate:
@@ -60,27 +67,22 @@ Schermate:
 - dettaglio conversazione
 - composer messaggio
 
-### Medical Records
-Schermate:
-- lista documenti
-- upload documento
-- dettaglio metadati
-
 ### Reminders
 Schermate:
 - lista reminder
 - crea reminder
 - modifica reminder
 
-### Settings / Profile
+### Profile
 Schermate:
-- profilo utente
-- preferenze
-- logout
-- area tecnica/debug
+- profilo pet / utente collegato al percorso demo
+
+### Estensioni fuori focus demo
+Presenti nel repo ma non centrali per la preview founder:
+- medical records
+- settings
 
 ## Deep link futuri
-- apertura diretta di un documento
 - reminder specifico
 - conversazione specifica
 - invito a completare il profilo pet
