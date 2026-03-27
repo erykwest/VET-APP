@@ -12,6 +12,7 @@ class ChatSeedData {
       previewMessage:
           'Se resta vivace possiamo osservare fino a domani, ma tieni nota di appetito e acqua.',
       lastSender: 'Assistente',
+      petId: 'demo-pet-moka',
     ),
     ChatConversationSummary(
       id: 'conv-2',
@@ -23,6 +24,7 @@ class ChatSeedData {
       previewMessage:
           'Ho già messo il richiamo e il promemoria di follow-up per la prossima settimana.',
       lastSender: 'Tu',
+      petId: 'demo-pet-moka',
     ),
     ChatConversationSummary(
       id: 'conv-3',
@@ -34,6 +36,7 @@ class ChatSeedData {
       previewMessage:
           'Posso riassumere il referto in tre punti: quadro, terapia e prossimo controllo.',
       lastSender: 'Assistente',
+      petId: 'demo-pet-moka',
     ),
   ];
 
@@ -44,6 +47,7 @@ class ChatSeedData {
     title: 'Moka - appetito e controllo',
     petName: 'Moka',
     statusLabel: 'Contesto attivo del pet',
+    petId: 'demo-pet-moka',
     messages: [
       ChatMessage(
         id: 'msg-1',
@@ -85,6 +89,7 @@ class ChatSeedData {
           title: 'Moka - promemoria vaccino',
           petName: 'Moka',
           statusLabel: 'Promemoria attivo',
+          petId: 'demo-pet-moka',
           messages: [
             ChatMessage(
               id: 'msg-1',
@@ -113,6 +118,7 @@ class ChatSeedData {
           title: 'Moka - referto visita',
           petName: 'Moka',
           statusLabel: 'Referto caricato',
+          petId: 'demo-pet-moka',
           messages: [
             ChatMessage(
               id: 'msg-1',

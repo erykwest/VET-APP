@@ -1,5 +1,9 @@
+import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../data/pet_api_repository.dart';
 import '../../data/pet_demo_store.dart';
 import '../../domain/pet_models.dart';
 import '../widgets/pet_avatar.dart';
@@ -24,8 +28,11 @@ class PetsListPage extends StatefulWidget {
 }
 
 class _PetsListPageState extends State<PetsListPage> {
+  final PetApiRepository _repository = PetApiRepository();
   String _selectedSpecies = 'Tutti';
-  List<PetProfile> _pets = PetDemoStore.instance.list();
+  List<PetProfile> _allPets = const [];
+  bool _isLoading = true;
+  Object? _error;
 
   @override
   void initState() {
@@ -33,20 +40,41 @@ class _PetsListPageState extends State<PetsListPage> {
     _reload();
   }
 
-  void _reload() {
+  Future<void> _reload() async {
     setState(() {
-      _pets = PetDemoStore.instance.list(species: _selectedSpecies);
+      _isLoading = true;
+      _error = null;
     });
+
+    try {
+      final pets = await _repository.listPets();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _allPets = pets;
+        _isLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = error;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
+    final visiblePets = _filteredPets();
 
     return PetsScaffold(
       title: "I tuoi pet, in un colpo d'occhio.",
       subtitle:
-          'Qui trovi i profili disponibili, le prossime scadenze e il pet in evidenza nella preview locale.',
+          'Qui trovi i profili sincronizzati dal backend, le prossime scadenze e il pet in evidenza.',
       scrollHeaderWithBody: true,
       actions: [
         IconButton(
@@ -72,19 +100,49 @@ class _PetsListPageState extends State<PetsListPage> {
             actionLabel: 'Crea pet',
             onAction: () => _openCreate(context),
           ),
-        PetsScreenStatus.success => _PetsListContent(
-            pets: _pets,
-            selectedSpecies: _selectedSpecies,
-            onSpeciesChanged: (species) {
-              setState(() {
-                _selectedSpecies = species;
-                _pets = PetDemoStore.instance.list(species: _selectedSpecies);
-              });
-            },
-            onAddPet: () => _openCreate(context),
-            onOpenPet: (pet) => _openDetail(context, pet),
-          ),
+        PetsScreenStatus.success => _isLoading
+            ? const PetsLoadingView(label: 'Carico la lista pet...')
+            : _error != null
+                ? PetsErrorView(
+                    title: 'Pet non disponibili',
+                    subtitle: 'Non riesco a leggere i dati dal backend.',
+                    actionLabel: 'Riprova',
+                    onRetry: () {
+                      _reload();
+                    },
+                  )
+                : visiblePets.isEmpty
+                    ? PetsEmptyView(
+                        title: 'Nessun pet ancora',
+                        subtitle:
+                            'Crea il primo profilo per tenere sotto controllo salute, note e scadenze.',
+                        actionLabel: 'Crea pet',
+                        onAction: () => _openCreate(context),
+                      )
+                    : _PetsListContent(
+                        pets: visiblePets,
+                        allPetsCount: _allPets.length,
+                        selectedSpecies: _selectedSpecies,
+                        onSpeciesChanged: (species) {
+                          setState(() {
+                            _selectedSpecies = species;
+                          });
+                        },
+                        onAddPet: () => _openCreate(context),
+                        onOpenPet: (pet) => _openDetail(context, pet),
+                      ),
       },
+    );
+  }
+
+  List<PetProfile> _filteredPets() {
+    final species = _selectedSpecies.trim();
+    if (species.isEmpty || species == 'Tutti') {
+      return List<PetProfile>.unmodifiable(_allPets);
+    }
+
+    return List<PetProfile>.unmodifiable(
+      _allPets.where((pet) => pet.species == species),
     );
   }
 
@@ -93,7 +151,7 @@ class _PetsListPageState extends State<PetsListPage> {
       MaterialPageRoute<void>(builder: (_) => const PetCreatePage()),
     );
     if (!mounted) return;
-    _reload();
+    await _reload();
   }
 
   Future<void> _openDetail(BuildContext context, PetProfile pet) async {
@@ -101,13 +159,14 @@ class _PetsListPageState extends State<PetsListPage> {
       MaterialPageRoute<void>(builder: (_) => PetDetailPage(pet: pet)),
     );
     if (!mounted) return;
-    _reload();
+    await _reload();
   }
 }
 
 class _PetsListContent extends StatelessWidget {
   const _PetsListContent({
     required this.pets,
+    required this.allPetsCount,
     required this.selectedSpecies,
     required this.onSpeciesChanged,
     required this.onAddPet,
@@ -115,6 +174,7 @@ class _PetsListContent extends StatelessWidget {
   });
 
   final List<PetProfile> pets;
+  final int allPetsCount;
   final String selectedSpecies;
   final ValueChanged<String> onSpeciesChanged;
   final VoidCallback onAddPet;
@@ -155,9 +215,9 @@ class _PetsListContent extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           PetSection(
-            title: 'Panoramica preview',
+            title: 'Panoramica sincronizzata',
             subtitle:
-                'Mostriamo subito il pet in evidenza, una scadenza vicina e i numeri chiave della preview locale.',
+                'Mostriamo subito il pet in evidenza, una scadenza vicina e i numeri chiave della vista sincronizzata.',
             children: [
               Wrap(
                 spacing: 12,
@@ -165,17 +225,17 @@ class _PetsListContent extends StatelessWidget {
                 children: [
                   PetMetricChip(
                     label: 'Pet registrati',
-                    value: '${PetDemoStore.instance.list().length}',
+                    value: '$allPetsCount',
                     backgroundColor: Color(0xFFE1F0EA),
                   ),
                   PetMetricChip(
                     label: 'Scadenze vicine',
-                    value: '1',
+                    value: '${visiblePets.where((pet) => !pet.nextVisitLabel.toLowerCase().contains('da pianificare')).length}',
                     backgroundColor: Color(0xFFF6EADF),
                   ),
                   PetMetricChip(
                     label: 'Note cliniche',
-                    value: '1',
+                    value: '${visiblePets.where((pet) => pet.medicalNote.trim().isNotEmpty).length}',
                     backgroundColor: Color(0xFFF5F0D8),
                   ),
                 ],
@@ -186,8 +246,8 @@ class _PetsListContent extends StatelessWidget {
           PetSection(
             title: 'Profili visibili',
             subtitle: selectedSpecies == 'Tutti'
-                ? 'Tutti i profili disponibili nella preview locale.'
-                : 'Stai guardando solo i profili ${selectedSpecies.toLowerCase()} della preview locale.',
+                ? 'Tutti i profili disponibili nel backend.'
+                : 'Stai guardando solo i profili ${selectedSpecies.toLowerCase()} del backend.',
             trailing: _SectionBadge(label: '${visiblePets.length} visibili'),
             children: [
               PetMetricChip(

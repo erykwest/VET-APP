@@ -182,7 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Se stai usando la preview locale senza Supabase, puoi ancora entrare con demo@vetapp.local / VETAPP. Con Supabase attivo usa invece un account reale o registrane uno nuovo.',
+                      'Se stai usando la preview locale senza backend, il flusso demo resta disponibile in automatico.',
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.35,

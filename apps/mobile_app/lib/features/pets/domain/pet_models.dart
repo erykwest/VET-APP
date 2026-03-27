@@ -32,6 +32,8 @@ class PetProfile {
     required this.nextVisitLabel,
     required this.avatarEmoji,
     required this.accentColor,
+    this.birthDateIso,
+    this.ageYears,
     this.profileImageDataUrl,
     this.galleryProvider,
   });
@@ -41,6 +43,8 @@ class PetProfile {
   final String species;
   final String breed;
   final String birthDateLabel;
+  final String? birthDateIso;
+  final int? ageYears;
   final String sex;
   final String weightLabel;
   final String medicalNote;
@@ -128,6 +132,8 @@ class PetProfile {
     String? species,
     String? breed,
     String? birthDateLabel,
+    String? birthDateIso,
+    int? ageYears,
     String? sex,
     String? weightLabel,
     String? medicalNote,
@@ -144,6 +150,8 @@ class PetProfile {
       species: species ?? this.species,
       breed: breed ?? this.breed,
       birthDateLabel: birthDateLabel ?? this.birthDateLabel,
+      birthDateIso: birthDateIso ?? this.birthDateIso,
+      ageYears: ageYears ?? this.ageYears,
       sex: sex ?? this.sex,
       weightLabel: weightLabel ?? this.weightLabel,
       medicalNote: medicalNote ?? this.medicalNote,
@@ -164,13 +172,15 @@ const samplePets = <PetProfile>[
     species: 'Cane',
     breed: 'Meticcio - Media',
     birthDateLabel: 'Mag 2021',
+    birthDateIso: '2021-05-01',
+    ageYears: 4,
     sex: 'Femmina',
     weightLabel: '17,8 kg',
     medicalNote:
-        'Stomaco delicato, dieta leggera e controllo periodico già pianificato.',
+        'Stomaco delicato, dieta leggera e controllo periodico gia pianificato.',
     healthBadge: 'Stabile',
     nextVisitLabel: 'Vaccino di richiamo tra 12 giorni',
-    avatarEmoji: 'M',
+    avatarEmoji: 'portrait-bosco',
     accentColor: Color(0xFFE7F2EE),
   ),
   PetProfile(
@@ -179,13 +189,15 @@ const samplePets = <PetProfile>[
     species: 'Gatto',
     breed: 'Europeo a pelo corto',
     birthDateLabel: 'Set 2019',
+    birthDateIso: '2019-09-01',
+    ageYears: 6,
     sex: 'Maschio',
     weightLabel: '5,1 kg',
     medicalNote:
         'Vita in casa, toelettatura regolare e attenzione ai controlli dentali.',
     healthBadge: 'Da monitorare',
     nextVisitLabel: 'Controllo dentale la prossima settimana',
-    avatarEmoji: 'O',
+    avatarEmoji: 'portrait-nebbia',
     accentColor: Color(0xFFF6EADF),
   ),
 ];

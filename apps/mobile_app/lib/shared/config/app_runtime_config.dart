@@ -11,6 +11,9 @@ class AppRuntimeConfig {
     required this.apiBaseUrl,
     required this.supabaseUrl,
     required this.supabaseAnonKey,
+    required this.demoBypassAuth,
+    required this.demoUserEmail,
+    required this.demoUserPassword,
     required this.logLevel,
     required this.enableTelemetry,
   });
@@ -20,6 +23,9 @@ class AppRuntimeConfig {
   final String apiBaseUrl;
   final String supabaseUrl;
   final String supabaseAnonKey;
+  final bool demoBypassAuth;
+  final String demoUserEmail;
+  final String demoUserPassword;
   final String logLevel;
   final bool enableTelemetry;
 
@@ -27,6 +33,8 @@ class AppRuntimeConfig {
   bool get hasSupabaseCredentials =>
       supabaseUrl.trim().isNotEmpty && supabaseAnonKey.trim().isNotEmpty;
   bool get hasSupabaseConfig => hasSupabaseCredentials;
+  bool get hasDemoCredentials =>
+      demoUserEmail.trim().isNotEmpty && demoUserPassword.trim().isNotEmpty;
 
   bool get isProduction => environment == AppEnvironment.production;
 }

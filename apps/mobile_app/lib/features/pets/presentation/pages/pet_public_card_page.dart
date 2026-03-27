@@ -1,7 +1,10 @@
+import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../data/pet_demo_store.dart';
+import '../../data/pet_api_repository.dart';
 import '../../data/pet_public_card_store.dart';
 import '../../domain/pet_models.dart';
 import '../widgets/pet_avatar.dart';
@@ -19,21 +22,39 @@ class PetPublicCardPage extends StatefulWidget {
 }
 
 class _PetPublicCardPageState extends State<PetPublicCardPage> {
+  final PetApiRepository _repository = PetApiRepository();
   PetPublicCardMetrics _metrics = const PetPublicCardMetrics();
-
-  PetProfile? get _pet {
-    final petId = widget.petId;
-    if (petId == null || petId.trim().isEmpty) {
-      return PetDemoStore.instance.list().firstOrNull;
-    }
-    return PetDemoStore.instance.byId(petId) ??
-        PetDemoStore.instance.list().firstOrNull;
-  }
+  PetProfile? _pet;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadMetricsAndTrackOpen();
+    _loadPet();
+  }
+
+  Future<void> _loadPet() async {
+    try {
+      final petId = widget.petId?.trim() ?? '';
+      if (petId.isNotEmpty) {
+        _pet = await _repository.getPet(petId);
+      } else {
+        final pets = await _repository.listPets();
+        _pet = pets.isNotEmpty ? pets.first : null;
+      }
+    } catch (_) {
+      _pet = null;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+
+    if (_pet != null) {
+      await _loadMetricsAndTrackOpen();
+    }
   }
 
   @override
@@ -44,7 +65,14 @@ class _PetPublicCardPageState extends State<PetPublicCardPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: pet == null
+          child: _isLoading
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(48),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              : pet == null
               ? const _MissingPetState()
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

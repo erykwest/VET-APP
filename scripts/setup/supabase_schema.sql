@@ -5,7 +5,15 @@ create table if not exists public.pet_profiles (
     species text not null,
     breed text,
     age_years integer,
-    notes text
+    notes text,
+    birth_date_label text,
+    sex text,
+    weight_label text,
+    health_badge text,
+    next_visit_label text,
+    avatar_key text,
+    profile_image_data_url text,
+    gallery_provider text
 );
 
 create table if not exists public.conversations (

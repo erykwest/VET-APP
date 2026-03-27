@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,7 +8,6 @@ import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
 import '../../data/chat_ask_vet_share_store.dart';
 import '../../data/chat_demo_store.dart';
-import '../../data/chat_seed_data.dart';
 import '../../domain/chat_models.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_empty_state.dart';
@@ -45,7 +46,7 @@ class _ChatConversationDetailPageState
   @override
   void initState() {
     super.initState();
-    _store.openConversation(widget.conversationId);
+    unawaited(_store.ensureLoaded());
   }
 
   @override
@@ -62,9 +63,38 @@ class _ChatConversationDetailPageState
         child: AnimatedBuilder(
           animation: _store,
           builder: (context, _) {
-            final conversation = _store.conversationById(widget.conversationId);
+            final conversation =
+                _store.conversationById(widget.conversationId) ??
+                    widget.initialConversation;
 
             if (conversation == null) {
+              if (_store.isLoading || !_store.hasLoaded) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xxl,
+                        AppSpacing.lg,
+                        AppSpacing.xxl,
+                        AppSpacing.md,
+                      ),
+                      child: _Header(
+                        conversation: _loadingConversation(),
+                        onDeleteConversation: () {},
+                        allowDelete: false,
+                      ),
+                    ),
+                    const Expanded(
+                      child: ChatLoadingState(
+                        title: 'Apriamo la conversazione',
+                        subtitle:
+                            'Stiamo caricando il thread e l ultimo contesto disponibile.',
+                      ),
+                    ),
+                  ],
+                );
+              }
+
               if (!_isLeavingAfterDelete) {
                 _scheduleReturnToList();
               }
@@ -79,19 +109,16 @@ class _ChatConversationDetailPageState
                       AppSpacing.md,
                     ),
                     child: _Header(
-                      conversation:
-                          widget.initialConversation ?? ChatSeedData.detail,
-                      onDeleteConversation: () => _deleteConversation(
-                        context,
-                        widget.initialConversation ?? ChatSeedData.detail,
-                      ),
+                      conversation: _deletedConversationFallback(),
+                      onDeleteConversation: () {},
+                      allowDelete: false,
                     ),
                   ),
                   Expanded(
                     child: ChatEmptyState(
                       title: 'Conversazione eliminata',
                       subtitle:
-                          'Questo thread non fa piu parte del preview store. Torna alle chat o crea una nuova conversazione.',
+                          'Questo thread non fa piu parte del backend. Torna alle chat o crea una nuova conversazione.',
                       actionLabel: 'Torna alle chat',
                       onAction: () => Navigator.of(context).maybePop(),
                     ),
@@ -112,7 +139,8 @@ class _ChatConversationDetailPageState
                   child: _Header(
                     conversation: conversation,
                     onDeleteConversation: () =>
-                        _deleteConversation(context, conversation),
+                        unawaited(_deleteConversation(context, conversation)),
+                    allowDelete: true,
                   ),
                 ),
                 Expanded(
@@ -214,6 +242,28 @@ class _ChatConversationDetailPageState
     });
   }
 
+  ChatConversationDetail _loadingConversation() {
+    return widget.initialConversation ??
+        ChatConversationDetail(
+          id: widget.conversationId,
+          title: 'Conversazione in caricamento',
+          petName: 'Pet',
+          statusLabel: 'Recupero backend in corso',
+          messages: const <ChatMessage>[],
+        );
+  }
+
+  ChatConversationDetail _deletedConversationFallback() {
+    return widget.initialConversation ??
+        ChatConversationDetail(
+          id: widget.conversationId,
+          title: 'Conversazione non disponibile',
+          petName: 'Pet',
+          statusLabel: 'Contenuto non disponibile',
+          messages: const <ChatMessage>[],
+        );
+  }
+
   Future<void> _deleteConversation(
     BuildContext context,
     ChatConversationDetail conversation,
@@ -224,7 +274,7 @@ class _ChatConversationDetailPageState
         return AlertDialog(
           title: const Text('Eliminare la chat?'),
           content: Text(
-            'Rimuoviamo "${conversation.title}" dal preview store. '
+            'Rimuoviamo "${conversation.title}" dal backend demo. '
             'Potrai ripristinarla subito con Annulla.',
           ),
           actions: [
@@ -249,7 +299,7 @@ class _ChatConversationDetailPageState
       _isLeavingAfterDelete = true;
     });
 
-    final removed = _store.deleteConversation(conversation.id);
+    final removed = await _store.deleteConversation(conversation.id);
     if (removed == null) {
       if (mounted) {
         setState(() {
@@ -489,10 +539,12 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.conversation,
     required this.onDeleteConversation,
+    this.allowDelete = true,
   });
 
   final ChatConversationDetail conversation;
   final VoidCallback onDeleteConversation;
+  final bool allowDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -548,31 +600,32 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
-          PopupMenuButton<String>(
-            tooltip: 'Azioni chat',
-            icon: const Icon(Icons.more_horiz, color: AppColors.secondaryText),
-            onSelected: (value) {
-              if (value == 'delete') {
-                onDeleteConversation();
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem<String>(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: AppColors.danger,
-                    ),
-                    SizedBox(width: 12),
-                    Text('Elimina chat'),
-                  ],
+          if (allowDelete)
+            PopupMenuButton<String>(
+              tooltip: 'Azioni chat',
+              icon: const Icon(Icons.more_horiz, color: AppColors.secondaryText),
+              onSelected: (value) {
+                if (value == 'delete') {
+                  onDeleteConversation();
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: AppColors.danger,
+                      ),
+                      SizedBox(width: 12),
+                      Text('Elimina chat'),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );

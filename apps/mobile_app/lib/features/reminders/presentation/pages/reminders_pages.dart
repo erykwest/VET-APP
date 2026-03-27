@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -88,7 +90,7 @@ class _RemindersListPageState extends State<RemindersListPage> {
             label: 'Errore sync',
             title: 'Sincronizzazione promemoria fallita.',
             body:
-                'La sorgente preview e ancora disponibile. Riprova quando la rete torna su.',
+                'La sorgente backend non risponde. Riprova quando la rete torna su.',
             icon: Icons.wifi_off_outlined,
             actionLabel: 'Riprova',
             onAction: () {},
@@ -109,7 +111,7 @@ class _RemindersListPageState extends State<RemindersListPage> {
                   label: 'Errore sync',
                   title: 'Sincronizzazione promemoria fallita.',
                   body:
-                      'La sorgente preview e ancora disponibile. Riprova quando la rete torna su.',
+                      'La sorgente backend non risponde. Riprova quando la rete torna su.',
                   icon: Icons.wifi_off_outlined,
                   actionLabel: 'Riprova',
                   onAction: () => unawaited(_reload()),
@@ -219,7 +221,7 @@ class _ReminderCreatePageState extends State<ReminderCreatePage> {
         _ViewState.loading => const _LoadingPanel(
             title: 'Preparazione form',
             body:
-                'Sto caricando le opzioni di ricorrenza e i valori predefiniti della preview.',
+                'Sto caricando le opzioni di ricorrenza e i valori predefiniti dal backend.',
           ),
         _ViewState.error => _StatePanel(
             label: 'Errore validazione',
@@ -238,20 +240,22 @@ class _ReminderCreatePageState extends State<ReminderCreatePage> {
               _FormItem(label: 'Ricorrenza', value: 'Ogni 12 mesi'),
               _FormItem(label: 'Nota', value: 'Porta il libretto sanitario'),
             ],
-            onSave: () {
-              unawaited(
-                _repository.saveReminder(
-                  const ReminderEntry(
-                    id: 'promemoria-bozza-vaccino',
-                    title: 'Richiamo vaccinale di Moka',
-                    subtitle: 'Ogni 12 mesi',
-                    due: '25 Apr 2026',
-                    badge: 'Bozza',
-                    note: 'Porta il libretto sanitario',
-                    schedule: 'Ricorrente ogni 12 mesi',
-                  ),
+            onSave: () async {
+              await _repository.saveReminder(
+                const ReminderEntry(
+                  id: 'promemoria-bozza-vaccino',
+                  title: 'Richiamo vaccinale di Moka',
+                  subtitle: 'Ogni 12 mesi',
+                  due: '25 Apr 2026',
+                  badge: 'Bozza',
+                  note: 'Porta il libretto sanitario',
+                  schedule: 'Ricorrente ogni 12 mesi',
+                  petId: 'demo-pet-moka',
                 ),
               );
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
             },
             onCancel: () => Navigator.of(context).pop(),
           ),
@@ -293,7 +297,7 @@ class _ReminderEditPageState extends State<ReminderEditPage> {
         _ViewState.loading => const _LoadingPanel(
             title: 'Caricamento promemoria',
             body:
-                'Sto leggendo regole di ricorrenza, note locali di preview e avvisi.',
+                'Sto leggendo regole di ricorrenza, note backend e avvisi.',
           ),
         _ViewState.error => _StatePanel(
             label: 'Salvataggio fallito',
@@ -313,20 +317,22 @@ class _ReminderEditPageState extends State<ReminderEditPage> {
               _FormItem(label: 'Ricorrenza', value: 'Ogni 30 giorni'),
               _FormItem(label: 'Avviso', value: 'Notifica push'),
             ],
-            onSave: () {
-              unawaited(
-                _repository.saveReminder(
-                  const ReminderEntry(
-                    id: 'moka-antiparassitario',
-                    title: 'Antiparassitario di Moka',
-                    subtitle: 'Ogni 30 giorni',
-                    due: '28 Mar 2026',
-                    badge: 'Prioritario',
-                    note: 'Notifica push attiva',
-                    schedule: 'Ricorrente ogni 30 giorni',
-                  ),
+            onSave: () async {
+              await _repository.saveReminder(
+                const ReminderEntry(
+                  id: 'moka-antiparassitario',
+                  title: 'Antiparassitario di Moka',
+                  subtitle: 'Ogni 30 giorni',
+                  due: '28 Mar 2026',
+                  badge: 'Prioritario',
+                  note: 'Notifica push attiva',
+                  schedule: 'Ricorrente ogni 30 giorni',
+                  petId: 'demo-pet-moka',
                 ),
               );
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
             },
             onCancel: () => Navigator.of(context).pop(),
           ),

@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../data/pet_api_repository.dart';
 import '../../data/pet_demo_store.dart';
 import '../../data/pet_public_card_store.dart';
 import '../../data/pet_share_snapshot_store.dart';
@@ -42,23 +45,55 @@ class PetDetailPage extends StatefulWidget {
 }
 
 class _PetDetailPageState extends State<PetDetailPage> {
+  final PetApiRepository _repository = PetApiRepository();
   PetProfile? _pet;
   PetShareSnapshotMetrics _shareMetrics = const PetShareSnapshotMetrics();
   PetPublicCardMetrics _publicCardMetrics = const PetPublicCardMetrics();
   bool _isSharing = false;
+  bool _isLoadingPet = false;
   _ShareFeedbackState _shareFeedback = _ShareFeedbackState.none;
 
   @override
   void initState() {
     super.initState();
-    _pet = widget.pet ?? PetDemoStore.instance.list().firstOrNull;
+    _pet = widget.pet;
+    if (_pet == null) {
+      _initializePet();
+    }
     _loadShareMetrics();
     _loadPublicCardMetrics();
   }
 
+  Future<void> _initializePet() async {
+    setState(() {
+      _isLoadingPet = true;
+    });
+
+    List<PetProfile> pets = const [];
+    try {
+      pets = await _repository.listPets();
+    } catch (_) {
+      pets = const [];
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _pet = widget.pet ?? (pets.isNotEmpty ? pets.first : null);
+      _isLoadingPet = false;
+    });
+
+    if (_pet != null) {
+      await _loadShareMetrics();
+      await _loadPublicCardMetrics();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pet = _pet ?? widget.pet ?? PetDemoStore.instance.list().firstOrNull;
+    final pet = _pet ?? widget.pet;
 
     return PetsScaffold(
       title: pet?.name ?? 'Dettaglio pet',
@@ -113,35 +148,44 @@ class _PetDetailPageState extends State<PetDetailPage> {
             actionLabel: 'Torna alla lista',
             onAction: () => _backToList(context),
           ),
-        PetsScreenStatus.success => _PetDetailContent(
-            pet: pet ?? PetDemoStore.instance.list().first,
-            onEdit: pet == null ? null : () => _openEdit(context, pet),
-            onBackToList: () => _backToList(context),
-            onShareToWhatsApp:
-                pet == null || _isSharing ? null : () => _shareOnWhatsApp(pet),
-            onShareToTelegram:
-                pet == null || _isSharing ? null : () => _shareOnTelegram(pet),
-            onShareToInstagram:
-                pet == null || _isSharing ? null : () => _shareOnInstagram(pet),
-            onShareToX: pet == null || _isSharing ? null : () => _shareOnX(pet),
-            onCopyUpdate:
-                pet == null || _isSharing ? null : () => _copyPetSnapshot(pet),
-            shareMetrics: _shareMetrics,
-            publicCardMetrics: _publicCardMetrics,
-            shareFeedback: _shareFeedback,
-            sharePreview: pet == null
-                ? ''
-                : PetShareSnapshotStore.instance.buildSnapshotText(pet),
-            onOpenPublicCard: pet == null ? null : () => _openPublicCard(pet),
-            onSharePublicCard:
-                pet == null || _isSharing ? null : () => _sharePublicCard(pet),
-          ),
+        PetsScreenStatus.success => _isLoadingPet
+            ? const PetsLoadingView(label: 'Carico il dettaglio pet...')
+            : pet == null
+                ? PetsEmptyView(
+                    title: 'Nessun pet selezionato',
+                    subtitle:
+                        'Scegli un profilo dalla lista per vedere dettagli, note e prossimi passi.',
+                    actionLabel: 'Torna alla lista',
+                    onAction: () => _backToList(context),
+                  )
+                : _PetDetailContent(
+                    pet: pet,
+                    onEdit: () => _openEdit(context, pet),
+                    onBackToList: () => _backToList(context),
+                    onShareToWhatsApp:
+                        _isSharing ? null : () => _shareOnWhatsApp(pet),
+                    onShareToTelegram:
+                        _isSharing ? null : () => _shareOnTelegram(pet),
+                    onShareToInstagram:
+                        _isSharing ? null : () => _shareOnInstagram(pet),
+                    onShareToX: _isSharing ? null : () => _shareOnX(pet),
+                    onCopyUpdate:
+                        _isSharing ? null : () => _copyPetSnapshot(pet),
+                    shareMetrics: _shareMetrics,
+                    publicCardMetrics: _publicCardMetrics,
+                    shareFeedback: _shareFeedback,
+                    sharePreview: PetShareSnapshotStore.instance
+                        .buildSnapshotText(pet),
+                    onOpenPublicCard: () => _openPublicCard(pet),
+                    onSharePublicCard:
+                        _isSharing ? null : () => _sharePublicCard(pet),
+                  ),
       },
     );
   }
 
   Future<void> _loadShareMetrics() async {
-    final pet = _pet ?? widget.pet ?? PetDemoStore.instance.list().firstOrNull;
+    final pet = _pet ?? widget.pet;
     if (pet == null) {
       return;
     }
@@ -157,7 +201,7 @@ class _PetDetailPageState extends State<PetDetailPage> {
   }
 
   Future<void> _loadPublicCardMetrics() async {
-    final pet = _pet ?? widget.pet ?? PetDemoStore.instance.list().firstOrNull;
+    final pet = _pet ?? widget.pet;
     if (pet == null) {
       return;
     }

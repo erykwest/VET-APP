@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../design_system/tokens/app_colors.dart';
@@ -26,6 +28,7 @@ class SplashPage extends StatefulWidget {
 
 class _SplashPageState extends State<SplashPage> {
   bool _isCheckingSession = false;
+  Timer? _minimumDisplayTimer;
 
   @override
   void initState() {
@@ -33,10 +36,26 @@ class _SplashPageState extends State<SplashPage> {
     _restoreSessionAndRoute();
   }
 
+  @override
+  void dispose() {
+    _minimumDisplayTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _restoreSessionAndRoute() async {
     final bootstrapState = widget.bootstrapState;
+    if (bootstrapState?.shouldBypassAuth == true) {
+      setState(() {
+        _isCheckingSession = true;
+      });
+
+      await _waitMinimumDisplayDuration();
+      _pushReplacement(AppRouter.homeShell);
+      return;
+    }
+
     if (bootstrapState != null && bootstrapState.previewMode) {
-      Navigator.of(context).pushReplacementNamed(AppRouter.previewDashboard);
+      _pushReplacement(AppRouter.previewDashboard);
       return;
     }
 
@@ -44,7 +63,7 @@ class _SplashPageState extends State<SplashPage> {
       _isCheckingSession = true;
     });
 
-    await Future<void>.delayed(widget.minimumDisplayDuration);
+    await _waitMinimumDisplayDuration();
     if (!mounted) return;
 
     final result = await widget.authRepository.restoreSession();
@@ -56,11 +75,37 @@ class _SplashPageState extends State<SplashPage> {
       onFailure: (_) => AppRouter.auth,
     );
 
-    Navigator.of(context).pushReplacementNamed(destination);
+    _pushReplacement(destination);
+  }
+
+  void _pushReplacement(String routeName) {
+    if (!mounted) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      Navigator.of(context).pushReplacementNamed(routeName);
+    });
+  }
+
+  Future<void> _waitMinimumDisplayDuration() {
+    final completer = Completer<void>();
+    _minimumDisplayTimer?.cancel();
+    _minimumDisplayTimer = Timer(widget.minimumDisplayDuration, () {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    });
+    return completer.future;
   }
 
   @override
   Widget build(BuildContext context) {
+    final bootstrapState = widget.bootstrapState;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -79,9 +124,7 @@ class _SplashPageState extends State<SplashPage> {
               const Text('VET APP', style: AppTextStyles.heading),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                _isCheckingSession
-                    ? 'Verifico la sessione Supabase e preparo il tuo spazio pet.'
-                    : 'Preparazione avvio in corso.',
+                _bootstrapMessage(bootstrapState),
                 style: AppTextStyles.body,
                 textAlign: TextAlign.center,
               ),
@@ -99,6 +142,18 @@ class _SplashPageState extends State<SplashPage> {
         ),
       ),
     );
+  }
+
+  String _bootstrapMessage(AppBootstrapState? bootstrapState) {
+    if (bootstrapState?.shouldBypassAuth == true) {
+      return _isCheckingSession
+          ? 'Collego il backend API e preparo la home demo.'
+          : 'Preparazione avvio in corso.';
+    }
+
+    return _isCheckingSession
+        ? 'Verifico la sessione Supabase e preparo il tuo spazio pet.'
+        : 'Preparazione avvio in corso.';
   }
 }
 

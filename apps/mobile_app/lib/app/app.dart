@@ -11,9 +11,11 @@ class VetApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initialRoute = bootstrapState.previewMode
-        ? AppRouter.previewDashboard
-        : AppRouter.splash;
+    final initialRoute = bootstrapState.shouldBypassAuth
+        ? AppRouter.splash
+        : bootstrapState.previewMode
+            ? AppRouter.previewDashboard
+            : AppRouter.splash;
 
     return MaterialApp(
       title: 'VET APP',

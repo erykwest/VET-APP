@@ -60,6 +60,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
   late String? _mixedBreedSize;
   late String? _sex;
   DateTime? _birthDate;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -74,7 +75,7 @@ class _PetProfileFormState extends State<PetProfileForm> {
     _breed = _initialBreedSelection(pet?.breed);
     _mixedBreedSize = _initialMixedBreedSize(pet?.breed);
     _sex = pet?.sex;
-    _birthDate = _parseBirthDate(pet?.birthDateLabel);
+    _birthDate = _parseBirthDate(pet);
   }
 
   @override
@@ -304,8 +305,14 @@ class _PetProfileFormState extends State<PetProfileForm> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _submit,
-                  icon: const Icon(Icons.save_rounded),
+                  onPressed: _isSubmitting ? null : _submit,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_rounded),
                   label: Text(widget.submitLabel),
                 ),
               ),
@@ -361,11 +368,19 @@ class _PetProfileFormState extends State<PetProfileForm> {
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting) {
+      return;
+    }
+
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid || _birthDate == null) {
       setState(() {});
       return;
     }
+
+    setState(() {
+      _isSubmitting = true;
+    });
 
     final draft = PetProfileDraft(
       name: _nameController.text.trim(),
@@ -377,7 +392,15 @@ class _PetProfileFormState extends State<PetProfileForm> {
       medicalNote: _notesController.text.trim(),
     );
 
-    await widget.onSubmit(draft);
+    try {
+      await widget.onSubmit(draft);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   List<String> _breedOptionsForSelectedSpecies() {
@@ -465,7 +488,19 @@ class _PetProfileFormState extends State<PetProfileForm> {
     return raw.replaceAll(',', '.');
   }
 
-  DateTime? _parseBirthDate(String? label) {
+  DateTime? _parseBirthDate(PetProfile? pet) {
+    final birthDateIso = pet?.birthDateIso;
+    if (birthDateIso != null && birthDateIso.trim().isNotEmpty) {
+      final parsedIso = DateTime.tryParse(birthDateIso);
+      if (parsedIso != null) {
+        return parsedIso;
+      }
+    }
+
+    return _parseBirthDateLabel(pet?.birthDateLabel);
+  }
+
+  DateTime? _parseBirthDateLabel(String? label) {
     if (label == null || label.trim().isEmpty) {
       return null;
     }

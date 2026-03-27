@@ -19,9 +19,9 @@ void main() {
     );
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
 
-    expect(find.byType(PreviewDashboardPage), findsOneWidget);
+    expect(find.byType(PreviewDashboardPage), findsWidgets);
     expect(find.byType(HomeShellPage), findsOneWidget);
   });
 
@@ -43,19 +43,44 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('routes to home shell when API base url is configured', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      VetApp(
+        bootstrapState: _bootstrapState(
+          supabaseConfigured: false,
+          supabaseInitialized: false,
+          apiBaseUrl: 'http://127.0.0.1:8000',
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1300));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomeShellPage), findsOneWidget);
+    expect(find.byType(PreviewDashboardPage), findsNothing);
+  });
 }
 
 AppBootstrapState _bootstrapState({
   required bool supabaseConfigured,
   required bool supabaseInitialized,
+  String apiBaseUrl = '',
 }) {
   return AppBootstrapState(
     runtimeConfig: AppRuntimeConfig(
       environment: AppEnvironment.development,
       appName: 'Vet App',
-      apiBaseUrl: '',
+      apiBaseUrl: apiBaseUrl,
       supabaseUrl: supabaseConfigured ? 'https://example.supabase.co' : '',
       supabaseAnonKey: supabaseConfigured ? 'anon-key' : '',
+      demoBypassAuth: true,
+      demoUserEmail: 'demo@vetapp.local',
+      demoUserPassword: 'VetAppDemo2026!',
       logLevel: 'INFO',
       enableTelemetry: false,
     ),

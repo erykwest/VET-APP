@@ -15,72 +15,86 @@ class DemoSeedBundle:
 def build_demo_seed(owner_id: str, *, today: date | None = None) -> DemoSeedBundle:
     seed_day = today or date.today()
 
-    moka_pet_id = "demo-pet-moka"
-    oliver_pet_id = "demo-pet-oliver"
+    moka_pet_id = "pet-moka"
+    oliver_pet_id = "pet-oliver"
 
     pet_profiles = (
         {
             "id": moka_pet_id,
             "owner_id": owner_id,
             "name": "Moka",
-            "species": "dog",
-            "breed": "Meticcio di taglia media",
+            "species": "Cane",
+            "breed": "Meticcio - Media",
             "age_years": 5,
-            "notes": "Stomaco delicato, controllo periodico gia pianificato.",
+            "notes": "Stomaco delicato, dieta leggera e controllo periodico gia pianificato.",
         },
         {
             "id": oliver_pet_id,
             "owner_id": owner_id,
             "name": "Oliver",
-            "species": "cat",
+            "species": "Gatto",
             "breed": "Europeo a pelo corto",
             "age_years": 6,
-            "notes": "Vita in casa, attenzione ai controlli dentali.",
+            "notes": "Vita in casa, toelettatura regolare e attenzione ai controlli dentali.",
         },
     )
 
     conversations = (
         {
-            "id": "demo-conv-moka-digestione",
+            "id": "conv-1",
             "owner_id": owner_id,
             "pet_id": moka_pet_id,
-            "title": "Digestione Moka",
+            "title": "Moka - appetito e controllo",
             "messages": [
                 _message(
-                    "user",
-                    "Moka oggi mangia poco e ha un po' di nausea.",
+                    "assistant",
+                    "Raccontami pure cosa stai osservando: appetito, energia, acqua e feci ci aiutano a capire subito se serve una visita o basta monitorare.",
                     seed_day,
-                    hour=8,
-                    minute=45,
+                    hour=9,
+                    minute=12,
+                ),
+                _message(
+                    "user",
+                    "Da ieri mangia meno del solito ma resta vivace. Devo preoccuparmi subito?",
+                    seed_day,
+                    hour=9,
+                    minute=13,
                 ),
                 _message(
                     "assistant",
-                    "Monitora appetito e idratazione per 24 ore e contatta il veterinario se peggiora.",
+                    "Se non ci sono vomito, abbattimento o dolore evidente, in genere conviene monitorare 24 ore e tenere nota di appetito, acqua e feci. Se qualcosa peggiora, contatta il veterinario.",
                     seed_day,
-                    hour=8,
-                    minute=46,
+                    hour=9,
+                    minute=14,
                 ),
             ],
         },
         {
-            "id": "demo-conv-oliver-denti",
+            "id": "conv-3",
             "owner_id": owner_id,
             "pet_id": oliver_pet_id,
-            "title": "Controllo dentale Oliver",
+            "title": "Oliver - controllo dentale",
             "messages": [
                 _message(
-                    "user",
-                    "Oliver ha alito pesante e mastica piano.",
+                    "assistant",
+                    "Posso sintetizzare il referto in tre punti: quadro clinico, terapia e prossimi controlli. Se vuoi, preparo anche una versione breve da condividere.",
                     seed_day - timedelta(days=1),
-                    hour=18,
-                    minute=10,
+                    hour=17,
+                    minute=5,
+                ),
+                _message(
+                    "user",
+                    "Si, dammi la versione breve.",
+                    seed_day - timedelta(days=1),
+                    hour=17,
+                    minute=6,
                 ),
                 _message(
                     "assistant",
-                    "Programma un controllo dentale e tieni traccia dell'appetito nei prossimi giorni.",
+                    "In breve: quadro stabile, terapia leggera per pochi giorni e controllo di follow-up gia programmato.",
                     seed_day - timedelta(days=1),
-                    hour=18,
-                    minute=12,
+                    hour=17,
+                    minute=7,
                 ),
             ],
         },
@@ -88,20 +102,20 @@ def build_demo_seed(owner_id: str, *, today: date | None = None) -> DemoSeedBund
 
     reminders = (
         {
-            "id": "demo-reminder-moka-vaccino",
+            "id": "moka-richiamo-vaccinale",
             "owner_id": owner_id,
             "pet_id": moka_pet_id,
-            "title": "Vaccino richiamo Moka",
+            "title": "Richiamo vaccinale di Moka",
             "due_date": (seed_day + timedelta(days=12)).isoformat(),
-            "notes": "Promemoria demo sincronizzato su Supabase.",
+            "notes": "Ogni 12 mesi | Programmato | Ricorrente ogni 12 mesi | Documento gia caricato in cartella per la prossima visita.",
         },
         {
-            "id": "demo-reminder-oliver-dentale",
+            "id": "oliver-controllo-dentale",
             "owner_id": owner_id,
             "pet_id": oliver_pet_id,
-            "title": "Controllo dentale Oliver",
+            "title": "Controllo dentale di Oliver",
             "due_date": (seed_day + timedelta(days=7)).isoformat(),
-            "notes": "Portare ultimo referto e foto gengive.",
+            "notes": "Promemoria manuale | Vicino | Promemoria una tantum | Rivedi andamento e note cliniche prima della chiamata.",
         },
     )
 

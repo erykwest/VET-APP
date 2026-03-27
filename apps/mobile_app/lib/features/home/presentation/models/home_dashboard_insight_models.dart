@@ -48,8 +48,8 @@ class HomeDashboardInsightComposer {
     DateTime? now,
   }) {
     final clock = now ?? DateTime.now();
-    final ageSnapshot = PetAgeSnapshot.fromBirthDateLabel(
-      pet.birthDateLabel,
+    final ageSnapshot = PetAgeSnapshot.fromPet(
+      pet,
       now: clock,
     );
     final firstConversation =
@@ -245,6 +245,52 @@ class PetAgeSnapshot {
   final String stageLabel;
   final String copyText;
   final int? months;
+
+  factory PetAgeSnapshot.fromPet(
+    PetProfile pet, {
+    required DateTime now,
+  }) {
+    final birthDateIso = pet.birthDateIso;
+    final parsedIso =
+        birthDateIso == null ? null : DateTime.tryParse(birthDateIso);
+    if (parsedIso != null) {
+      final months = ((now.year - parsedIso.year) * 12) +
+          (now.month - parsedIso.month);
+      final safeMonths = months < 0 ? 0 : months;
+      final years = safeMonths ~/ 12;
+      final remainingMonths = safeMonths % 12;
+      final ageLabel = _buildAgeLabel(years, remainingMonths);
+      final stageLabel = _stageLabelForMonths(safeMonths);
+      final copyText = _stageCopyForMonths(safeMonths, ageLabel, stageLabel);
+
+      return PetAgeSnapshot(
+        ageLabel: ageLabel,
+        stageLabel: stageLabel,
+        copyText: copyText,
+        months: safeMonths,
+      );
+    }
+
+    final ageYears = pet.ageYears;
+    if (ageYears != null) {
+      final safeMonths = ageYears * 12;
+      final ageLabel = '$ageYears ${ageYears == 1 ? 'anno' : 'anni'}';
+      final stageLabel = _stageLabelForMonths(safeMonths);
+      final copyText = _stageCopyForMonths(safeMonths, ageLabel, stageLabel);
+
+      return PetAgeSnapshot(
+        ageLabel: ageLabel,
+        stageLabel: stageLabel,
+        copyText: copyText,
+        months: safeMonths,
+      );
+    }
+
+    return PetAgeSnapshot.fromBirthDateLabel(
+      pet.birthDateLabel,
+      now: now,
+    );
+  }
 
   factory PetAgeSnapshot.fromBirthDateLabel(
     String birthDateLabel, {

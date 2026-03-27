@@ -4,6 +4,7 @@
 The repository is prepared to read Supabase Postgres details from `.env`.
 
 Use these variables:
+- `API_BASE_URL`
 - `PERSISTENCE_BACKEND`
 - `AUTH_BACKEND`
 - `DATABASE_URL`
@@ -33,6 +34,7 @@ Current project values already prepared in `.env.example`:
 ## Current bootstrap mode
 - `PERSISTENCE_BACKEND=supabase` enables Supabase repositories
 - `AUTH_BACKEND=supabase` enables real Supabase email/password auth and bearer-token user resolution
+- `API_BASE_URL` switches the Flutter client from local preview entry to the app shell that talks to the Python API
 
 Fail-fast validation:
 - if `PERSISTENCE_BACKEND=supabase`, the app now requires `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`
@@ -69,6 +71,12 @@ Policy model:
 ## Next step after schema
 When the tables exist, start the app normally. The bootstrap container will use Supabase repositories and Supabase auth automatically from `.env`.
 
+For the frontend/API bootstrap path, keep the client in bypass-login mode and point it at the Python backend:
+- set `API_BASE_URL` in the Flutter runtime config
+- keep `DEMO_BYPASS_AUTH=true` in the Flutter runtime config
+- keep `AUTH_BACKEND=bootstrap` on the Python API
+- keep `PERSISTENCE_BACKEND=supabase` on the Python API
+
 To seed stable demo data directly into Supabase and immediately verify readback on the same tables, run:
 - `python scripts/setup/seed_demo_supabase.py --reset`
 
@@ -79,7 +87,7 @@ What this script does:
 
 Current scope:
 - this validates the core Python persistence path against real Supabase tables
-- Flutter preview sections that still rely on local seed stores, such as some dashboard/chat/medical-record widgets, remain outside this seed flow until their repositories are aligned to the same schema
+- Flutter preview sections that still rely on local seed stores remain outside this seed flow until their repositories are aligned to the same schema
 
 For the LLM path, the recommended flow is:
 - import journal rankings into registry tables and normalize them to percentiles

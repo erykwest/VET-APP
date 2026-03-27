@@ -14,7 +14,10 @@ class AppBootstrapState {
   final String? supabaseInitializationError;
 
   bool get supabaseReady => supabaseConfigured && supabaseInitialized;
-  bool get previewMode => !supabaseReady;
+  bool get previewMode => !hasApiBaseUrl && !supabaseReady;
+  bool get hasApiBaseUrl => runtimeConfig.hasApiBaseUrl;
+  bool get shouldBypassAuth =>
+      hasApiBaseUrl && runtimeConfig.demoBypassAuth;
 
   bool get hasSupabaseConfig => runtimeConfig.hasSupabaseCredentials;
 

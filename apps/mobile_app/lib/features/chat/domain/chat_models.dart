@@ -20,6 +20,7 @@ class ChatConversationSummary {
     required this.activePetName,
     required this.previewMessage,
     required this.lastSender,
+    this.petId,
   });
 
   final String id;
@@ -30,6 +31,7 @@ class ChatConversationSummary {
   final String activePetName;
   final String previewMessage;
   final String lastSender;
+  final String? petId;
 }
 
 class ChatMessage {
@@ -38,6 +40,7 @@ class ChatMessage {
     required this.author,
     required this.text,
     required this.timeLabel,
+    this.createdAt,
     this.isRead = true,
   });
 
@@ -45,6 +48,7 @@ class ChatMessage {
   final ChatMessageAuthor author;
   final String text;
   final String timeLabel;
+  final DateTime? createdAt;
   final bool isRead;
 }
 
@@ -55,6 +59,7 @@ class ChatConversationDetail {
     required this.petName,
     required this.statusLabel,
     required this.messages,
+    this.petId,
   });
 
   final String id;
@@ -62,6 +67,7 @@ class ChatConversationDetail {
   final String petName;
   final String statusLabel;
   final List<ChatMessage> messages;
+  final String? petId;
 
   ChatConversationDetail copyWith({
     String? id,
@@ -69,6 +75,7 @@ class ChatConversationDetail {
     String? petName,
     String? statusLabel,
     List<ChatMessage>? messages,
+    String? petId,
   }) {
     return ChatConversationDetail(
       id: id ?? this.id,
@@ -76,6 +83,7 @@ class ChatConversationDetail {
       petName: petName ?? this.petName,
       statusLabel: statusLabel ?? this.statusLabel,
       messages: messages ?? this.messages,
+      petId: petId ?? this.petId,
     );
   }
 }

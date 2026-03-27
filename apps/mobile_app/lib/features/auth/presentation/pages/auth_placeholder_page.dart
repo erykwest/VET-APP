@@ -1,4 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../widgets/auth_widgets.dart';
 import 'login_page.dart';
@@ -37,7 +40,8 @@ class AuthPlaceholderPage extends StatelessWidget {
           const AuthStateBanner(
             status: AuthBannerStatus.info,
             title: 'Hub secondario',
-            message: 'Questa schermata resta disponibile come ingresso alternativo, ma il percorso primario ora passa da login.',
+            message:
+                'Questa schermata resta disponibile come ingresso alternativo, ma il percorso primario ora passa da login.',
           ),
           const SizedBox(height: 16),
           AuthSurfaceCard(
@@ -89,8 +93,7 @@ class AuthPlaceholderPage extends StatelessWidget {
           const AuthStateBanner(
             status: AuthBannerStatus.success,
             title: 'Percorso principale',
-            message:
-                'Login e registrazione sono ora il punto di ingresso principale dell app.',
+            message: 'Login e registrazione sono ora il punto di ingresso principale dell app.',
           ),
         ],
       ),
@@ -165,4 +168,3 @@ class _AuthQuickTile extends StatelessWidget {
     );
   }
 }
-

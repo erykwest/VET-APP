@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'config/app_bootstrap_state.dart';
+import '../features/chat/data/chat_demo_store.dart';
+import '../features/pets/data/pet_demo_store.dart';
 import '../shared/config/app_runtime_config_loader.dart';
 
 Future<void> bootstrap() async {
@@ -35,6 +37,15 @@ Future<void> bootstrap() async {
     supabaseInitializationError =
         'Missing SUPABASE_URL or SUPABASE_ANON_KEY dart defines.';
     debugPrint('Supabase initialization skipped: missing configuration.');
+  }
+
+  if (runtimeConfig.hasApiBaseUrl) {
+    try {
+      await PetDemoStore.instance.initialize();
+      await ChatDemoStore.instance.ensureLoaded();
+    } catch (error) {
+      debugPrint('Backend bootstrap warmup failed: $error');
+    }
   }
 
   runApp(

@@ -25,7 +25,7 @@ void main() {
     );
     expect(find.textContaining('Moka - appetito e controllo'), findsOneWidget);
     expect(find.textContaining('Moka - promemoria vaccino'), findsNothing);
-    expect(find.text('Preview pronta'), findsOneWidget);
+    expect(find.text('Sync backend'), findsOneWidget);
   });
 
   testWidgets('renders empty chat state', (tester) async {
@@ -42,7 +42,7 @@ void main() {
     expect(find.text('Nessuna conversazione ancora'), findsOneWidget);
     expect(
       find.text(
-          'Avvia una chat vera per vedere il flusso completo dell assistente veterinario.'),
+          'Avvia una chat reale per vedere il flusso completo dell assistente veterinario.'),
       findsOneWidget,
     );
     expect(find.text('Apri la prima chat'), findsOneWidget);

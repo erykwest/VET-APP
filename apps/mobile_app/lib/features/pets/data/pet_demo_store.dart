@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../domain/pet_models.dart';
+import 'pet_api_repository.dart';
 
 class PetAvatarChoice {
   const PetAvatarChoice({
@@ -35,11 +39,24 @@ class PetSpeciesOption {
 }
 
 class PetDemoStore {
-  PetDemoStore._() {
-    _pets = List<PetProfile>.of(samplePets);
+  PetDemoStore._({PetApiRepository? repository})
+      : _repository = repository ?? PetApiRepository();
+
+  factory PetDemoStore.testing({required PetApiRepository repository}) {
+    return PetDemoStore._(repository: repository);
   }
 
   static final PetDemoStore instance = PetDemoStore._();
+
+  final PetApiRepository _repository;
+  List<PetProfile> _pets = List<PetProfile>.of(samplePets);
+  bool _hasLoaded = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  bool get hasLoaded => _hasLoaded;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   static const List<PetAvatarChoice> avatarChoices = [
     PetAvatarChoice(
@@ -167,7 +184,27 @@ class PetDemoStore {
     'Amazon Photos',
   ];
 
-  late List<PetProfile> _pets;
+  Future<void> initialize({bool force = false}) async {
+    if (_hasLoaded && !force) {
+      return;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    try {
+      _pets = await _repository.listPets();
+      if (_pets.isEmpty) {
+        _pets = List<PetProfile>.of(samplePets);
+      }
+      _hasLoaded = true;
+    } catch (error) {
+      _errorMessage = error.toString();
+      _pets = List<PetProfile>.of(samplePets);
+      _hasLoaded = true;
+    } finally {
+      _isLoading = false;
+    }
+  }
 
   List<PetProfile> list({String? species}) {
     final normalizedSpecies = species?.trim() ?? '';
@@ -189,22 +226,7 @@ class PetDemoStore {
     return null;
   }
 
-  PetProfile upsert(PetProfile pet) {
-    final index = _pets.indexWhere((item) => item.id == pet.id);
-    if (index == -1) {
-      _pets = [pet, ..._pets];
-      return pet;
-    }
-
-    _pets = [
-      ..._pets.take(index),
-      pet,
-      ..._pets.skip(index + 1),
-    ];
-    return pet;
-  }
-
-  PetProfile create({
+  Future<PetProfile> create({
     required String name,
     required String species,
     required String? breed,
@@ -215,31 +237,51 @@ class PetDemoStore {
     String? avatarKey,
     String? profileImageDataUrl,
     String? galleryProvider,
-  }) {
-    final option = optionForSpecies(species);
+  }) async {
     final resolvedAvatarKey = resolveAvatarKey(
       avatarKey ?? defaultAvatarKeyForSpecies(species),
     );
-    final pet = PetProfile(
-      id: 'pet-${DateTime.now().microsecondsSinceEpoch}',
+    final created = await _repository.createPet(
       name: name.trim(),
       species: species,
-      breed: breed?.trim() ?? '',
-      birthDateLabel: _formatDate(birthDate),
+      breed: breed?.trim(),
+      birthDate: birthDate,
       sex: sex,
-      weightLabel: _formatWeight(weightKg),
+      weightKg: weightKg,
       medicalNote: medicalNote.trim().isEmpty
           ? 'Profilo creato da poco, pronto per la prossima visita.'
           : medicalNote.trim(),
       healthBadge: 'Nuovo profilo',
       nextVisitLabel: 'Da pianificare',
-      avatarEmoji: resolvedAvatarKey,
-      accentColor: option.accentColor,
+      avatarKey: resolvedAvatarKey,
       profileImageDataUrl: profileImageDataUrl,
       galleryProvider: galleryProvider,
     );
+    _pets = [created, ..._pets.where((pet) => pet.id != created.id)];
+    return created;
+  }
 
-    return upsert(pet);
+  Future<PetProfile> upsert(PetProfile pet) async {
+    final updated = await _repository.updatePet(
+      petId: pet.id,
+      name: pet.name,
+      species: pet.species,
+      breed: pet.breed,
+      birthDate: _birthDateFromPet(pet),
+      sex: pet.sex,
+      weightKg: _weightKgFromLabel(pet.weightLabel),
+      medicalNote: pet.medicalNote,
+      healthBadge: pet.healthBadge,
+      nextVisitLabel: pet.nextVisitLabel,
+      avatarKey: pet.avatarEmoji,
+      profileImageDataUrl: pet.profileImageDataUrl,
+      galleryProvider: pet.galleryProvider,
+    );
+    _pets = [
+      updated,
+      ..._pets.where((item) => item.id != updated.id),
+    ];
+    return updated;
   }
 
   static PetSpeciesOption optionForSpecies(String species) {
@@ -301,7 +343,6 @@ class PetDemoStore {
       case 'Rettile':
         return 'portrait-smeraldo';
       case 'Roditore':
-        return 'portrait-corallo';
       case 'Altro':
         return 'portrait-corallo';
       default:
@@ -325,69 +366,55 @@ class PetDemoStore {
     return avatarChoiceForKey(resolveAvatarKey(key)).label;
   }
 
-  static String _formatWeight(double weightKg) {
-    final normalized = weightKg.toStringAsFixed(
-      weightKg.truncateToDouble() == weightKg ? 0 : 1,
-    );
-    return '${normalized.replaceAll('.', ',')} kg';
-  }
-
-  static String _formatDate(DateTime date) {
-    const months = [
-      'Gen',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mag',
-      'Giu',
-      'Lug',
-      'Ago',
-      'Set',
-      'Ott',
-      'Nov',
-      'Dic',
-    ];
-
-    return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
-  }
-
   static bool _looksLikePresetKey(String key) {
     final trimmed = key.trim();
     return trimmed.startsWith('portrait-') ||
         trimmed.startsWith('photo-') ||
         trimmed.startsWith('avatar-');
   }
-}
 
-const samplePets = <PetProfile>[
-  PetProfile(
-    id: 'pet-moka',
-    name: 'Moka',
-    species: 'Cane',
-    breed: 'Meticcio - Media',
-    birthDateLabel: 'Mag 2021',
-    sex: 'Femmina',
-    weightLabel: '17,8 kg',
-    medicalNote:
-        'Stomaco delicato, dieta leggera e controllo periodico gia pianificato.',
-    healthBadge: 'Stabile',
-    nextVisitLabel: 'Vaccino di richiamo tra 12 giorni',
-    avatarEmoji: 'portrait-bosco',
-    accentColor: Color(0xFFE7F2EE),
-  ),
-  PetProfile(
-    id: 'pet-oliver',
-    name: 'Oliver',
-    species: 'Gatto',
-    breed: 'Europeo a pelo corto',
-    birthDateLabel: 'Set 2019',
-    sex: 'Maschio',
-    weightLabel: '5,1 kg',
-    medicalNote:
-        'Vita in casa, toelettatura regolare e attenzione ai controlli dentali.',
-    healthBadge: 'Da monitorare',
-    nextVisitLabel: 'Controllo dentale la prossima settimana',
-    avatarEmoji: 'portrait-nebbia',
-    accentColor: Color(0xFFF6EADF),
-  ),
-];
+  DateTime _birthDateFromPet(PetProfile pet) {
+    if (pet.birthDateIso != null) {
+      final parsed = DateTime.tryParse(pet.birthDateIso!);
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+
+    final parts = pet.birthDateLabel.split(' ');
+    if (parts.length == 2) {
+      const months = {
+        'gen': 1,
+        'feb': 2,
+        'mar': 3,
+        'apr': 4,
+        'mag': 5,
+        'giu': 6,
+        'lug': 7,
+        'ago': 8,
+        'set': 9,
+        'ott': 10,
+        'nov': 11,
+        'dic': 12,
+      };
+      final month = months[parts[0].toLowerCase()];
+      final year = int.tryParse(parts[1]);
+      if (month != null && year != null) {
+        return DateTime(year, month, 1);
+      }
+    }
+
+    final ageYears = pet.ageYears;
+    if (ageYears != null) {
+      final now = DateTime.now();
+      return DateTime(now.year - ageYears, 1, 1);
+    }
+
+    return DateTime.now();
+  }
+
+  double _weightKgFromLabel(String weightLabel) {
+    final normalized = weightLabel.toLowerCase().replaceAll('kg', '').trim();
+    return double.tryParse(normalized.replaceAll(',', '.')) ?? 0;
+  }
+}

@@ -1,9 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/tokens/app_colors.dart';
 import '../../../../design_system/tokens/app_spacing.dart';
 import '../../data/chat_demo_store.dart';
-import '../../data/chat_seed_data.dart';
 import '../../domain/chat_models.dart';
 import '../widgets/chat_conversation_card.dart';
 import '../widgets/chat_empty_state.dart';
@@ -11,24 +12,36 @@ import '../widgets/chat_error_state.dart';
 import '../widgets/chat_loading_state.dart';
 import 'chat_conversation_detail_page.dart';
 
-class ChatConversationsPage extends StatelessWidget {
+class ChatConversationsPage extends StatefulWidget {
   const ChatConversationsPage({
     super.key,
     this.state = ChatScreenState.success,
-    this.conversations = ChatSeedData.conversations,
+    this.conversations,
     this.onRetry,
     this.onConversationTap,
   });
 
   final ChatScreenState state;
-  final List<ChatConversationSummary> conversations;
+  final List<ChatConversationSummary>? conversations;
   final VoidCallback? onRetry;
   final ValueChanged<ChatConversationSummary>? onConversationTap;
 
   @override
+  State<ChatConversationsPage> createState() => _ChatConversationsPageState();
+}
+
+class _ChatConversationsPageState extends State<ChatConversationsPage> {
+  final ChatDemoStore _store = ChatDemoStore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_store.ensureLoaded());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final store = ChatDemoStore.instance;
-    final usingStoreData = identical(conversations, ChatSeedData.conversations);
+    final explicitConversations = widget.conversations;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -45,12 +58,12 @@ class ChatConversationsPage extends StatelessWidget {
         ),
         child: SafeArea(
           child: AnimatedBuilder(
-            animation: store,
+            animation: _store,
             builder: (context, _) {
-              final visibleConversations =
-                  state == ChatScreenState.success && usingStoreData
-                      ? store.conversations.toList(growable: false)
-                      : conversations;
+              final visibleConversations = explicitConversations ??
+                  (_store.hasLoaded
+                      ? _store.conversations.toList(growable: false)
+                      : const <ChatConversationSummary>[]);
               final totalUnread = visibleConversations.fold<int>(
                 0,
                 (sum, conversation) => sum + conversation.unreadCount,
@@ -58,6 +71,76 @@ class ChatConversationsPage extends StatelessWidget {
               final activePetName = visibleConversations.isEmpty
                   ? 'Moka'
                   : visibleConversations.first.activePetName;
+              final showLoading = widget.state == ChatScreenState.loading ||
+                  (widget.state == ChatScreenState.success &&
+                      explicitConversations == null &&
+                      _store.isLoading &&
+                      !_store.hasLoaded);
+              final body = showLoading
+                  ? const ChatLoadingState(
+                      key: ValueKey('loading'),
+                      title: 'Carichiamo la chat del pet',
+                      subtitle:
+                          'Stiamo recuperando i thread dal backend del tuo profilo demo.',
+                    )
+                  : switch (widget.state) {
+                      ChatScreenState.empty => ChatEmptyState(
+                          key: const ValueKey('empty'),
+                          title: 'Nessuna conversazione ancora',
+                          subtitle:
+                              'Avvia una chat reale per vedere il flusso completo dell assistente veterinario.',
+                          actionLabel: 'Apri la prima chat',
+                          onAction: visibleConversations.isEmpty
+                              ? () => unawaited(
+                                    _startConversation(context),
+                                  )
+                              : () => unawaited(
+                                    _openConversation(
+                                      context,
+                                      visibleConversations.first,
+                                    ),
+                                  ),
+                        ),
+                      ChatScreenState.error => ChatErrorState(
+                          key: const ValueKey('error'),
+                          title: 'Non riusciamo a caricare le chat',
+                          subtitle:
+                              'Controlla la connessione e riprova tra un momento.',
+                          actionLabel: 'Indietro',
+                          onAction: widget.onRetry ??
+                              () => Navigator.of(context).maybePop(),
+                        ),
+                      ChatScreenState.success =>
+                        visibleConversations.isEmpty
+                            ? ChatEmptyState(
+                                key: const ValueKey('success-empty'),
+                                title: 'Nessuna chat salvata',
+                                subtitle:
+                                    'Avvia un thread reale per vedere il flusso completo dell assistente veterinario.',
+                                actionLabel: 'Nuova chat',
+                                onAction: () =>
+                                    unawaited(_startConversation(context)),
+                              )
+                            : _ConversationList(
+                                key: const ValueKey('success'),
+                                conversations: visibleConversations,
+                                onConversationTap: widget.onConversationTap ??
+                                    (conversation) => unawaited(
+                                          _openConversation(
+                                            context,
+                                            conversation,
+                                          ),
+                                        ),
+                                onDeleteConversation: (conversation) =>
+                                    unawaited(_confirmDeleteConversation(
+                                  context,
+                                  conversation,
+                                )),
+                                onCreateConversation: () =>
+                                    unawaited(_startConversation(context)),
+                              ),
+                      ChatScreenState.loading => const SizedBox.shrink(),
+                    };
 
               return Column(
                 children: [
@@ -72,67 +155,14 @@ class ChatConversationsPage extends StatelessWidget {
                       totalCount: visibleConversations.length,
                       totalUnread: totalUnread,
                       activePetName: activePetName,
-                      onStartConversation: () => _startConversation(context),
+                      onStartConversation: () =>
+                          unawaited(_startConversation(context)),
                     ),
                   ),
                   Expanded(
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 220),
-                      child: switch (state) {
-                        ChatScreenState.loading => const ChatLoadingState(
-                            key: ValueKey('loading'),
-                            title: 'Carichiamo la chat del pet',
-                            subtitle:
-                                'Stiamo recuperando i thread piu utili del tuo profilo preview.',
-                          ),
-                        ChatScreenState.empty => ChatEmptyState(
-                            key: const ValueKey('empty'),
-                            title: 'Nessuna conversazione ancora',
-                            subtitle:
-                                'Avvia una chat vera per vedere il flusso completo dell assistente veterinario.',
-                            actionLabel: 'Apri la prima chat',
-                            onAction: visibleConversations.isEmpty
-                                ? () => _startConversation(context)
-                                : () => _openConversation(
-                                      context,
-                                      visibleConversations.first,
-                                    ),
-                          ),
-                        ChatScreenState.error => ChatErrorState(
-                            key: const ValueKey('error'),
-                            title: 'Non riusciamo a caricare le chat',
-                            subtitle:
-                                'Controlla la connessione e riprova tra un momento.',
-                            actionLabel: 'Indietro',
-                            onAction:
-                                onRetry ?? () => Navigator.of(context).maybePop(),
-                          ),
-                        ChatScreenState.success => visibleConversations.isEmpty
-                            ? ChatEmptyState(
-                                key: const ValueKey('success-empty'),
-                                title: 'Nessuna chat salvata',
-                                subtitle:
-                                'Avvia un thread preview per vedere il flusso completo dell assistente veterinario.',
-                                actionLabel: 'Nuova chat preview',
-                                onAction: () => _startConversation(context),
-                              )
-                            : _ConversationList(
-                                key: const ValueKey('success'),
-                                conversations: visibleConversations,
-                                onConversationTap: onConversationTap ??
-                                    (conversation) => _openConversation(
-                                          context,
-                                          conversation,
-                                        ),
-                                onDeleteConversation: (conversation) =>
-                                    _confirmDeleteConversation(
-                                  context,
-                                  conversation,
-                                ),
-                                onCreateConversation: () =>
-                                    _startConversation(context),
-                              ),
-                      },
+                      child: body,
                     ),
                   ),
                 ],
@@ -144,11 +174,14 @@ class ChatConversationsPage extends StatelessWidget {
     );
   }
 
-  void _openConversation(
+  Future<void> _openConversation(
     BuildContext context,
     ChatConversationSummary conversation,
-  ) {
-    final detail = ChatDemoStore.instance.openConversation(conversation.id);
+  ) async {
+    final detail = await _store.openConversation(conversation.id);
+    if (!mounted) {
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ChatConversationDetailPage(
@@ -159,8 +192,11 @@ class ChatConversationsPage extends StatelessWidget {
     );
   }
 
-  void _startConversation(BuildContext context) {
-    final conversation = ChatDemoStore.instance.startConversation();
+  Future<void> _startConversation(BuildContext context) async {
+    final conversation = await _store.startConversation();
+    if (!mounted) {
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ChatConversationDetailPage(
@@ -181,7 +217,7 @@ class ChatConversationsPage extends StatelessWidget {
         return AlertDialog(
           title: const Text('Eliminare la chat?'),
           content: Text(
-            'Rimuoviamo "${conversation.title}" dal tuo preview store. '
+            'Rimuoviamo "${conversation.title}" dalla lista delle conversazioni. '
             'Potrai ripristinarla subito con Annulla.',
           ),
           actions: [
@@ -202,8 +238,8 @@ class ChatConversationsPage extends StatelessWidget {
       return;
     }
 
-    final removed = ChatDemoStore.instance.deleteConversation(conversation.id);
-    if (removed == null) {
+    final removed = await _store.deleteConversation(conversation.id);
+    if (removed == null || !mounted) {
       return;
     }
 
@@ -323,7 +359,7 @@ class _Header extends StatelessWidget {
                 foregroundColor: const Color(0xFF8B5B3E),
               ),
               const _HeaderChip(
-                label: 'Preview pronta',
+                label: 'Sync backend',
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.onPrimary,
               ),
@@ -335,7 +371,7 @@ class _Header extends StatelessWidget {
             child: TextButton.icon(
               onPressed: onStartConversation,
               icon: const Icon(Icons.add_comment_outlined),
-              label: const Text('Nuova chat preview'),
+              label: const Text('Nuova chat'),
             ),
           ),
         ],
@@ -471,7 +507,7 @@ class _NewConversationBanner extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Crea un thread di preview con un primo scambio utile, non un placeholder vuoto.',
+                  'Crea un thread pronto da salvare e leggere dal backend.',
                   style: TextStyle(
                     color: AppColors.secondaryText,
                     fontSize: 12,

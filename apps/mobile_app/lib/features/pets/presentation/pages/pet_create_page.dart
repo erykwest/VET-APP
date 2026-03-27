@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../data/pet_api_repository.dart';
 import '../../data/pet_demo_store.dart';
 import '../../domain/pet_models.dart';
 import '../widgets/pet_avatar.dart';
@@ -66,6 +67,7 @@ class _CreateForm extends StatefulWidget {
 }
 
 class _CreateFormState extends State<_CreateForm> {
+  final PetApiRepository _repository = PetApiRepository();
   late String _selectedAvatarKey = PetDemoStore.avatarChoices.first.key;
   String? _profileImageDataUrl;
   String? _galleryProvider;
@@ -118,20 +120,31 @@ class _CreateFormState extends State<_CreateForm> {
           submitLabel: 'Salva profilo pet',
           scrollable: false,
           onSubmit: (draft) async {
-            final pet = PetDemoStore.instance.create(
-              name: draft.name,
-              species: draft.species,
-              breed: draft.breed,
-              birthDate: draft.birthDate,
-              sex: draft.sex,
-              weightKg: draft.weightKg,
-              medicalNote: draft.medicalNote,
-              avatarKey: _selectedAvatarKey,
-              profileImageDataUrl: _profileImageDataUrl,
-              galleryProvider: _galleryProvider,
-            );
-            if (!context.mounted) return;
-            Navigator.of(context).pop(pet);
+            try {
+              final pet = await _repository.createPet(
+                name: draft.name,
+                species: draft.species,
+                breed: draft.breed,
+                birthDate: draft.birthDate,
+                sex: draft.sex,
+                weightKg: draft.weightKg,
+                medicalNote: draft.medicalNote,
+                healthBadge: 'Nuovo profilo',
+                nextVisitLabel: 'Da pianificare',
+                avatarKey: _selectedAvatarKey,
+                profileImageDataUrl: _profileImageDataUrl,
+                galleryProvider: _galleryProvider,
+              );
+              if (!context.mounted) return;
+              Navigator.of(context).pop(pet);
+            } catch (error) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Non sono riuscito a salvare il profilo: $error'),
+                ),
+              );
+            }
           },
         ),
       ],

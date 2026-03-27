@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../data/pet_api_repository.dart';
 import '../../data/pet_demo_store.dart';
 import '../../data/post_visit_recap_store.dart';
 import '../../domain/pet_models.dart';
@@ -72,6 +73,7 @@ class _EditForm extends StatefulWidget {
 }
 
 class _EditFormState extends State<_EditForm> {
+  final PetApiRepository _repository = PetApiRepository();
   late String _selectedAvatarKey =
       PetDemoStore.resolveAvatarKey(widget.pet.avatarEmoji);
 
@@ -99,50 +101,41 @@ class _EditFormState extends State<_EditForm> {
           submitLabel: 'Salva modifiche',
           scrollable: false,
           onSubmit: (draft) async {
-            final updated = widget.pet.copyWith(
-              name: draft.name,
-              species: draft.species,
-              breed: draft.breed ?? '',
-              birthDateLabel: _formatDate(draft.birthDate),
-              sex: draft.sex,
-              weightLabel: _formatWeight(draft.weightKg),
-              medicalNote: draft.medicalNote,
-              avatarEmoji: _selectedAvatarKey,
-            );
-            PetDemoStore.instance.upsert(updated);
-            if (!context.mounted) return;
-            await _showPostVisitRecapSheet(updated);
-            if (!context.mounted) return;
-            Navigator.of(context).pop(updated);
+            try {
+              final updated = await _repository.updatePet(
+                petId: widget.pet.id,
+                name: draft.name,
+                species: draft.species,
+                breed: draft.breed,
+                birthDate: draft.birthDate,
+                sex: draft.sex,
+                weightKg: draft.weightKg,
+                medicalNote: draft.medicalNote,
+                healthBadge: widget.pet.healthBadge,
+                nextVisitLabel: widget.pet.nextVisitLabel,
+                avatarKey: _selectedAvatarKey,
+                profileImageDataUrl: widget.pet.profileImageDataUrl,
+                galleryProvider: widget.pet.galleryProvider,
+              );
+              await PetDemoStore.instance.initialize(force: true);
+              if (!context.mounted) return;
+              await _showPostVisitRecapSheet(updated);
+              if (!context.mounted) return;
+              Navigator.of(context).pop(updated);
+            } catch (error) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Non sono riuscito a salvare le modifiche: $error',
+                  ),
+                ),
+              );
+            }
           },
         ),
       ],
     );
-  }
-
-  String _formatWeight(double weightKg) {
-    final normalized = weightKg
-        .toStringAsFixed(weightKg.truncateToDouble() == weightKg ? 0 : 1);
-    return '${normalized.replaceAll('.', ',')} kg';
-  }
-
-  String _formatDate(DateTime date) {
-    const months = [
-      'Gen',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mag',
-      'Giu',
-      'Lug',
-      'Ago',
-      'Set',
-      'Ott',
-      'Nov',
-      'Dic',
-    ];
-
-    return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
   }
 
   Future<void> _showPostVisitRecapSheet(PetProfile pet) async {

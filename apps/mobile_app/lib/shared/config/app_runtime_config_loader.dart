@@ -28,6 +28,18 @@ class AppRuntimeConfigLoader {
         AppEnvKeys.supabaseAnonKey,
         defaultValue: '',
       ),
+      demoBypassAuth: const bool.fromEnvironment(
+        AppEnvKeys.demoBypassAuth,
+        defaultValue: true,
+      ),
+      demoUserEmail: const String.fromEnvironment(
+        AppEnvKeys.demoUserEmail,
+        defaultValue: 'demo@vetapp.local',
+      ),
+      demoUserPassword: const String.fromEnvironment(
+        AppEnvKeys.demoUserPassword,
+        defaultValue: 'VetAppDemo2026!',
+      ),
       logLevel: const String.fromEnvironment(
         AppEnvKeys.logLevel,
         defaultValue: 'INFO',
