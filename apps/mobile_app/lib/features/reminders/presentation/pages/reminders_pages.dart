@@ -678,7 +678,12 @@ class _Card extends StatelessWidget {
               width: double.infinity,
               child: FilledButton(
                 onPressed: onAction,
-                child: Text(actionLabel),
+                child: Text(
+                  actionLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ],
