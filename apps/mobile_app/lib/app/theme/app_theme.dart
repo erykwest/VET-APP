@@ -65,7 +65,7 @@ class AppTheme {
         selectionColor: AppColors.accentSoft,
         selectionHandleColor: AppColors.primary,
       ),
-      textTheme: TextTheme(
+      textTheme: const TextTheme(
         displayLarge: AppTextStyles.display,
         displayMedium: AppTextStyles.heading,
         displaySmall: AppTextStyles.title,

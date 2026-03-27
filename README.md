@@ -47,6 +47,8 @@ Web-first pet-tech product with a Flutter client and a Python backend bootstrap.
 
 For the demo-safe path, prefer `make run-web-server` and open the printed URL manually in your browser. This keeps the preview inside the current user session and avoids browser/profile issues that do not add value to the presentation. When validating real Supabase auth in web, use the `*-supabase` targets so Flutter receives the required compile-time `--dart-define` values.
 
+For `flutter analyze` in the same no-admin environment, use the documented workaround in `docs/runbooks/flutter_analyze_no_admin.md`.
+
 ## Vercel deploy
 The repository supports two Vercel projects:
 
@@ -114,3 +116,7 @@ Product and strategy documents now live under `docs/`:
 - `docs/architecture/repo_bootstrap_instructions.md`
 - `docs/decisions/*`
 - `docs/runbooks/`
+
+Recent implementation notes:
+- `docs/runbooks/flutter_analyze_no_admin.md`
+- `docs/frontend/10-ux-review-2026-03-26.md`

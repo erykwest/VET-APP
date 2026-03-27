@@ -36,13 +36,21 @@ If the terminal does not have administrator rights, prefer:
 2. `flutter run -d web-server --web-hostname 127.0.0.1 --web-port 8080`
 3. Open the printed URL manually in your browser
 
+For `flutter analyze` on this machine, use the no-admin runbook:
+- [docs/runbooks/flutter_analyze_no_admin.md](/C:/Users/vasta/OneDrive%20-%20Techbau%20SpA/Documenti/PERS/VET%20APP/GIT/docs/runbooks/flutter_analyze_no_admin.md)
+
 ## Current scope
 
-The app is bootstrapped with:
+The app currently includes:
 
 - global theme tokens
 - onboarding welcome screen
 - preview-friendly routes for auth and home
+- warm-clinical dashboard preview
+- desktop-first shell with persistent sidebar
+- pet management preview flows
+- chat preview flows with send/reply behavior
+- records archive with per-pet filtering
 - explicit preview labels where data is still local or seeded
 
 ## Notes
@@ -60,3 +68,14 @@ For the founder demo, this folder can be deployed as its own Vercel project:
 5. If the preview should use Supabase auth, set the matching `SUPABASE_URL` and `SUPABASE_ANON_KEY` environment variables in the Vercel project so the build script can forward them to Flutter.
 
 This keeps the Flutter web demo independent from the root FastAPI deployment and matches the current web-first roadmap.
+
+## Preview mode
+
+For demo and founder review:
+- web preview can still start from the dedicated preview route `/preview-dashboard`
+- the primary app flow now starts from splash and login, while preview data stays explicitly labeled as local preview content
+- the preview is meant to show seeded UX, not production auth behavior
+
+See the current implementation/state here:
+- [docs/frontend/09-mobile-preview-state.md](/C:/Users/vasta/OneDrive%20-%20Techbau%20SpA/Documenti/PERS/VET%20APP/GIT/docs/frontend/09-mobile-preview-state.md)
+- [docs/frontend/10-ux-review-2026-03-26.md](/C:/Users/vasta/OneDrive%20-%20Techbau%20SpA/Documenti/PERS/VET%20APP/GIT/docs/frontend/10-ux-review-2026-03-26.md)
