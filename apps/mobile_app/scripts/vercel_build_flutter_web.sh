@@ -32,4 +32,8 @@ if [ -n "${SUPABASE_ANON_KEY:-}" ]; then
   FLUTTER_DART_DEFINES+=("--dart-define=SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}")
 fi
 
+if [ -n "${API_BASE_URL:-}" ]; then
+  FLUTTER_DART_DEFINES+=("--dart-define=API_BASE_URL=${API_BASE_URL}")
+fi
+
 flutter build web --release "${FLUTTER_DART_DEFINES[@]}"

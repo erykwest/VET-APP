@@ -1,34 +1,34 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 from packages.core.application.ports.auth_provider import AuthProvider, AuthSession, AuthenticatedUser
 from packages.shared.auth_context import get_access_token
 from packages.shared.errors.base import AuthenticationError
 
-if TYPE_CHECKING:
-    from supabase import Client as SupabaseClient
-else:
-    SupabaseClient = Any
-
-try:
-    from supabase import Client as _SupabaseClient
-except ModuleNotFoundError as exc:  # pragma: no cover - exercised by local runtime environments
-    _SUPABASE_IMPORT_ERROR = exc
-else:
-    _SUPABASE_IMPORT_ERROR = None
-
 
 class SupabaseAuthProvider(AuthProvider):
-    def __init__(self, public_client: SupabaseClient, admin_client: SupabaseClient) -> None:
-        if _SUPABASE_IMPORT_ERROR is not None:
-            raise AuthenticationError(
-                "Supabase auth provider requires the optional 'supabase' dependency"
-            ) from _SUPABASE_IMPORT_ERROR
+    def __init__(
+        self,
+        public_client: Any,
+        admin_client: Any,
+        *,
+        allow_demo_fallback: bool = False,
+        bootstrap_user_id: str = "",
+        bootstrap_user_email: str = "",
+    ) -> None:
         self._public_client = public_client
         self._admin_client = admin_client
+        self._allow_demo_fallback = allow_demo_fallback
+        self._bootstrap_user_id = bootstrap_user_id
+        self._bootstrap_user_email = bootstrap_user_email
 
     def get_current_user(self) -> AuthenticatedUser:
         access_token = get_access_token()
         if not access_token:
+            if self._allow_demo_fallback and self._bootstrap_user_id.strip():
+                return AuthenticatedUser(
+                    id=self._bootstrap_user_id,
+                    email=self._bootstrap_user_email,
+                )
             raise AuthenticationError("Missing access token")
 
         response = self._admin_client.auth.get_user(access_token)

@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     supabase_db_password: str = Field(default="", alias="SUPABASE_DB_PASSWORD")
     bootstrap_user_id: str = Field(default="demo-user", alias="BOOTSTRAP_USER_ID")
     bootstrap_user_email: str = Field(default="demo@vetapp.local", alias="BOOTSTRAP_USER_EMAIL")
+    allow_demo_auth_fallback: bool = Field(default=True, alias="ALLOW_DEMO_AUTH_FALLBACK")
     llm_provider: str = Field(default="echo", alias="LLM_PROVIDER")
     llm_model: str = Field(default="demo-model", alias="LLM_MODEL")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")

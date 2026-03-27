@@ -34,6 +34,7 @@ Current project values already prepared in `.env.example`:
 ## Current bootstrap mode
 - `PERSISTENCE_BACKEND=supabase` enables Supabase repositories
 - `AUTH_BACKEND=supabase` enables real Supabase email/password auth and bearer-token user resolution
+- `ALLOW_DEMO_AUTH_FALLBACK=true` keeps the demo user available when the frontend is still in bypass-login mode and no bearer token is present
 - `API_BASE_URL` switches the Flutter client from local preview entry to the app shell that talks to the Python API
 
 Fail-fast validation:
@@ -74,8 +75,12 @@ When the tables exist, start the app normally. The bootstrap container will use 
 For the frontend/API bootstrap path, keep the client in bypass-login mode and point it at the Python backend:
 - set `API_BASE_URL` in the Flutter runtime config
 - keep `DEMO_BYPASS_AUTH=true` in the Flutter runtime config
-- keep `AUTH_BACKEND=bootstrap` on the Python API
+- keep `AUTH_BACKEND=bootstrap` on the Python API, or keep `ALLOW_DEMO_AUTH_FALLBACK=true` when the backend auth mode is still `supabase`
 - keep `PERSISTENCE_BACKEND=supabase` on the Python API
+
+Recommended local commands for the persistent demo path:
+- `make run-api`
+- `make run-web-server-persistent-demo`
 
 To seed stable demo data directly into Supabase and immediately verify readback on the same tables, run:
 - `python scripts/setup/seed_demo_supabase.py --reset`

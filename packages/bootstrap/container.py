@@ -79,6 +79,12 @@ class ApplicationContainer:
                 return SupabaseAuthProvider(
                     public_client=build_supabase_public_client(self.settings),
                     admin_client=build_supabase_client(self.settings),
+                    allow_demo_fallback=(
+                        self.settings.allow_demo_auth_fallback
+                        and self.settings.environment != "production"
+                    ),
+                    bootstrap_user_id=self.settings.bootstrap_user_id,
+                    bootstrap_user_email=self.settings.bootstrap_user_email,
                 )
             except ModuleNotFoundError:
                 if self.settings.environment != "production":
