@@ -14,6 +14,7 @@ class AppBootstrapState {
   final String? supabaseInitializationError;
 
   bool get supabaseReady => supabaseConfigured && supabaseInitialized;
+  bool get previewMode => !supabaseReady;
 
   bool get hasSupabaseConfig => runtimeConfig.hasSupabaseCredentials;
 

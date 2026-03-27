@@ -5,6 +5,7 @@ import '../../../shared/types/result.dart';
 import '../domain/auth_repository.dart';
 import 'auth_remote_data_source.dart';
 import 'auth_session_store.dart';
+import 'auth_sign_up_result.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
@@ -109,8 +110,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> dispose() async {
     await _storeSubscription.cancel();
     await _contextController.close();
-    if (_sessionStore case final MemoryAuthSessionStore memoryStore) {
-      await memoryStore.dispose();
-    }
+    await _sessionStore.dispose();
   }
 }
