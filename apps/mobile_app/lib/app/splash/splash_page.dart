@@ -35,11 +35,8 @@ class _SplashPageState extends State<SplashPage> {
 
   Future<void> _restoreSessionAndRoute() async {
     final bootstrapState = widget.bootstrapState;
-    if (bootstrapState != null && !bootstrapState.supabaseReady) {
-      if (!mounted) return;
-      setState(() {
-        _isCheckingSession = false;
-      });
+    if (bootstrapState != null && bootstrapState.previewMode) {
+      Navigator.of(context).pushReplacementNamed(AppRouter.previewDashboard);
       return;
     }
 
@@ -64,33 +61,13 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bootstrapState = widget.bootstrapState;
-    final hasBootstrapError =
-        bootstrapState != null && !bootstrapState.supabaseReady;
-
-    if (hasBootstrapError) {
-      final state = bootstrapState!;
-      return Scaffold(
-        body: _BootstrapErrorState(
-          errorMessage: state.supabaseInitializationError ??
-              (state.hasSupabaseConfig
-                  ? 'Supabase initialization failed before the app could start.'
-                  : 'Missing SUPABASE_URL or SUPABASE_ANON_KEY dart defines.'),
-        ),
-      );
-    }
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFF4F9F6),
-              Color(0xFFE7F1EC),
-              Color(0xFFD8E9E1),
-            ],
+            colors: [Color(0xFFF4F9F6), Color(0xFFE7F1EC), Color(0xFFD8E9E1)],
           ),
         ),
         child: Center(
@@ -148,97 +125,6 @@ class _SplashLogo extends StatelessWidget {
         Icons.pets_rounded,
         color: AppColors.onPrimary,
         size: 40,
-      ),
-    );
-  }
-}
-
-class _BootstrapErrorState extends StatelessWidget {
-  const _BootstrapErrorState({
-    required this.errorMessage,
-  });
-
-  final String errorMessage;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF4F9F6),
-            Color(0xFFF0E7E1),
-            Color(0xFFE8D9D4),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.xl),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFE3D7D1)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x1A163A35),
-                    blurRadius: 28,
-                    offset: Offset(0, 16),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _SplashLogo(),
-                  const SizedBox(height: AppSpacing.lg),
-                  const Text(
-                    'Supabase non pronto',
-                    style: AppTextStyles.heading,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  const Text(
-                    'La web app non puo usare il flusso auth reale finche la configurazione non e disponibile o l inizializzazione non riesce.',
-                    style: AppTextStyles.body,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7EFEA),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      errorMessage,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.45,
-                        color: Color(0xFF6D544C),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  const Text(
-                    'Aggiungi le dart defines Supabase e riavvia l app per attivare il flusso auth reale.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.45,
-                      color: Color(0xFF6D544C),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
