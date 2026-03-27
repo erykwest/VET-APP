@@ -137,12 +137,14 @@ class _PetsListContent extends StatelessWidget {
                 children: [
                   _SpeciesFilterChip(
                     label: 'Tutti',
+                    icon: Icons.grid_view_rounded,
                     selected: selectedSpecies == 'Tutti',
                     onTap: () => onSpeciesChanged('Tutti'),
                   ),
                   ...PetDemoStore.speciesOptions.map(
                     (option) => _SpeciesFilterChip(
                       label: option.label,
+                      icon: PetProfile.speciesIconFor(option.label),
                       selected: selectedSpecies == option.label,
                       onTap: () => onSpeciesChanged(option.label),
                     ),
@@ -309,13 +311,25 @@ class _FeaturedPetCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          pet.title,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF5C726D),
-                          ),
+                        Row(
+                          children: [
+                            Icon(
+                              pet.speciesIcon,
+                              size: 16,
+                              color: const Color(0xFF5C726D),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                pet.title,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF5C726D),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -431,13 +445,25 @@ class _PetListCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      pet.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF5C726D),
-                      ),
+                    Row(
+                      children: [
+                        Icon(
+                          pet.speciesIcon,
+                          size: 16,
+                          color: const Color(0xFF5C726D),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            pet.title,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF5C726D),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -555,30 +581,44 @@ class _DemoPill extends StatelessWidget {
 class _SpeciesFilterChip extends StatelessWidget {
   const _SpeciesFilterChip({
     required this.label,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return FilterChip(
-      selected: selected,
-      onSelected: (_) => onTap(),
-      label: Text(label),
-      selectedColor: const Color(0xFF163A35),
-      checkmarkColor: Colors.white,
-      labelStyle: TextStyle(
-        color: selected ? Colors.white : const Color(0xFF173A35),
-        fontWeight: FontWeight.w700,
-      ),
-      backgroundColor: const Color(0xFFF4EFE7),
-      shape: StadiumBorder(
-        side: BorderSide(
-          color: selected ? const Color(0xFF163A35) : const Color(0xFFE4DDD2),
+    return Tooltip(
+      message: label,
+      child: FilterChip(
+        selected: selected,
+        onSelected: (_) => onTap(),
+        showCheckmark: false,
+        avatar: Icon(
+          icon,
+          size: 18,
+          color: selected ? Colors.white : const Color(0xFF173A35),
+        ),
+        label: const SizedBox.shrink(),
+        selectedColor: const Color(0xFF163A35),
+        checkmarkColor: Colors.white,
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : const Color(0xFF173A35),
+          fontWeight: FontWeight.w700,
+        ),
+        visualDensity: VisualDensity.compact,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        backgroundColor: const Color(0xFFF4EFE7),
+        shape: StadiumBorder(
+          side: BorderSide(
+            color:
+                selected ? const Color(0xFF163A35) : const Color(0xFFE4DDD2),
+          ),
         ),
       ),
     );

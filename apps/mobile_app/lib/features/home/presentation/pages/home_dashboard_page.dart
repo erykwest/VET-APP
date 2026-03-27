@@ -331,8 +331,8 @@ class _DashboardTopBar extends StatelessWidget {
           runSpacing: AppSpacing.sm,
           children: [
             _SoftPill(
-              icon: Icons.pets_rounded,
-              label: '${pet.name} attivo',
+              icon: pet.speciesIcon,
+              label: pet.name,
             ),
             _SoftPill(
               icon: Icons.notifications_none_rounded,
@@ -510,9 +510,20 @@ class _PetPortrait extends StatelessWidget {
                   style: AppTextStyles.title.copyWith(fontSize: 22),
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                Text(
-                  '${pet.species} - ${pet.sex}',
-                  style: AppTextStyles.bodySmall,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      pet.speciesIcon,
+                      size: 16,
+                      color: AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      '${pet.species} - ${pet.sex}',
+                      style: AppTextStyles.bodySmall,
+                    ),
+                  ],
                 ),
               ],
             ),

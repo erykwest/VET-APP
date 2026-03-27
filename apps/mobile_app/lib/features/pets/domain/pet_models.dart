@@ -52,6 +52,7 @@ class PetProfile {
   final String? galleryProvider;
 
   String get title => '$name - $species';
+  IconData get speciesIcon => speciesIconFor(species);
   String get breedLabel =>
       breed.trim().isEmpty ? 'Razza non specificata' : breed.trim();
   bool get isMixedBreed => isMixedBreedLabel(breed);
@@ -98,6 +99,27 @@ class PetProfile {
 
   static String mixedBreedLabelForSize(String size) {
     return '$mixedBreedLabel - $size';
+  }
+
+  static IconData speciesIconFor(String species) {
+    switch (species.trim().toLowerCase()) {
+      case 'cane':
+        return Icons.pets_rounded;
+      case 'gatto':
+        return Icons.pets_outlined;
+      case 'coniglio':
+        return Icons.cruelty_free_outlined;
+      case 'uccello':
+        return Icons.flutter_dash_rounded;
+      case 'rettile':
+        return Icons.bug_report_outlined;
+      case 'roditore':
+        return Icons.park_outlined;
+      case 'altro':
+        return Icons.category_outlined;
+      default:
+        return Icons.pets_rounded;
+    }
   }
 
   PetProfile copyWith({
