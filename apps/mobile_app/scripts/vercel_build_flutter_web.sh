@@ -24,6 +24,18 @@ flutter pub get
 
 FLUTTER_DART_DEFINES=()
 
+if [ -n "${ENVIRONMENT:-}" ]; then
+  FLUTTER_DART_DEFINES+=("--dart-define=ENVIRONMENT=${ENVIRONMENT}")
+fi
+
+if [ -n "${APP_NAME:-}" ]; then
+  FLUTTER_DART_DEFINES+=("--dart-define=APP_NAME=${APP_NAME}")
+fi
+
+if [ -n "${DEMO_BYPASS_AUTH:-}" ]; then
+  FLUTTER_DART_DEFINES+=("--dart-define=DEMO_BYPASS_AUTH=${DEMO_BYPASS_AUTH}")
+fi
+
 if [ -n "${SUPABASE_URL:-}" ]; then
   FLUTTER_DART_DEFINES+=("--dart-define=SUPABASE_URL=${SUPABASE_URL}")
 fi
@@ -34,6 +46,8 @@ fi
 
 if [ -n "${API_BASE_URL:-}" ]; then
   FLUTTER_DART_DEFINES+=("--dart-define=API_BASE_URL=${API_BASE_URL}")
+elif [ "${VERCEL_SELF_HOSTED_API:-false}" = "true" ]; then
+  FLUTTER_DART_DEFINES+=("--dart-define=API_BASE_URL=/")
 fi
 
 flutter build web --release "${FLUTTER_DART_DEFINES[@]}"
