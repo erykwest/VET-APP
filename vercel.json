@@ -3,11 +3,6 @@
   "framework": null,
   "buildCommand": "ENVIRONMENT=production APP_NAME='Vet App' DEMO_BYPASS_AUTH=true VERCEL_SELF_HOSTED_API=true bash apps/mobile_app/scripts/vercel_build_flutter_web.sh",
   "outputDirectory": "apps/mobile_app/build/web",
-  "functions": {
-    "app.py": {
-      "excludeFiles": "{.git/**,.github/**,.playwright/**,.playwright-cli/**,.pytest_cache/**,apps/mobile_app/**,docs/**,scripts/**,tests/**,shopping.jpg}"
-    }
-  },
   "rewrites": [
     {
       "source": "/health",
