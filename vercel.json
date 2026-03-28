@@ -1,44 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "ENVIRONMENT=production APP_NAME='Vet App' DEMO_BYPASS_AUTH=true VERCEL_SELF_HOSTED_API=true bash apps/mobile_app/scripts/vercel_build_flutter_web.sh",
-  "outputDirectory": "apps/mobile_app/build/web",
   "rewrites": [
     {
-      "source": "/health",
-      "destination": "/app.py"
-    },
-    {
-      "source": "/auth/:path*",
-      "destination": "/app.py"
-    },
-    {
-      "source": "/pets/:path*",
-      "destination": "/app.py"
-    },
-    {
-      "source": "/conversations/:path*",
-      "destination": "/app.py"
-    },
-    {
-      "source": "/chat/:path*",
-      "destination": "/app.py"
-    },
-    {
-      "source": "/reminders/:path*",
-      "destination": "/app.py"
-    },
-    {
-      "source": "/docs",
-      "destination": "/app.py"
-    },
-    {
-      "source": "/openapi.json",
-      "destination": "/app.py"
-    },
-    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/app.py"
     }
   ]
 }
