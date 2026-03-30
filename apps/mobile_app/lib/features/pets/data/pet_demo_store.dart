@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -49,7 +48,7 @@ class PetDemoStore {
   static final PetDemoStore instance = PetDemoStore._();
 
   final PetApiRepository _repository;
-  List<PetProfile> _pets = List<PetProfile>.of(samplePets);
+  List<PetProfile> _pets = const <PetProfile>[];
   bool _hasLoaded = false;
   bool _isLoading = false;
   String? _errorMessage;
@@ -193,13 +192,10 @@ class PetDemoStore {
     _errorMessage = null;
     try {
       _pets = await _repository.listPets();
-      if (_pets.isEmpty) {
-        _pets = List<PetProfile>.of(samplePets);
-      }
       _hasLoaded = true;
     } catch (error) {
       _errorMessage = error.toString();
-      _pets = List<PetProfile>.of(samplePets);
+      _pets = const <PetProfile>[];
       _hasLoaded = true;
     } finally {
       _isLoading = false;

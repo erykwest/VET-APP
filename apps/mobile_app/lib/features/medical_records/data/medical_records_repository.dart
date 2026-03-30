@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../shared/config/app_runtime_config_loader.dart';
@@ -93,12 +95,12 @@ class MedicalRecordsRepository {
 
   Future<List<MedicalRecordEntry>> loadRecords() async {
     final backendRecords = await _tryLoadBackendRecords();
-    if (backendRecords.isNotEmpty) {
+    if (_backendApiClient.isConfigured) {
       return backendRecords;
     }
 
     final remote = await _tryLoadRemoteRecords();
-    if (remote.isNotEmpty) {
+    if (_resolveClient() != null) {
       return remote;
     }
     return List<MedicalRecordEntry>.from(_previewRecords);
@@ -118,7 +120,7 @@ class MedicalRecordsRepository {
     String? petName,
   }) async {
     final backendTimeline = await _tryLoadBackendTimeline(petName: petName);
-    if (backendTimeline.isNotEmpty) {
+    if (_backendApiClient.isConfigured) {
       return backendTimeline;
     }
     return _previewTimeline(petName: petName);
@@ -128,7 +130,7 @@ class MedicalRecordsRepository {
     String? petName,
   }) async {
     final backendProfile = await _tryLoadBackendHealthProfile(petName: petName);
-    if (backendProfile != null) {
+    if (_backendApiClient.isConfigured) {
       return backendProfile;
     }
     return _previewHealthProfile(petName: petName);
@@ -147,7 +149,7 @@ class MedicalRecordsRepository {
     String? petName,
   }) async {
     final backendEvents = await _tryLoadBackendEvents(petName: petName);
-    if (backendEvents.isNotEmpty) {
+    if (_backendApiClient.isConfigured) {
       return backendEvents;
     }
     return _previewEvents(petName: petName);
@@ -356,8 +358,8 @@ class MedicalRecordsRepository {
           fallback: 'Non indicato',
         ),
         notes: _readString(
-          petProfile,
-          'notes',
+          _clinicalNoteFromPetProfile(petProfile),
+          'value',
           fallback: 'Nessuna nota clinica disponibile.',
         ),
       );
@@ -562,6 +564,35 @@ class MedicalRecordsRepository {
     final value = row[key];
     final text = value?.toString().trim() ?? '';
     return text.isEmpty ? fallback : text;
+  }
+
+  static Map<String, dynamic> _clinicalNoteFromPetProfile(
+    Map<String, dynamic> petProfile,
+  ) {
+    final rawNotes = _readString(
+      petProfile,
+      'notes',
+      fallback: 'Nessuna nota clinica disponibile.',
+    );
+    final trimmed = rawNotes.trim();
+    if (!(trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+      return <String, dynamic>{'value': rawNotes};
+    }
+
+    try {
+      final decoded = jsonDecode(trimmed);
+      if (decoded is Map) {
+        final map = Map<String, dynamic>.from(decoded);
+        final medicalNote = (map['medical_note'] ?? '').toString().trim();
+        if (medicalNote.isNotEmpty) {
+          return <String, dynamic>{'value': medicalNote};
+        }
+      }
+    } catch (_) {
+      return <String, dynamic>{'value': rawNotes};
+    }
+
+    return <String, dynamic>{'value': 'Nessuna nota clinica disponibile.'};
   }
 
   SupabaseClient? _resolveClient() {
@@ -837,109 +868,11 @@ class MedicalRecordsRepository {
     return normalized.replaceAll(' ', '_');
   }
 
-  static final List<MedicalRecordEntry> _previewRecords = [
-    const MedicalRecordEntry(
-      id: 'moka-richiamo-vaccinale',
-      petName: 'Moka',
-      title: 'Richiamo vaccinale di Moka',
-      subtitle: 'PDF - 2 pagine - Clinica Vet Roma',
-      meta: 'Caricato oggi, pronto da mostrare a Francesco',
-      badge: 'Da condividere',
-      detailSource: 'Clinica Vet Roma',
-      createdAt: '25 Mar 2026, 09:32',
-      timeline: [
-        MedicalRecordTimelineEntry(label: 'Importato', value: '25 Mar 2026'),
-        MedicalRecordTimelineEntry(label: 'Revisionato', value: '25 Mar 2026, 09:45'),
-        MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'Disponibile'),
-      ],
-    ),
-    const MedicalRecordEntry(
-      id: 'moka-esame-ematico',
-      petName: 'Moka',
-      title: 'Esame ematico di Moka',
-      subtitle: 'PDF - 4 pagine - controlli di routine',
-      meta: 'Letto ieri, richiede un controllo rapido',
-      badge: 'Da rivedere',
-      detailSource: 'Laboratorio Vet',
-      createdAt: '24 Mar 2026, 17:08',
-      timeline: [
-        MedicalRecordTimelineEntry(label: 'Importato', value: '24 Mar 2026'),
-        MedicalRecordTimelineEntry(label: 'Revisionato', value: '24 Mar 2026, 18:20'),
-        MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'In attesa di nota'),
-      ],
-    ),
-    const MedicalRecordEntry(
-      id: 'oliver-dentale',
-      petName: 'Oliver',
-      title: 'Controllo dentale di Oliver',
-      subtitle: 'PDF - 3 pagine - ambulatorio di fiducia',
-      meta: 'Utile per il follow-up dentale della prossima settimana',
-      badge: 'In revisione',
-      detailSource: 'Ambulatorio San Marco',
-      createdAt: '18 Mar 2026, 11:20',
-      timeline: [
-        MedicalRecordTimelineEntry(label: 'Importato', value: '18 Mar 2026'),
-        MedicalRecordTimelineEntry(label: 'Revisionato', value: '18 Mar 2026, 12:05'),
-        MedicalRecordTimelineEntry(label: "Pronto per l'invio", value: 'Da controllare'),
-      ],
-    ),
-  ];
+  static final List<MedicalRecordEntry> _previewRecords = <MedicalRecordEntry>[];
 
-  static final List<ClinicalHealthProfile> _previewHealthProfiles = [
-    const ClinicalHealthProfile(
-      petName: 'Moka',
-      species: 'Cane',
-      breed: 'Meticcio - Media',
-      sex: 'Femmina',
-      weightLabel: '17,8 kg',
-      microchipCode: '380260101234567',
-      neuteredLabel: 'Si',
-      notes:
-          'Stomaco delicato, dieta leggera e controllo periodico gia pianificato.',
-    ),
-    const ClinicalHealthProfile(
-      petName: 'Oliver',
-      species: 'Gatto',
-      breed: 'Europeo a pelo corto',
-      sex: 'Maschio',
-      weightLabel: '5,1 kg',
-      microchipCode: '380260109876543',
-      neuteredLabel: 'Si',
-      notes:
-          'Vita in casa, controllo dentale programmato e monitoraggio alimentazione.',
-    ),
-  ];
+  static final List<ClinicalHealthProfile> _previewHealthProfiles =
+      <ClinicalHealthProfile>[];
 
-  static final List<ClinicalEventEntry> _previewEventsStore = [
-    const ClinicalEventEntry(
-      id: 'evt-moka-vaccino',
-      petName: 'Moka',
-      title: 'Richiamo vaccinale annuale',
-      eventType: 'vaccination_administered',
-      eventDate: '2026-03-25',
-      summary: 'Richiamo annuale completato senza criticita.',
-      severityLabel: 'Routine',
-      sourceLabel: 'Clinica Vet Roma',
-    ),
-    const ClinicalEventEntry(
-      id: 'evt-moka-emocromo',
-      petName: 'Moka',
-      title: 'Emocromo di controllo',
-      eventType: 'exam_result',
-      eventDate: '2026-03-24',
-      summary: 'Esame ematico di routine con referto archiviato.',
-      severityLabel: 'Routine',
-      sourceLabel: 'Laboratorio Vet',
-    ),
-    const ClinicalEventEntry(
-      id: 'evt-oliver-dentale',
-      petName: 'Oliver',
-      title: 'Visita dentale',
-      eventType: 'clinical_visit',
-      eventDate: '2026-03-18',
-      summary: 'Controllo dentale con follow-up consigliato.',
-      severityLabel: 'Moderata',
-      sourceLabel: 'Ambulatorio San Marco',
-    ),
-  ];
+  static final List<ClinicalEventEntry> _previewEventsStore =
+      <ClinicalEventEntry>[];
 }

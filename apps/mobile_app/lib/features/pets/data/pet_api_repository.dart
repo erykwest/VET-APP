@@ -128,9 +128,11 @@ class PetApiRepository {
         'Peso non disponibile';
     final medicalNote = metadata?.medicalNote ??
         preset?.medicalNote ??
-        (notes.trim().isNotEmpty
-            ? notes.trim()
-            : 'Nessuna nota clinica disponibile.');
+        (_looksLikeJson(notes)
+            ? 'Nessuna nota clinica disponibile.'
+            : (notes.trim().isNotEmpty
+                ? notes.trim()
+                : 'Nessuna nota clinica disponibile.'));
     final healthBadge = metadata?.healthBadge ??
         preset?.healthBadge ??
         _healthBadgeForSpecies(species);
@@ -264,6 +266,11 @@ class PetApiRepository {
   static String? _normalizedTextOrNull(String? value) {
     final text = value?.trim() ?? '';
     return text.isEmpty ? null : text;
+  }
+
+  static bool _looksLikeJson(String value) {
+    final trimmed = value.trim();
+    return trimmed.startsWith('{') && trimmed.endsWith('}');
   }
 
   static String _formatIsoDate(DateTime date) {

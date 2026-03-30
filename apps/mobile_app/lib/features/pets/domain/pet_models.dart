@@ -165,39 +165,4 @@ class PetProfile {
   }
 }
 
-const samplePets = <PetProfile>[
-  PetProfile(
-    id: 'pet-moka',
-    name: 'Moka',
-    species: 'Cane',
-    breed: 'Meticcio - Media',
-    birthDateLabel: 'Mag 2021',
-    birthDateIso: '2021-05-01',
-    ageYears: 4,
-    sex: 'Femmina',
-    weightLabel: '17,8 kg',
-    medicalNote:
-        'Stomaco delicato, dieta leggera e controllo periodico gia pianificato.',
-    healthBadge: 'Stabile',
-    nextVisitLabel: 'Vaccino di richiamo tra 12 giorni',
-    avatarEmoji: 'portrait-bosco',
-    accentColor: Color(0xFFE7F2EE),
-  ),
-  PetProfile(
-    id: 'pet-oliver',
-    name: 'Oliver',
-    species: 'Gatto',
-    breed: 'Europeo a pelo corto',
-    birthDateLabel: 'Set 2019',
-    birthDateIso: '2019-09-01',
-    ageYears: 6,
-    sex: 'Maschio',
-    weightLabel: '5,1 kg',
-    medicalNote:
-        'Vita in casa, toelettatura regolare e attenzione ai controlli dentali.',
-    healthBadge: 'Da monitorare',
-    nextVisitLabel: 'Controllo dentale la prossima settimana',
-    avatarEmoji: 'portrait-nebbia',
-    accentColor: Color(0xFFF6EADF),
-  ),
-];
+const samplePets = <PetProfile>[];
