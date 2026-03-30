@@ -80,6 +80,21 @@ class BackendApiClient {
     return const <String, dynamic>{};
   }
 
+  Future<Map<String, dynamic>> patchJson(
+    String path, {
+    required Map<String, dynamic> body,
+  }) async {
+    final payload = await _sendJson(
+      method: 'PATCH',
+      path: path,
+      body: body,
+    );
+    if (payload is Map<String, dynamic>) {
+      return payload;
+    }
+    return const <String, dynamic>{};
+  }
+
   Future<dynamic> getJson(String path) async {
     final response = await _httpClient.get(
       _buildUri(path),
@@ -111,6 +126,11 @@ class BackendApiClient {
           body: encodedBody,
         ),
       'PUT' => await _httpClient.put(
+          uri,
+          headers: _jsonHeaders,
+          body: encodedBody,
+        ),
+      'PATCH' => await _httpClient.patch(
           uri,
           headers: _jsonHeaders,
           body: encodedBody,

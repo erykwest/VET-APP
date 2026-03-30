@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     supabase_db_name: str = Field(default="postgres", alias="SUPABASE_DB_NAME")
     supabase_db_user: str = Field(default="", alias="SUPABASE_DB_USER")
     supabase_db_password: str = Field(default="", alias="SUPABASE_DB_PASSWORD")
+    clinical_documents_bucket: str = Field(
+        default="clinical-documents",
+        alias="CLINICAL_DOCUMENTS_BUCKET",
+    )
+    local_storage_dir: str = Field(default=".data/storage", alias="LOCAL_STORAGE_DIR")
     bootstrap_user_id: str = Field(default="demo-user", alias="BOOTSTRAP_USER_ID")
     bootstrap_user_email: str = Field(default="demo@vetapp.local", alias="BOOTSTRAP_USER_EMAIL")
     allow_demo_auth_fallback: bool = Field(default=True, alias="ALLOW_DEMO_AUTH_FALLBACK")

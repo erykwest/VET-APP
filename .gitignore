@@ -14,5 +14,6 @@ Thumbs.db
 .vscode/
 .idea/
 .vercel/
+.data/
 uv.lock
 *.egg-info/

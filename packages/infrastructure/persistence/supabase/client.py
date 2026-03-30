@@ -39,6 +39,16 @@ class SupabaseRestTableQuery:
         self._params.append(("limit", str(count)))
         return self
 
+    def order(self, field: str, *, desc: bool = False) -> "SupabaseRestTableQuery":
+        direction = "desc" if desc else "asc"
+        self._params.append(("order", f"{field}.{direction}"))
+        return self
+
+    def delete(self) -> "SupabaseRestTableQuery":
+        self._method = "DELETE"
+        self._headers["Prefer"] = "return=minimal"
+        return self
+
     def upsert(self, payload: dict[str, Any] | list[dict[str, Any]]) -> "SupabaseRestTableQuery":
         self._method = "POST"
         self._body = payload

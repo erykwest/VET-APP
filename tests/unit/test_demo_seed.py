@@ -27,3 +27,9 @@ def test_demo_seed_keeps_owner_and_relationships_aligned() -> None:
         assert document["pet_id"] in pet_ids
         assert document["document_type"]
         assert document["document_date"] <= "2026-03-26"
+
+    for event in seed.clinical_events:
+        assert event["owner_id"] == "demo-user"
+        assert event["pet_id"] in pet_ids
+        assert event["event_type"]
+        assert event["event_date"] <= "2026-03-26"

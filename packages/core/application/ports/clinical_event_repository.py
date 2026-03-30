@@ -1,0 +1,13 @@
+from typing import Protocol
+
+from packages.core.domain.clinical_records.models import ClinicalEvent
+
+
+class ClinicalEventRepository(Protocol):
+    def save(self, event: ClinicalEvent) -> ClinicalEvent: ...
+
+    def get(self, event_id: str) -> ClinicalEvent | None: ...
+
+    def delete(self, event_id: str) -> None: ...
+
+    def list_by_pet(self, pet_id: str) -> list[ClinicalEvent]: ...

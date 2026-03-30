@@ -22,6 +22,20 @@ class ClinicalDocument(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
+class ClinicalEvent(BaseModel):
+    id: str = Field(default_factory=new_id)
+    owner_id: str
+    pet_id: str
+    event_type: str
+    title: str
+    event_date: date
+    summary: str | None = None
+    severity: str | None = None
+    source: str | None = None
+    linked_document_id: str | None = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 class ClinicalTimelineItem(BaseModel):
     id: str
     pet_id: str

@@ -25,3 +25,37 @@ class CreateClinicalDocumentRequest(BaseModel):
     extracted_text_summary: str | None = None
     status: str = "uploaded"
     verified_by_user: bool = False
+
+
+class UploadClinicalDocumentRequest(BaseModel):
+    title: str
+    document_type: str
+    document_date: str
+    filename: str
+    content_base64: str
+    content_type: str | None = None
+    summary: str | None = None
+    source: str | None = None
+    extracted_text_summary: str | None = None
+    status: str = "uploaded"
+    verified_by_user: bool = False
+
+
+class CreateClinicalEventRequest(BaseModel):
+    event_type: str
+    title: str
+    event_date: str
+    summary: str | None = None
+    severity: str | None = None
+    source: str | None = None
+    linked_document_id: str | None = None
+
+
+class UpdateClinicalEventRequest(BaseModel):
+    event_type: str | None = None
+    title: str | None = None
+    event_date: str | None = None
+    summary: str | None = None
+    severity: str | None = None
+    source: str | None = None
+    linked_document_id: str | None = None

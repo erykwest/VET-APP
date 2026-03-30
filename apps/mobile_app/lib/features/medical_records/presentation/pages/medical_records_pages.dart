@@ -193,6 +193,68 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
                     icon: Icons.verified_outlined,
                   ),
                   const SizedBox(height: AppSpacing.lg),
+                  FutureBuilder<ClinicalHealthProfile?>(
+                    future: _repository.loadHealthProfile(
+                      petName: selectedPetName,
+                    ),
+                    builder: (context, profileSnapshot) {
+                      if (profileSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const _SummaryCard(
+                          title: 'Scheda salute',
+                          body:
+                              'Sto recuperando il profilo clinico del pet selezionato.',
+                          icon: Icons.favorite_border,
+                        );
+                      }
+
+                      final profile = profileSnapshot.data;
+                      if (profile == null) {
+                        return _SummaryCard(
+                          title: 'Scheda salute',
+                          body: selectedPetName == null
+                              ? 'La scheda salute comparira appena avremo un profilo clinico completo.'
+                              : 'Nessuna scheda salute disponibile per $selectedPetName.',
+                          icon: Icons.favorite_border,
+                        );
+                      }
+
+                      return _ClinicalHealthProfileCard(profile: profile);
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  FutureBuilder<List<ClinicalEventEntry>>(
+                    future: _repository.loadEvents(
+                      petName: selectedPetName,
+                    ),
+                    builder: (context, eventsSnapshot) {
+                      if (eventsSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const _SummaryCard(
+                          title: 'Eventi clinici recenti',
+                          body: 'Sto ricostruendo gli ultimi eventi sanitari.',
+                          icon: Icons.medical_information_outlined,
+                        );
+                      }
+
+                      final events = eventsSnapshot.data ?? const [];
+                      if (events.isEmpty) {
+                        return _SummaryCard(
+                          title: 'Eventi clinici recenti',
+                          body: selectedPetName == null
+                              ? 'Gli eventi clinici appariranno appena aggiungi visite, vaccini o terapie.'
+                              : 'Nessun evento clinico disponibile per $selectedPetName.',
+                          icon: Icons.medical_information_outlined,
+                        );
+                      }
+
+                      return _ClinicalEventsCard(
+                        petName: selectedPetName,
+                        events: events.take(3).toList(growable: false),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
                   ...filteredRecords.asMap().entries.expand(
                     (entry) {
                       final index = entry.key;
@@ -487,6 +549,9 @@ class _MedicalRecordsUploadPageState extends State<MedicalRecordsUploadPage> {
       }
       if (!launched) {
         await Clipboard.setData(ClipboardData(text: preview));
+        if (!context.mounted) {
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('WhatsApp non disponibile. Riepilogo copiato.'),
@@ -1360,6 +1425,150 @@ class _TimelineCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           ...rows.map(
             (row) => _TimelineRow(label: row.label, value: row.value),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClinicalHealthProfileCard extends StatelessWidget {
+  const _ClinicalHealthProfileCard({required this.profile});
+
+  final ClinicalHealthProfile profile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SummaryCard(
+          title: 'Scheda salute di ${profile.petName}',
+          body:
+              '${profile.species} · ${profile.breed} · ${profile.weightLabel}. Microchip: ${profile.microchipCode}.',
+          icon: Icons.favorite_border,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _MetaGrid(
+          items: [
+            _MetaItem('Specie', profile.species),
+            _MetaItem('Razza', profile.breed),
+            _MetaItem('Sesso', profile.sex),
+            _MetaItem('Peso', profile.weightLabel),
+            _MetaItem('Microchip', profile.microchipCode),
+            _MetaItem('Sterilizzato', profile.neuteredLabel),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _SummaryCard(
+          title: 'Note cliniche',
+          body: profile.notes,
+          icon: Icons.notes_outlined,
+        ),
+      ],
+    );
+  }
+}
+
+class _ClinicalEventsCard extends StatelessWidget {
+  const _ClinicalEventsCard({
+    required this.events,
+    this.petName,
+  });
+
+  final List<ClinicalEventEntry> events;
+  final String? petName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            petName == null
+                ? 'Eventi clinici recenti'
+                : 'Eventi clinici di $petName',
+            style: AppTextStyles.title,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Ultimi eventi utili per consultazione rapida, reminder e contesto chat.',
+            style: AppTextStyles.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          ...events.asMap().entries.expand(
+            (entry) {
+              final index = entry.key;
+              final event = entry.value;
+              return <Widget>[
+                _ClinicalEventRow(event: event),
+                if (index != events.length - 1)
+                  const SizedBox(height: AppSpacing.md),
+              ];
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClinicalEventRow extends StatelessWidget {
+  const _ClinicalEventRow({required this.event});
+
+  final ClinicalEventEntry event;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      event.title,
+                      style: AppTextStyles.title.copyWith(fontSize: 17),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(event.summary, style: AppTextStyles.bodySmall),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              _Badge(label: event.severityLabel),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _PetBadge(label: event.petName),
+              _Badge(label: event.eventType),
+              _Badge(label: event.eventDate),
+              _Badge(label: event.sourceLabel),
+            ],
           ),
         ],
       ),

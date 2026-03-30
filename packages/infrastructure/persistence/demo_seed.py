@@ -11,6 +11,7 @@ class DemoSeedBundle:
     conversations: tuple[dict[str, Any], ...]
     reminders: tuple[dict[str, Any], ...]
     clinical_documents: tuple[dict[str, Any], ...]
+    clinical_events: tuple[dict[str, Any], ...]
 
 
 def build_demo_seed(owner_id: str, *, today: date | None = None) -> DemoSeedBundle:
@@ -163,11 +164,49 @@ def build_demo_seed(owner_id: str, *, today: date | None = None) -> DemoSeedBund
         },
     )
 
+    clinical_events = (
+        {
+            "id": "evt-moka-routine-check",
+            "owner_id": owner_id,
+            "pet_id": moka_pet_id,
+            "event_type": "clinical_visit",
+            "title": "Controllo routinario di Moka",
+            "event_date": (seed_day - timedelta(days=2)).isoformat(),
+            "summary": "Visita breve con quadro generale stabile.",
+            "severity": "low",
+            "source": "Clinica Vet Roma",
+            "linked_document_id": "doc-moka-emocromo",
+            "created_at": datetime.combine(
+                seed_day - timedelta(days=2),
+                time(hour=15, minute=5),
+                tzinfo=UTC,
+            ).isoformat(),
+        },
+        {
+            "id": "evt-oliver-follow-up",
+            "owner_id": owner_id,
+            "pet_id": oliver_pet_id,
+            "event_type": "therapy_started",
+            "title": "Follow-up dentale di Oliver",
+            "event_date": (seed_day - timedelta(days=7)).isoformat(),
+            "summary": "Avviato follow-up post visita con monitoraggio del comfort.",
+            "severity": "medium",
+            "source": "Ambulatorio San Marco",
+            "linked_document_id": "doc-oliver-dentale",
+            "created_at": datetime.combine(
+                seed_day - timedelta(days=7),
+                time(hour=10, minute=30),
+                tzinfo=UTC,
+            ).isoformat(),
+        },
+    )
+
     return DemoSeedBundle(
         pet_profiles=pet_profiles,
         conversations=conversations,
         reminders=reminders,
         clinical_documents=clinical_documents,
+        clinical_events=clinical_events,
     )
 
 

@@ -9,7 +9,8 @@ from packages.core.application.ports.reminder_repository import ReminderReposito
 from packages.core.application.ports.clinical_document_repository import (
     ClinicalDocumentRepository,
 )
-from packages.core.domain.clinical_records.models import ClinicalDocument
+from packages.core.application.ports.clinical_event_repository import ClinicalEventRepository
+from packages.core.domain.clinical_records.models import ClinicalDocument, ClinicalEvent
 from packages.core.domain.conversation.models import Conversation
 from packages.core.domain.pet_profile.models import PetProfile
 from packages.core.domain.reminders.models import Reminder
@@ -104,3 +105,33 @@ class SupabaseClinicalDocumentRepository(ClinicalDocumentRepository):
             .execute()
         )
         return [ClinicalDocument.model_validate(item) for item in response.data or []]
+
+
+class SupabaseClinicalEventRepository(ClinicalEventRepository):
+    def __init__(self, client: Client) -> None:
+        self._client = client
+        self._table = "clinical_events"
+
+    def save(self, event: ClinicalEvent) -> ClinicalEvent:
+        payload = _serialize_payload(event.model_dump(mode="json"))
+        self._client.table(self._table).upsert(payload).execute()
+        return event
+
+    def get(self, event_id: str) -> ClinicalEvent | None:
+        response = self._client.table(self._table).select("*").eq("id", event_id).limit(1).execute()
+        if not response.data:
+            return None
+        return ClinicalEvent.model_validate(response.data[0])
+
+    def delete(self, event_id: str) -> None:
+        self._client.table(self._table).delete().eq("id", event_id).execute()
+
+    def list_by_pet(self, pet_id: str) -> list[ClinicalEvent]:
+        response = (
+            self._client.table(self._table)
+            .select("*")
+            .eq("pet_id", pet_id)
+            .order("event_date", desc=True)
+            .execute()
+        )
+        return [ClinicalEvent.model_validate(item) for item in response.data or []]

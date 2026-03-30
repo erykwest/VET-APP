@@ -50,9 +50,10 @@ The script now includes:
 - base tables
 - indexes
 - Row Level Security
-- owner-scoped policies for `pet_profiles`, `conversations`, `reminders`, and `clinical_documents`
+- owner-scoped policies for `pet_profiles`, `conversations`, `reminders`, `clinical_documents`, and `clinical_events`
 - cartella clinica fields on `pet_profiles`: `birth_date`, `weight_kg`, `microchip_code`, `neutered`
-- `clinical_documents` for the first cartella clinica rollout
+- `clinical_documents` and `clinical_events` for the first cartella clinica rollout
+- storage bucket `clinical-documents` with owner-scoped policies on `storage.objects`
 
 For the LLM evidence layer, also run `scripts/setup/supabase_llm_sources_schema.sql`.
 
@@ -91,7 +92,7 @@ To seed stable demo data directly into Supabase and immediately verify readback 
 
 What this script does:
 - uses `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from local `.env`
-- seeds `pet_profiles`, `conversations`, `reminders`, and `clinical_documents` for `BOOTSTRAP_USER_ID` by default
+- seeds `pet_profiles`, `conversations`, `reminders`, `clinical_documents`, and `clinical_events` for `BOOTSTRAP_USER_ID` by default
 - re-reads the same rows from Supabase and prints a JSON summary with counts and pet names
 
 Current scope:

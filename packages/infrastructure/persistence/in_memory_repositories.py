@@ -1,10 +1,11 @@
 from packages.core.application.ports.clinical_document_repository import (
     ClinicalDocumentRepository,
 )
+from packages.core.application.ports.clinical_event_repository import ClinicalEventRepository
 from packages.core.application.ports.conversation_repository import ConversationRepository
 from packages.core.application.ports.pet_profile_repository import PetProfileRepository
 from packages.core.application.ports.reminder_repository import ReminderRepository
-from packages.core.domain.clinical_records.models import ClinicalDocument
+from packages.core.domain.clinical_records.models import ClinicalDocument, ClinicalEvent
 from packages.core.domain.conversation.models import Conversation
 from packages.core.domain.pet_profile.models import PetProfile
 from packages.core.domain.reminders.models import Reminder
@@ -66,4 +67,38 @@ class InMemoryClinicalDocumentRepository(ClinicalDocumentRepository):
         return document
 
     def list_by_pet(self, pet_id: str) -> list[ClinicalDocument]:
-        return [item for item in self._items if item.pet_id == pet_id]
+        return sorted(
+            [item for item in self._items if item.pet_id == pet_id],
+            key=lambda item: item.document_date,
+            reverse=True,
+        )
+
+
+class InMemoryClinicalEventRepository(ClinicalEventRepository):
+    def __init__(self) -> None:
+        self._items: list[ClinicalEvent] = []
+
+    def save(self, event: ClinicalEvent) -> ClinicalEvent:
+        for index, item in enumerate(self._items):
+            if item.id == event.id:
+                self._items[index] = event
+                break
+        else:
+            self._items.append(event)
+        return event
+
+    def get(self, event_id: str) -> ClinicalEvent | None:
+        for item in self._items:
+            if item.id == event_id:
+                return item
+        return None
+
+    def delete(self, event_id: str) -> None:
+        self._items = [item for item in self._items if item.id != event_id]
+
+    def list_by_pet(self, pet_id: str) -> list[ClinicalEvent]:
+        return sorted(
+            [item for item in self._items if item.pet_id == pet_id],
+            key=lambda item: item.event_date,
+            reverse=True,
+        )

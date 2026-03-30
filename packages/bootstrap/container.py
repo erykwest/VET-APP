@@ -4,6 +4,9 @@ from packages.core.application.ports.auth_provider import AuthProvider
 from packages.core.application.services.create_clinical_document import (
     CreateClinicalDocumentService,
 )
+from packages.core.application.services.create_clinical_event import (
+    CreateClinicalEventService,
+)
 from packages.core.application.services.chat_orchestrator import ChatOrchestrator
 from packages.core.application.services.create_pet_profile import CreatePetProfileService
 from packages.core.application.services.create_reminder import CreateReminderService
@@ -13,6 +16,9 @@ from packages.core.application.services.get_pet_health_profile import (
 )
 from packages.core.application.services.list_clinical_documents import (
     ListClinicalDocumentsService,
+)
+from packages.core.application.services.list_clinical_events import (
+    ListClinicalEventsService,
 )
 from packages.core.application.services.list_clinical_timeline import (
     ListClinicalTimelineService,
@@ -24,6 +30,15 @@ from packages.core.application.services.send_chat_message import SendChatMessage
 from packages.core.application.services.update_pet_health_profile import (
     UpdatePetHealthProfileService,
 )
+from packages.core.application.services.update_clinical_event import (
+    UpdateClinicalEventService,
+)
+from packages.core.application.services.delete_clinical_event import (
+    DeleteClinicalEventService,
+)
+from packages.core.application.services.upload_clinical_document import (
+    UploadClinicalDocumentService,
+)
 from packages.core.application.services.update_pet_profile import UpdatePetProfileService
 from packages.infrastructure.auth.bootstrap_auth_provider import BootstrapAuthProvider
 from packages.infrastructure.llm.providers.echo_llm_client import EchoLLMClient
@@ -33,9 +48,14 @@ from packages.infrastructure.llm.retrieval.in_memory_evidence_retriever import (
 )
 from packages.infrastructure.persistence.in_memory_repositories import (
     InMemoryClinicalDocumentRepository,
+    InMemoryClinicalEventRepository,
     InMemoryConversationRepository,
     InMemoryPetProfileRepository,
     InMemoryReminderRepository,
+)
+from packages.infrastructure.storage import (
+    LocalClinicalDocumentStorage,
+    SupabaseClinicalDocumentStorage,
 )
 from packages.shared.config.settings import Settings, get_settings
 
@@ -49,7 +69,9 @@ class ApplicationContainer:
             self.conversation_repository,
             self.reminder_repository,
             self.clinical_document_repository,
+            self.clinical_event_repository,
         ) = self._build_repositories()
+        self.clinical_document_storage = self._build_document_storage()
         self.llm_client = self._build_llm_client()
         self.evidence_retriever = self._build_evidence_retriever()
         self.chat_orchestrator = ChatOrchestrator(self.llm_client, self.evidence_retriever)
@@ -103,9 +125,39 @@ class ApplicationContainer:
     def list_clinical_timeline_service(self) -> ListClinicalTimelineService:
         return ListClinicalTimelineService(
             self.clinical_document_repository,
+            self.clinical_event_repository,
             self.reminder_repository,
             self.pet_profile_repository,
         )
+
+    def upload_clinical_document_service(self) -> UploadClinicalDocumentService:
+        return UploadClinicalDocumentService(
+            self.clinical_document_repository,
+            self.pet_profile_repository,
+            self.clinical_document_storage,
+        )
+
+    def create_clinical_event_service(self) -> CreateClinicalEventService:
+        return CreateClinicalEventService(
+            self.clinical_event_repository,
+            self.pet_profile_repository,
+            self.clinical_document_repository,
+        )
+
+    def list_clinical_events_service(self) -> ListClinicalEventsService:
+        return ListClinicalEventsService(
+            self.clinical_event_repository,
+            self.pet_profile_repository,
+        )
+
+    def update_clinical_event_service(self) -> UpdateClinicalEventService:
+        return UpdateClinicalEventService(
+            self.clinical_event_repository,
+            self.clinical_document_repository,
+        )
+
+    def delete_clinical_event_service(self) -> DeleteClinicalEventService:
+        return DeleteClinicalEventService(self.clinical_event_repository)
 
     def _build_auth_provider(self) -> AuthProvider:
         if self.settings.auth_backend == "supabase":
@@ -136,7 +188,7 @@ class ApplicationContainer:
 
     def _build_repositories(
         self,
-    ) -> tuple[object, object, object, object]:
+    ) -> tuple[object, object, object, object, object]:
         if self.settings.persistence_backend == "supabase":
             try:
                 from packages.infrastructure.persistence.supabase.client import (
@@ -144,6 +196,7 @@ class ApplicationContainer:
                 )
                 from packages.infrastructure.persistence.supabase.supabase_repositories import (
                     SupabaseClinicalDocumentRepository,
+                    SupabaseClinicalEventRepository,
                     SupabaseConversationRepository,
                     SupabasePetProfileRepository,
                     SupabaseReminderRepository,
@@ -155,6 +208,7 @@ class ApplicationContainer:
                     SupabaseConversationRepository(client),
                     SupabaseReminderRepository(client),
                     SupabaseClinicalDocumentRepository(client),
+                    SupabaseClinicalEventRepository(client),
                 )
             except ModuleNotFoundError:
                 if self.settings.environment != "production":
@@ -163,6 +217,7 @@ class ApplicationContainer:
                         InMemoryConversationRepository(),
                         InMemoryReminderRepository(),
                         InMemoryClinicalDocumentRepository(),
+                        InMemoryClinicalEventRepository(),
                     )
                 raise
         return (
@@ -170,7 +225,13 @@ class ApplicationContainer:
             InMemoryConversationRepository(),
             InMemoryReminderRepository(),
             InMemoryClinicalDocumentRepository(),
+            InMemoryClinicalEventRepository(),
         )
+
+    def _build_document_storage(self) -> object:
+        if self.settings.persistence_backend == "supabase":
+            return SupabaseClinicalDocumentStorage(self.settings)
+        return LocalClinicalDocumentStorage(self.settings)
 
     def _build_llm_client(self) -> EchoLLMClient | GroqLLMClient:
         if self.settings.llm_provider == "groq":
