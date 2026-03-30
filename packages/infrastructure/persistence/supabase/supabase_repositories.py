@@ -6,6 +6,10 @@ from typing import TYPE_CHECKING, Any
 from packages.core.application.ports.conversation_repository import ConversationRepository
 from packages.core.application.ports.pet_profile_repository import PetProfileRepository
 from packages.core.application.ports.reminder_repository import ReminderRepository
+from packages.core.application.ports.clinical_document_repository import (
+    ClinicalDocumentRepository,
+)
+from packages.core.domain.clinical_records.models import ClinicalDocument
 from packages.core.domain.conversation.models import Conversation
 from packages.core.domain.pet_profile.models import PetProfile
 from packages.core.domain.reminders.models import Reminder
@@ -79,3 +83,24 @@ class SupabaseReminderRepository(ReminderRepository):
     def list_by_owner(self, owner_id: str) -> list[Reminder]:
         response = self._client.table(self._table).select("*").eq("owner_id", owner_id).execute()
         return [Reminder.model_validate(item) for item in response.data or []]
+
+
+class SupabaseClinicalDocumentRepository(ClinicalDocumentRepository):
+    def __init__(self, client: Client) -> None:
+        self._client = client
+        self._table = "clinical_documents"
+
+    def save(self, document: ClinicalDocument) -> ClinicalDocument:
+        payload = _serialize_payload(document.model_dump(mode="json"))
+        self._client.table(self._table).upsert(payload).execute()
+        return document
+
+    def list_by_pet(self, pet_id: str) -> list[ClinicalDocument]:
+        response = (
+            self._client.table(self._table)
+            .select("*")
+            .eq("pet_id", pet_id)
+            .order("document_date", desc=True)
+            .execute()
+        )
+        return [ClinicalDocument.model_validate(item) for item in response.data or []]

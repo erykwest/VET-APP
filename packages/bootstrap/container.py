@@ -1,14 +1,29 @@
 from functools import lru_cache
 
 from packages.core.application.ports.auth_provider import AuthProvider
+from packages.core.application.services.create_clinical_document import (
+    CreateClinicalDocumentService,
+)
 from packages.core.application.services.chat_orchestrator import ChatOrchestrator
 from packages.core.application.services.create_pet_profile import CreatePetProfileService
 from packages.core.application.services.create_reminder import CreateReminderService
 from packages.core.application.services.get_pet_profile import GetPetProfileService
+from packages.core.application.services.get_pet_health_profile import (
+    GetPetHealthProfileService,
+)
+from packages.core.application.services.list_clinical_documents import (
+    ListClinicalDocumentsService,
+)
+from packages.core.application.services.list_clinical_timeline import (
+    ListClinicalTimelineService,
+)
 from packages.core.application.services.list_conversations import ListConversationsService
 from packages.core.application.services.list_pet_profiles import ListPetProfilesService
 from packages.core.application.services.list_reminders import ListRemindersService
 from packages.core.application.services.send_chat_message import SendChatMessageService
+from packages.core.application.services.update_pet_health_profile import (
+    UpdatePetHealthProfileService,
+)
 from packages.core.application.services.update_pet_profile import UpdatePetProfileService
 from packages.infrastructure.auth.bootstrap_auth_provider import BootstrapAuthProvider
 from packages.infrastructure.llm.providers.echo_llm_client import EchoLLMClient
@@ -17,6 +32,7 @@ from packages.infrastructure.llm.retrieval.in_memory_evidence_retriever import (
     InMemoryEvidenceRetriever,
 )
 from packages.infrastructure.persistence.in_memory_repositories import (
+    InMemoryClinicalDocumentRepository,
     InMemoryConversationRepository,
     InMemoryPetProfileRepository,
     InMemoryReminderRepository,
@@ -32,6 +48,7 @@ class ApplicationContainer:
             self.pet_profile_repository,
             self.conversation_repository,
             self.reminder_repository,
+            self.clinical_document_repository,
         ) = self._build_repositories()
         self.llm_client = self._build_llm_client()
         self.evidence_retriever = self._build_evidence_retriever()
@@ -49,6 +66,12 @@ class ApplicationContainer:
     def list_pet_profiles_service(self) -> ListPetProfilesService:
         return ListPetProfilesService(self.pet_profile_repository)
 
+    def get_pet_health_profile_service(self) -> GetPetHealthProfileService:
+        return GetPetHealthProfileService(self.pet_profile_repository)
+
+    def update_pet_health_profile_service(self) -> UpdatePetHealthProfileService:
+        return UpdatePetHealthProfileService(self.pet_profile_repository)
+
     def send_chat_message_service(self) -> SendChatMessageService:
         return SendChatMessageService(
             self.conversation_repository,
@@ -64,6 +87,25 @@ class ApplicationContainer:
 
     def list_reminders_service(self) -> ListRemindersService:
         return ListRemindersService(self.reminder_repository)
+
+    def create_clinical_document_service(self) -> CreateClinicalDocumentService:
+        return CreateClinicalDocumentService(
+            self.clinical_document_repository,
+            self.pet_profile_repository,
+        )
+
+    def list_clinical_documents_service(self) -> ListClinicalDocumentsService:
+        return ListClinicalDocumentsService(
+            self.clinical_document_repository,
+            self.pet_profile_repository,
+        )
+
+    def list_clinical_timeline_service(self) -> ListClinicalTimelineService:
+        return ListClinicalTimelineService(
+            self.clinical_document_repository,
+            self.reminder_repository,
+            self.pet_profile_repository,
+        )
 
     def _build_auth_provider(self) -> AuthProvider:
         if self.settings.auth_backend == "supabase":
@@ -94,13 +136,14 @@ class ApplicationContainer:
 
     def _build_repositories(
         self,
-    ) -> tuple[object, object, object]:
+    ) -> tuple[object, object, object, object]:
         if self.settings.persistence_backend == "supabase":
             try:
                 from packages.infrastructure.persistence.supabase.client import (
                     build_supabase_client,
                 )
                 from packages.infrastructure.persistence.supabase.supabase_repositories import (
+                    SupabaseClinicalDocumentRepository,
                     SupabaseConversationRepository,
                     SupabasePetProfileRepository,
                     SupabaseReminderRepository,
@@ -111,6 +154,7 @@ class ApplicationContainer:
                     SupabasePetProfileRepository(client),
                     SupabaseConversationRepository(client),
                     SupabaseReminderRepository(client),
+                    SupabaseClinicalDocumentRepository(client),
                 )
             except ModuleNotFoundError:
                 if self.settings.environment != "production":
@@ -118,12 +162,14 @@ class ApplicationContainer:
                         InMemoryPetProfileRepository(),
                         InMemoryConversationRepository(),
                         InMemoryReminderRepository(),
+                        InMemoryClinicalDocumentRepository(),
                     )
                 raise
         return (
             InMemoryPetProfileRepository(),
             InMemoryConversationRepository(),
             InMemoryReminderRepository(),
+            InMemoryClinicalDocumentRepository(),
         )
 
     def _build_llm_client(self) -> EchoLLMClient | GroqLLMClient:

@@ -227,6 +227,36 @@ class _MedicalRecordsListPageState extends State<MedicalRecordsListPage> {
                           ? _openUpload
                           : () => _selectPet(null),
                     ),
+                  const SizedBox(height: AppSpacing.lg),
+                  FutureBuilder<List<MedicalRecordTimelineEntry>>(
+                    future: _repository.loadTimeline(
+                      petName: selectedPetName,
+                    ),
+                    builder: (context, timelineSnapshot) {
+                      if (timelineSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const _SummaryCard(
+                          title: 'Timeline clinica',
+                          body:
+                              'Sto preparando la cronologia sanitaria piu recente.',
+                          icon: Icons.timeline_outlined,
+                        );
+                      }
+
+                      final timeline = timelineSnapshot.data ?? const [];
+                      if (timeline.isEmpty) {
+                        return _SummaryCard(
+                          title: 'Timeline clinica',
+                          body: selectedPetName == null
+                              ? 'La cronologia comparira appena il primo documento o promemoria entrera in archivio.'
+                              : 'Nessuna voce timeline disponibile per $selectedPetName.',
+                          icon: Icons.timeline_outlined,
+                        );
+                      }
+
+                      return _TimelineCard(timeline: timeline);
+                    },
+                  ),
                 ],
               );
             },

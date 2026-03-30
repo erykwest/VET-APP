@@ -10,6 +10,7 @@ class DemoSeedBundle:
     pet_profiles: tuple[dict[str, Any], ...]
     conversations: tuple[dict[str, Any], ...]
     reminders: tuple[dict[str, Any], ...]
+    clinical_documents: tuple[dict[str, Any], ...]
 
 
 def build_demo_seed(owner_id: str, *, today: date | None = None) -> DemoSeedBundle:
@@ -119,10 +120,54 @@ def build_demo_seed(owner_id: str, *, today: date | None = None) -> DemoSeedBund
         },
     )
 
+    clinical_documents = (
+        {
+            "id": "doc-moka-emocromo",
+            "owner_id": owner_id,
+            "pet_id": moka_pet_id,
+            "title": "emocromo_aprile.pdf",
+            "document_type": "lab_result",
+            "document_date": (seed_day - timedelta(days=3)).isoformat(),
+            "summary": "Controllo annuale con emocromo di routine.",
+            "source": "Laboratorio Vet",
+            "file_path": "users/demo-user/pets/pet-moka/clinical/doc-moka-emocromo/emocromo_aprile.pdf",
+            "original_filename": "emocromo_aprile.pdf",
+            "extracted_text_summary": "Emocromo di controllo senza note urgenti.",
+            "status": "uploaded",
+            "verified_by_user": True,
+            "created_at": datetime.combine(
+                seed_day - timedelta(days=3),
+                time(hour=11, minute=20),
+                tzinfo=UTC,
+            ).isoformat(),
+        },
+        {
+            "id": "doc-oliver-dentale",
+            "owner_id": owner_id,
+            "pet_id": oliver_pet_id,
+            "title": "controllo_dentale_oliver.pdf",
+            "document_type": "clinical_visit",
+            "document_date": (seed_day - timedelta(days=8)).isoformat(),
+            "summary": "Visita odontoiatrica con follow-up consigliato.",
+            "source": "Ambulatorio San Marco",
+            "file_path": "users/demo-user/pets/pet-oliver/clinical/doc-oliver-dentale/controllo_dentale_oliver.pdf",
+            "original_filename": "controllo_dentale_oliver.pdf",
+            "extracted_text_summary": "Follow-up dentale raccomandato entro una settimana.",
+            "status": "reviewed",
+            "verified_by_user": False,
+            "created_at": datetime.combine(
+                seed_day - timedelta(days=8),
+                time(hour=16, minute=10),
+                tzinfo=UTC,
+            ).isoformat(),
+        },
+    )
+
     return DemoSeedBundle(
         pet_profiles=pet_profiles,
         conversations=conversations,
         reminders=reminders,
+        clinical_documents=clinical_documents,
     )
 
 

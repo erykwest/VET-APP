@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 
 from apps.api.routes.auth import router as auth_router
 from apps.api.routes.chat import router as chat_router
+from apps.api.routes.clinical_records import router as clinical_records_router
 from apps.api.routes.conversations import router as conversations_router
 from apps.api.routes.health import router as health_router
 from apps.api.routes.pets import router as pets_router
@@ -63,6 +64,7 @@ async def handle_provider_error(_: Request, exc: ProviderError) -> JSONResponse:
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(pets_router)
+app.include_router(clinical_records_router)
 app.include_router(conversations_router)
 app.include_router(chat_router)
 app.include_router(reminders_router)

@@ -39,10 +39,12 @@ def main() -> int:
     client.upsert("pet_profiles", list(seed.pet_profiles))
     client.upsert("conversations", list(seed.conversations))
     client.upsert("reminders", list(seed.reminders))
+    client.upsert("clinical_documents", list(seed.clinical_documents))
 
     pets = client.select_by_owner("pet_profiles", owner_id)
     conversations = client.select_by_owner("conversations", owner_id)
     reminders = client.select_by_owner("reminders", owner_id)
+    clinical_documents = client.select_by_owner("clinical_documents", owner_id)
 
     print(
         json.dumps(
@@ -51,6 +53,7 @@ def main() -> int:
                 "pet_profiles": len(pets),
                 "conversations": len(conversations),
                 "reminders": len(reminders),
+                "clinical_documents": len(clinical_documents),
                 "pet_names": [row["name"] for row in pets],
             },
             indent=2,
@@ -126,7 +129,7 @@ class SupabaseRestClient:
 
 
 def reset_owner_seed(client: SupabaseRestClient, owner_id: str) -> None:
-    for table in ("conversations", "reminders", "pet_profiles"):
+    for table in ("clinical_documents", "conversations", "reminders", "pet_profiles"):
         client.delete_by_owner(table, owner_id)
 
 

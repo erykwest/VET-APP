@@ -66,3 +66,53 @@ def test_chat_and_reminder_flow() -> None:
     reminder_list = client.get("/reminders")
     assert reminder_list.status_code == 200
     assert len(reminder_list.json()["reminders"]) >= 1
+
+
+def test_health_profile_documents_and_timeline_flow() -> None:
+    client = TestClient(app)
+    pet_response = client.post(
+        "/pets",
+        json={
+            "name": "Moka",
+            "species": "dog",
+            "breed": "Meticcio",
+            "weight_kg": 17.8,
+            "microchip_code": "380260101234567",
+            "neutered": True,
+        },
+    )
+    assert pet_response.status_code == 200
+    pet_id = pet_response.json()["pet_profile"]["id"]
+
+    health_response = client.get(f"/pets/{pet_id}/health-profile")
+    assert health_response.status_code == 200
+    assert health_response.json()["pet_profile"]["weight_kg"] == 17.8
+
+    health_patch = client.patch(
+        f"/pets/{pet_id}/health-profile",
+        json={"notes": "Allergia sospetta al pollo", "sex": "female"},
+    )
+    assert health_patch.status_code == 200
+    assert health_patch.json()["pet_profile"]["sex"] == "female"
+
+    document_create = client.post(
+        f"/pets/{pet_id}/clinical-documents",
+        json={
+            "title": "emocromo_aprile.pdf",
+            "document_type": "lab_result",
+            "document_date": "2026-04-10",
+            "summary": "Controllo annuale",
+            "original_filename": "emocromo_aprile.pdf",
+        },
+    )
+    assert document_create.status_code == 200
+    assert document_create.json()["document"]["document_type"] == "lab_result"
+
+    document_list = client.get(f"/pets/{pet_id}/clinical-documents")
+    assert document_list.status_code == 200
+    assert len(document_list.json()["documents"]) == 1
+
+    timeline_response = client.get(f"/pets/{pet_id}/timeline")
+    assert timeline_response.status_code == 200
+    assert len(timeline_response.json()["timeline"]) == 1
+    assert timeline_response.json()["timeline"][0]["entry_type"] == "clinical_document"

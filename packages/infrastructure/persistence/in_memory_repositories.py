@@ -1,6 +1,10 @@
+from packages.core.application.ports.clinical_document_repository import (
+    ClinicalDocumentRepository,
+)
 from packages.core.application.ports.conversation_repository import ConversationRepository
 from packages.core.application.ports.pet_profile_repository import PetProfileRepository
 from packages.core.application.ports.reminder_repository import ReminderRepository
+from packages.core.domain.clinical_records.models import ClinicalDocument
 from packages.core.domain.conversation.models import Conversation
 from packages.core.domain.pet_profile.models import PetProfile
 from packages.core.domain.reminders.models import Reminder
@@ -46,3 +50,20 @@ class InMemoryReminderRepository(ReminderRepository):
 
     def list_by_owner(self, owner_id: str) -> list[Reminder]:
         return [item for item in self._items if item.owner_id == owner_id]
+
+
+class InMemoryClinicalDocumentRepository(ClinicalDocumentRepository):
+    def __init__(self) -> None:
+        self._items: list[ClinicalDocument] = []
+
+    def save(self, document: ClinicalDocument) -> ClinicalDocument:
+        for index, item in enumerate(self._items):
+            if item.id == document.id:
+                self._items[index] = document
+                break
+        else:
+            self._items.append(document)
+        return document
+
+    def list_by_pet(self, pet_id: str) -> list[ClinicalDocument]:
+        return [item for item in self._items if item.pet_id == pet_id]

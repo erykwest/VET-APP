@@ -21,3 +21,9 @@ def test_demo_seed_keeps_owner_and_relationships_aligned() -> None:
         assert reminder["owner_id"] == "demo-user"
         assert reminder["pet_id"] in pet_ids
         assert reminder["due_date"] >= "2026-03-26"
+
+    for document in seed.clinical_documents:
+        assert document["owner_id"] == "demo-user"
+        assert document["pet_id"] in pet_ids
+        assert document["document_type"]
+        assert document["document_date"] <= "2026-03-26"

@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../shared/config/app_runtime_config_loader.dart';
+import '../../../../shared/network/backend_api_client.dart';
 
 class MedicalRecordEntry {
   const MedicalRecordEntry({
@@ -37,11 +38,21 @@ class MedicalRecordTimelineEntry {
 }
 
 class MedicalRecordsRepository {
-  MedicalRecordsRepository({SupabaseClient? client}) : _client = client;
+  MedicalRecordsRepository({
+    SupabaseClient? client,
+    BackendApiClient? backendApiClient,
+  })  : _client = client,
+        _backendApiClient = backendApiClient ?? BackendApiClient();
 
   final SupabaseClient? _client;
+  final BackendApiClient _backendApiClient;
 
   Future<List<MedicalRecordEntry>> loadRecords() async {
+    final backendRecords = await _tryLoadBackendRecords();
+    if (backendRecords.isNotEmpty) {
+      return backendRecords;
+    }
+
     final remote = await _tryLoadRemoteRecords();
     if (remote.isNotEmpty) {
       return remote;
@@ -59,7 +70,24 @@ class MedicalRecordsRepository {
     return null;
   }
 
+  Future<List<MedicalRecordTimelineEntry>> loadTimeline({
+    String? petName,
+  }) async {
+    final backendTimeline = await _tryLoadBackendTimeline(petName: petName);
+    if (backendTimeline.isNotEmpty) {
+      return backendTimeline;
+    }
+
+    return _previewTimeline(petName: petName);
+  }
+
   Future<void> saveRecord(MedicalRecordEntry record) async {
+    final backendSaved = await _trySaveRecordToBackend(record);
+    if (backendSaved) {
+      _upsertPreviewRecord(record);
+      return;
+    }
+
     final client = _resolveClient();
     if (client == null) {
       _upsertPreviewRecord(record);
@@ -148,6 +176,156 @@ class MedicalRecordsRepository {
     } catch (_) {
       return const [];
     }
+  }
+
+  Future<List<MedicalRecordEntry>> _tryLoadBackendRecords() async {
+    if (!_backendApiClient.isConfigured) {
+      return const [];
+    }
+
+    try {
+      final pets =
+          await _backendApiClient.getCollection('/pets', 'pet_profiles');
+      final records = <MedicalRecordEntry>[];
+      for (final pet in pets) {
+        final petId = _readString(pet, 'id', fallback: '');
+        if (petId.isEmpty) {
+          continue;
+        }
+
+        final petName = _readString(pet, 'name', fallback: 'Pet');
+        final response = await _backendApiClient.getCollection(
+          '/pets/$petId/clinical-documents',
+          'documents',
+        );
+        records.addAll(
+          response
+              .map((row) => _recordFromBackend(row, petName))
+              .toList(growable: false),
+        );
+      }
+      return records;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<MedicalRecordTimelineEntry>> _tryLoadBackendTimeline({
+    String? petName,
+  }) async {
+    if (!_backendApiClient.isConfigured) {
+      return const [];
+    }
+
+    try {
+      final pets =
+          await _backendApiClient.getCollection('/pets', 'pet_profiles');
+      final timeline = <MedicalRecordTimelineEntry>[];
+
+      for (final pet in pets) {
+        final currentPetName = _readString(pet, 'name', fallback: 'Pet');
+        if (petName != null && currentPetName != petName) {
+          continue;
+        }
+
+        final petId = _readString(pet, 'id', fallback: '');
+        if (petId.isEmpty) {
+          continue;
+        }
+
+        final response = await _backendApiClient.getCollection(
+          '/pets/$petId/timeline',
+          'timeline',
+        );
+
+        timeline.addAll(
+          response
+              .map(
+                (row) => MedicalRecordTimelineEntry(
+                  label: _timelineLabelFromBackend(row, currentPetName),
+                  value: _timelineValueFromBackend(row),
+                ),
+              )
+              .toList(growable: false),
+        );
+      }
+
+      return timeline;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<bool> _trySaveRecordToBackend(MedicalRecordEntry record) async {
+    if (!_backendApiClient.isConfigured) {
+      return false;
+    }
+
+    try {
+      final pets =
+          await _backendApiClient.getCollection('/pets', 'pet_profiles');
+      final matchingPet = pets.cast<Map<String, dynamic>?>().firstWhere(
+            (pet) =>
+                _readString(pet ?? const {}, 'name', fallback: '') ==
+                record.petName,
+            orElse: () => null,
+          );
+      final petId = _readString(matchingPet ?? const {}, 'id', fallback: '');
+      if (petId.isEmpty) {
+        return false;
+      }
+
+      await _backendApiClient.postJson(
+        '/pets/$petId/clinical-documents',
+        {
+          'title': record.title,
+          'document_type': _inferDocumentType(record),
+          'document_date': _inferDocumentDate(record),
+          'summary': record.subtitle,
+          'source': record.detailSource,
+          'original_filename': record.title,
+          'status': _inferStatus(record),
+          'verified_by_user': record.badge.toLowerCase().contains('verificat'),
+        },
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static MedicalRecordEntry _recordFromBackend(
+    Map<String, dynamic> row,
+    String petName,
+  ) {
+    final title = _readString(row, 'title', fallback: 'Referto clinico');
+    final documentType =
+        _readString(row, 'document_type', fallback: 'Documento');
+    final documentDate =
+        _readString(row, 'document_date', fallback: 'Data non disponibile');
+    final summary = _readString(
+      row,
+      'summary',
+      fallback: 'Documento clinico disponibile nell archivio del pet.',
+    );
+    final status = _readString(row, 'status', fallback: 'Caricato');
+    final source = _readString(row, 'source', fallback: 'Cartella clinica');
+
+    return MedicalRecordEntry(
+      id: _readString(row, 'id', fallback: 'clinical-document'),
+      petName: petName,
+      title: title,
+      subtitle: summary,
+      meta: '$documentType - $documentDate',
+      badge: _badgeFromStatus(status),
+      detailSource: source,
+      createdAt: documentDate,
+      timeline: [
+        MedicalRecordTimelineEntry(label: 'Documento', value: documentType),
+        MedicalRecordTimelineEntry(label: 'Data', value: documentDate),
+        MedicalRecordTimelineEntry(label: 'Stato', value: status),
+      ],
+    );
   }
 
   static String _readString(
@@ -256,5 +434,117 @@ class MedicalRecordsRepository {
     }
 
     _previewRecords[index] = record;
+  }
+
+  static String _inferDocumentType(MedicalRecordEntry record) {
+    final normalized =
+        '${record.title} ${record.badge} ${record.subtitle}'.toLowerCase();
+    if (normalized.contains('vaccin')) {
+      return 'vaccination';
+    }
+    if (normalized.contains('esame') || normalized.contains('emocromo')) {
+      return 'lab_result';
+    }
+    if (normalized.contains('nota')) {
+      return 'clinical_visit';
+    }
+    return 'other';
+  }
+
+  static String _inferStatus(MedicalRecordEntry record) {
+    final normalized = record.badge.toLowerCase();
+    if (normalized.contains('verificat')) {
+      return 'verified';
+    }
+    if (normalized.contains('revision')) {
+      return 'in_review';
+    }
+    return 'uploaded';
+  }
+
+  static String _inferDocumentDate(MedicalRecordEntry record) {
+    final match = RegExp(r'(\d{1,2})\s+[A-Za-z]{3}\s+(\d{4})')
+        .firstMatch(record.createdAt);
+    if (match == null) {
+      return '2026-03-25';
+    }
+
+    final day = int.tryParse(match.group(1) ?? '') ?? 25;
+    final year = int.tryParse(match.group(2) ?? '') ?? 2026;
+    final month = _monthFromItalianLabel(record.createdAt);
+    return '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+  }
+
+  static int _monthFromItalianLabel(String label) {
+    final normalized = label.toLowerCase();
+    const months = <String, int>{
+      'gen': 1,
+      'feb': 2,
+      'mar': 3,
+      'apr': 4,
+      'mag': 5,
+      'giu': 6,
+      'lug': 7,
+      'ago': 8,
+      'set': 9,
+      'ott': 10,
+      'nov': 11,
+      'dic': 12,
+    };
+    for (final entry in months.entries) {
+      if (normalized.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return 3;
+  }
+
+  static String _badgeFromStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'verified':
+        return 'Verificato';
+      case 'in_review':
+        return 'In revisione';
+      default:
+        return 'Caricato';
+    }
+  }
+
+  static List<MedicalRecordTimelineEntry> _previewTimeline({
+    String? petName,
+  }) {
+    final records = petName == null
+        ? _previewRecords
+        : _previewRecords
+            .where((record) => record.petName == petName)
+            .toList(growable: false);
+
+    return records
+        .map(
+          (record) => MedicalRecordTimelineEntry(
+            label: '${record.title} · ${record.badge}',
+            value: record.createdAt,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  static String _timelineLabelFromBackend(
+    Map<String, dynamic> row,
+    String petName,
+  ) {
+    final title = _readString(row, 'title', fallback: 'Voce timeline');
+    final sourceLabel = _readString(row, 'source_label', fallback: petName);
+    return '$title · $sourceLabel';
+  }
+
+  static String _timelineValueFromBackend(Map<String, dynamic> row) {
+    final eventDate =
+        _readString(row, 'event_date', fallback: 'Data non disponibile');
+    final summary = _readString(row, 'summary', fallback: '');
+    if (summary.isEmpty) {
+      return eventDate;
+    }
+    return '$eventDate · $summary';
   }
 }

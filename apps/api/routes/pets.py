@@ -8,6 +8,7 @@ from packages.core.application.services.list_pet_profiles import ListPetProfiles
 from packages.core.application.services.update_pet_profile import UpdatePetProfileInput
 from packages.infrastructure.persistence.demo_seed import build_demo_seed
 from packages.shared.config.settings import get_settings
+from packages.shared.errors.base import ValidationError
 
 router = APIRouter(prefix="/pets", tags=["pets"])
 
@@ -25,7 +26,11 @@ def list_pets() -> dict[str, object]:
 
 @router.get("/{pet_id}")
 def get_pet(pet_id: str) -> dict[str, object]:
-    result = get_container().get_pet_profile_service().execute(GetPetProfileInput(pet_id=pet_id))
+    container = get_container()
+    user = container.auth_provider.get_current_user()
+    result = container.get_pet_profile_service().execute(GetPetProfileInput(pet_id=pet_id))
+    if result.pet_profile.owner_id != user.id:
+        raise ValidationError("pet_profile not found")
     return result.model_dump()
 
 
@@ -41,7 +46,13 @@ def create_pet(request: CreatePetProfileRequest) -> dict[str, object]:
 
 @router.put("/{pet_id}")
 def update_pet(pet_id: str, request: CreatePetProfileRequest) -> dict[str, object]:
-    result = get_container().update_pet_profile_service().execute(
+    container = get_container()
+    user = container.auth_provider.get_current_user()
+    existing = container.get_pet_profile_service().execute(GetPetProfileInput(pet_id=pet_id))
+    if existing.pet_profile.owner_id != user.id:
+        raise ValidationError("pet_profile not found")
+
+    result = container.update_pet_profile_service().execute(
         UpdatePetProfileInput(pet_id=pet_id, **request.model_dump())
     )
     return result.model_dump()
