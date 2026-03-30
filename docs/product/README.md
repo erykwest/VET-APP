@@ -15,5 +15,7 @@ Curated product documents for the MVP now live here instead of the repository ro
 
 ## Additional source
 - `10_prd_mvp_modulare.md`
+- `11_cartella_clinica_operativa.md`
+- `12_backlog_tecnico_cartella_clinica.md`
 
 This keeps the root focused on codebase bootstrap and operational files.
